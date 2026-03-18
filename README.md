@@ -29,6 +29,10 @@ It focuses on secure authentication first, then extends to workplace and attenda
 - Global API key guard
   - All endpoints require API key header
   - Then JWT auth is evaluated for protected APIs
+- Attendance APIs
+  - Check in (`POST /api/attendance/check-in`)
+  - Check out (`POST /api/attendance/check-out`)
+  - My records by date range (`GET /api/attendance/me`)
 
 ## Data Model (Current Focus)
 - `USERS`: internal user account
