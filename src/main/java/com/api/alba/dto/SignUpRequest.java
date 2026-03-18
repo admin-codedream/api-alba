@@ -22,4 +22,8 @@ public class SignUpRequest {
     @NotBlank(message = "name is required.")
     @Size(max = 100, message = "name must be 100 characters or fewer.")
     private String name;
+
+    @NotBlank(message = "userType is required.")
+    @Pattern(regexp = "^(?i)(OWNER|STAFF)$", message = "userType must be OWNER or STAFF.")
+    private String userType;
 }

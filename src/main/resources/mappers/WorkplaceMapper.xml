@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.WorkplaceMapper">
+
+    <resultMap id="workplaceMap" type="com.api.alba.domain.Workplace">
+        <id property="id" column="ID"/>
+        <result property="ownerId" column="OWNER_ID"/>
+        <result property="name" column="NAME"/>
+        <result property="address" column="ADDRESS"/>
+        <result property="inviteCode" column="INVITE_CODE"/>
+        <result property="createdAt" column="CREATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.Workplace" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACES (OWNER_ID, NAME, ADDRESS, INVITE_CODE)
+        VALUES (#{ownerId}, #{name}, #{address}, #{inviteCode})
+    </insert>
+
+    <select id="findById" resultMap="workplaceMap">
+        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, CREATED_AT
+        FROM WORKPLACES
+        WHERE ID = #{id}
+    </select>
+
+</mapper>

@@ -35,6 +35,7 @@ public class AuthService {
         user.setLoginId(request.getLoginId());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
+        user.setUserType(request.getUserType().toUpperCase());
         user.setStatus("ACTIVE");
         userMapper.insert(user);
 
@@ -65,7 +66,7 @@ public class AuthService {
         if (user == null) {
             throw new ApiException("User not found.");
         }
-        return new MeResponse(user.getId(), user.getLoginId(), user.getName(), user.getStatus());
+        return new MeResponse(user.getId(), user.getLoginId(), user.getName(), user.getUserType(), user.getStatus());
     }
 
     @Transactional
@@ -80,6 +81,7 @@ public class AuthService {
         if (account == null) {
             user = new User();
             user.setName(resolveUserName(request));
+            user.setUserType("STAFF");
             user.setStatus("ACTIVE");
             userMapper.insert(user);
 

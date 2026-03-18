@@ -13,11 +13,25 @@
         <result property="status" column="STATUS"/>
     </resultMap>
 
+    <insert id="insert" parameterType="com.api.alba.domain.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS)
+        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{status})
+    </insert>
+
     <select id="findActiveMember" resultMap="workplaceMemberMap">
         SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
+          AND STATUS = 'ACTIVE'
+    </select>
+
+    <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND ROLE = 'OWNER'
           AND STATUS = 'ACTIVE'
     </select>
 

@@ -37,6 +37,13 @@
           AND WORK_DATE = #{workDate}
     </select>
 
+    <select id="findById" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE ID = #{id}
+    </select>
+
     <update id="updateCheckOut">
         UPDATE ATTENDANCE_RECORDS
         SET CHECK_OUT_AT = #{checkOutAt},
@@ -56,5 +63,58 @@
           AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
         ORDER BY WORK_DATE DESC
     </select>
+
+    <select id="countTodayCheckedIn" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE = #{today}
+          AND CHECK_IN_AT IS NOT NULL
+    </select>
+
+    <select id="countTodayWorking" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE = #{today}
+          AND CHECK_IN_AT IS NOT NULL
+          AND CHECK_OUT_AT IS NULL
+    </select>
+
+    <select id="findWorkplaceRecordsByPeriod" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        <if test="userId != null">
+          AND USER_ID = #{userId}
+        </if>
+        ORDER BY WORK_DATE DESC, USER_ID ASC
+    </select>
+
+    <select id="findEmployeeWageSummaryByPeriod" resultType="com.api.alba.dto.EmployeeWageSummary">
+        SELECT ar.USER_ID AS userId,
+               u.NAME AS userName,
+               COALESCE(SUM(ar.WORKED_MINUTES), 0) AS totalWorkedMinutes,
+               COALESCE(SUM(ar.FINAL_WAGE), 0) AS totalExpectedWage
+        FROM ATTENDANCE_RECORDS ar
+        JOIN USERS u ON u.ID = ar.USER_ID
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        GROUP BY ar.USER_ID, u.NAME
+        ORDER BY totalExpectedWage DESC
+    </select>
+
+    <update id="updateByOwnerDecision">
+        UPDATE ATTENDANCE_RECORDS
+        SET CHECK_IN_AT = #{checkInAt},
+            CHECK_OUT_AT = #{checkOutAt},
+            WORKED_MINUTES = #{workedMinutes},
+            BASE_WAGE = #{baseWage},
+            FINAL_WAGE = #{finalWage},
+            STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
 
 </mapper>

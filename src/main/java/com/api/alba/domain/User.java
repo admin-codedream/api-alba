@@ -12,6 +12,7 @@ public class User {
     private String loginId;
     private String passwordHash;
     private String name;
+    private String userType;
     private String status;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;

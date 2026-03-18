@@ -9,5 +9,6 @@ public class MeResponse {
     private Long id;
     private String loginId;
     private String name;
+    private String userType;
     private String status;
 }

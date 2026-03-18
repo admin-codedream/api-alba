@@ -18,7 +18,7 @@ It focuses on secure authentication first, then extends to workplace and attenda
 
 ## Core Features
 - Basic auth
-  - Sign up (`loginId`, `password`, `name`)
+  - Sign up (`loginId`, `password`, `name`, `userType`)
   - Login (JWT issue)
   - My profile (`/api/auth/me`)
 - Social auth
@@ -33,6 +33,27 @@ It focuses on secure authentication first, then extends to workplace and attenda
   - Check in (`POST /api/attendance/check-in`)
   - Check out (`POST /api/attendance/check-out`)
   - My records by date range (`GET /api/attendance/me`)
+- Owner APIs (3.2)
+  - Create workplace (`POST /api/owner/workplaces`)
+  - Get invite code (`GET /api/owner/workplaces/{workplaceId}/invite-code`)
+  - Today dashboard (`GET /api/owner/workplaces/{workplaceId}/dashboard/today`)
+  - Staff attendance records (`GET /api/owner/workplaces/{workplaceId}/attendance-records`)
+  - Approve/reject attendance request (`PATCH /api/owner/attendance-requests/{requestId}`)
+  - Expected wage summary by employee (`GET /api/owner/workplaces/{workplaceId}/wages/expected`)
+
+## 3.0 Onboarding
+- Sign up now requires user type selection:
+  - `OWNER`
+  - `STAFF`
+- Example request:
+```json
+{
+  "loginId": "owner01",
+  "password": "password1234",
+  "name": "Hong",
+  "userType": "OWNER"
+}
+```
 
 ## Data Model (Current Focus)
 - `USERS`: internal user account
@@ -57,3 +78,14 @@ It focuses on secure authentication first, then extends to workplace and attenda
 ## Notes
 - Execute `src/main/resources/schema.sql` in DB manually (`spring.sql.init.mode=never`).
 - Do not commit real secrets in profile property files.
+- For existing DB, run migration:
+```sql
+ALTER TABLE USERS
+ADD COLUMN USER_TYPE VARCHAR(30) NOT NULL DEFAULT 'STAFF' AFTER NAME,
+ADD KEY IDX_USERS_USER_TYPE (USER_TYPE);
+```
+```sql
+ALTER TABLE WORKPLACES
+ADD COLUMN INVITE_CODE VARCHAR(20) NOT NULL,
+ADD UNIQUE KEY UK_WORKPLACES_INVITE_CODE (INVITE_CODE);
+```

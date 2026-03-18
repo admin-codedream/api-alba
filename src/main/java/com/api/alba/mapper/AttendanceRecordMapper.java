@@ -1,6 +1,7 @@
 package com.api.alba.mapper;
 
 import com.api.alba.domain.AttendanceRecord;
+import com.api.alba.dto.EmployeeWageSummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,6 +20,8 @@ public interface AttendanceRecordMapper {
             @Param("workDate") LocalDate workDate
     );
 
+    AttendanceRecord findById(@Param("id") Long id);
+
     int updateCheckOut(
             @Param("id") Long id,
             @Param("checkOutAt") LocalDateTime checkOutAt,
@@ -33,5 +36,32 @@ public interface AttendanceRecordMapper {
             @Param("userId") Long userId,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
+    );
+
+    int countTodayCheckedIn(@Param("workplaceId") Long workplaceId, @Param("today") LocalDate today);
+
+    int countTodayWorking(@Param("workplaceId") Long workplaceId, @Param("today") LocalDate today);
+
+    List<AttendanceRecord> findWorkplaceRecordsByPeriod(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
+    List<EmployeeWageSummary> findEmployeeWageSummaryByPeriod(
+            @Param("workplaceId") Long workplaceId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
+    int updateByOwnerDecision(
+            @Param("id") Long id,
+            @Param("checkInAt") LocalDateTime checkInAt,
+            @Param("checkOutAt") LocalDateTime checkOutAt,
+            @Param("workedMinutes") Integer workedMinutes,
+            @Param("baseWage") BigDecimal baseWage,
+            @Param("finalWage") BigDecimal finalWage,
+            @Param("status") String status
     );
 }

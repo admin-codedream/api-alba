@@ -9,6 +9,7 @@
         <result property="loginId" column="LOGIN_ID"/>
         <result property="passwordHash" column="PASSWORD_HASH"/>
         <result property="name" column="NAME"/>
+        <result property="userType" column="USER_TYPE"/>
         <result property="status" column="STATUS"/>
         <result property="lastLoginAt" column="LAST_LOGIN_AT"/>
         <result property="createdAt" column="CREATED_AT"/>
@@ -16,18 +17,18 @@
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO USERS (LOGIN_ID, PASSWORD_HASH, NAME, STATUS)
-        VALUES (#{loginId}, #{passwordHash}, #{name}, #{status})
+        INSERT INTO USERS (LOGIN_ID, PASSWORD_HASH, NAME, USER_TYPE, STATUS)
+        VALUES (#{loginId}, #{passwordHash}, #{name}, #{userType}, #{status})
     </insert>
 
     <select id="findByLoginId" resultMap="userMap">
-        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
+        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, USER_TYPE, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
         FROM USERS
         WHERE LOGIN_ID = #{loginId}
     </select>
 
     <select id="findById" resultMap="userMap">
-        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
+        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, USER_TYPE, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
         FROM USERS
         WHERE ID = #{id}
     </select>
