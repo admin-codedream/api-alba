@@ -1,0 +1,219 @@
+package com.api.alba.service;
+
+import com.api.alba.domain.AttendanceRecord;
+import com.api.alba.domain.AttendanceRequest;
+import com.api.alba.domain.Workplace;
+import com.api.alba.domain.WorkplaceMember;
+import com.api.alba.dto.AttendanceCorrectionRequestCreateRequest;
+import com.api.alba.dto.AttendanceRequestCreatedResponse;
+import com.api.alba.dto.JoinWorkplaceRequest;
+import com.api.alba.dto.JoinWorkplaceResponse;
+import com.api.alba.dto.MyAggregateSummary;
+import com.api.alba.dto.StaffHomeTodayResponse;
+import com.api.alba.dto.StaffTodaySummaryResponse;
+import com.api.alba.exception.ApiException;
+import com.api.alba.mapper.AttendanceRecordMapper;
+import com.api.alba.mapper.AttendanceRequestMapper;
+import com.api.alba.mapper.WorkplaceMapper;
+import com.api.alba.mapper.WorkplaceMemberMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Locale;
+
+@Service
+@RequiredArgsConstructor
+public class StaffService {
+    private final WorkplaceMapper workplaceMapper;
+    private final WorkplaceMemberMapper workplaceMemberMapper;
+    private final AttendanceRecordMapper attendanceRecordMapper;
+    private final AttendanceRequestMapper attendanceRequestMapper;
+
+    @Transactional
+    public JoinWorkplaceResponse joinWorkplaceByInviteCode(Long userId, JoinWorkplaceRequest request) {
+        String inviteCode = request.getInviteCode().trim().toUpperCase(Locale.ROOT);
+        Workplace workplace = workplaceMapper.findByInviteCode(inviteCode);
+        if (workplace == null) {
+            throw new ApiException("Invalid invite code.");
+        }
+
+        WorkplaceMember activeMember = workplaceMemberMapper.findActiveMember(workplace.getId(), userId);
+        if (activeMember != null) {
+            return new JoinWorkplaceResponse(workplace.getId(), workplace.getName(), activeMember.getRole(), "ALREADY_JOINED");
+        }
+
+        WorkplaceMember existingMember = workplaceMemberMapper.findMember(workplace.getId(), userId);
+        if (existingMember == null) {
+            WorkplaceMember newMember = new WorkplaceMember();
+            newMember.setWorkplaceId(workplace.getId());
+            newMember.setUserId(userId);
+            newMember.setRole("STAFF");
+            newMember.setStatus("ACTIVE");
+            newMember.setHourlyWage(null);
+            workplaceMemberMapper.insert(newMember);
+        } else {
+            workplaceMemberMapper.updateStatus(existingMember.getId(), "ACTIVE");
+        }
+
+        WorkplaceMember joinedMember = workplaceMemberMapper.findActiveMember(workplace.getId(), userId);
+        if (joinedMember == null) {
+            throw new ApiException("Failed to join workplace.");
+        }
+        return new JoinWorkplaceResponse(workplace.getId(), workplace.getName(), joinedMember.getRole(), "JOINED");
+    }
+
+    public StaffHomeTodayResponse getHomeToday(Long userId, Long workplaceId) {
+        WorkplaceMember member = ensureActiveMember(workplaceId, userId);
+        LocalDate today = LocalDate.now();
+        AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
+
+        BigDecimal hourlyWage = safeWage(member.getHourlyWage());
+        if (record == null) {
+            return new StaffHomeTodayResponse(
+                    workplaceId,
+                    today,
+                    "BEFORE_CHECK_IN",
+                    null,
+                    null,
+                    0,
+                    BigDecimal.ZERO,
+                    hourlyWage
+            );
+        }
+
+        int workedMinutes = safeMinutes(record.getWorkedMinutes());
+        BigDecimal expectedWage = safeWage(record.getFinalWage());
+        if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
+            workedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
+            expectedWage = calculateWage(hourlyWage, workedMinutes);
+        }
+
+        return new StaffHomeTodayResponse(
+                workplaceId,
+                today,
+                record.getStatus(),
+                record.getCheckInAt(),
+                record.getCheckOutAt(),
+                workedMinutes,
+                expectedWage,
+                hourlyWage
+        );
+    }
+
+    public StaffTodaySummaryResponse getTodaySummary(Long userId, Long workplaceId) {
+        WorkplaceMember member = ensureActiveMember(workplaceId, userId);
+        LocalDate today = LocalDate.now();
+        AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
+
+        BigDecimal hourlyWage = safeWage(member.getHourlyWage());
+        int todayWorkedMinutes = 0;
+        BigDecimal todayExpectedWage = BigDecimal.ZERO;
+        if (record != null) {
+            todayWorkedMinutes = safeMinutes(record.getWorkedMinutes());
+            todayExpectedWage = safeWage(record.getFinalWage());
+
+            if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
+                todayWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
+                todayExpectedWage = calculateWage(hourlyWage, todayWorkedMinutes);
+            }
+        }
+
+        MyAggregateSummary aggregate = attendanceRecordMapper.findMyAggregateSummary(workplaceId, userId);
+        int cumulativeWorkedMinutes = aggregate == null ? 0 : safeMinutes(aggregate.getTotalWorkedMinutes());
+        BigDecimal cumulativeExpectedWage = aggregate == null ? BigDecimal.ZERO : safeWage(aggregate.getTotalExpectedWage());
+
+        return new StaffTodaySummaryResponse(
+                workplaceId,
+                today,
+                todayWorkedMinutes,
+                todayExpectedWage,
+                cumulativeWorkedMinutes,
+                cumulativeExpectedWage
+        );
+    }
+
+    @Transactional
+    public AttendanceRequestCreatedResponse submitCorrectionRequest(
+            Long userId,
+            Long attendanceRecordId,
+            AttendanceCorrectionRequestCreateRequest request
+    ) {
+        AttendanceRecord record = attendanceRecordMapper.findById(attendanceRecordId);
+        if (record == null) {
+            throw new ApiException("Attendance record not found.");
+        }
+        if (!record.getUserId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You can request correction only for your own record.");
+        }
+        ensureActiveMember(record.getWorkplaceId(), userId);
+
+        String type = resolveRequestType(request);
+        if (attendanceRequestMapper.countPendingByRecordAndUser(attendanceRecordId, userId) > 0) {
+            throw new ApiException("Pending correction request already exists for this record.");
+        }
+
+        AttendanceRequest attendanceRequest = new AttendanceRequest();
+        attendanceRequest.setAttendanceRecordId(attendanceRecordId);
+        attendanceRequest.setUserId(userId);
+        attendanceRequest.setType(type);
+        attendanceRequest.setRequestedCheckInAt(request.getRequestedCheckInAt());
+        attendanceRequest.setRequestedCheckOutAt(request.getRequestedCheckOutAt());
+        attendanceRequest.setReason(request.getReason());
+        attendanceRequest.setStatus("PENDING");
+        attendanceRequestMapper.insert(attendanceRequest);
+
+        return new AttendanceRequestCreatedResponse(attendanceRequest.getId(), attendanceRequest.getStatus());
+    }
+
+    private WorkplaceMember ensureActiveMember(Long workplaceId, Long userId) {
+        WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
+        if (member == null) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Active workplace member not found.");
+        }
+        return member;
+    }
+
+    private String resolveRequestType(AttendanceCorrectionRequestCreateRequest request) {
+        LocalDateTime checkIn = request.getRequestedCheckInAt();
+        LocalDateTime checkOut = request.getRequestedCheckOutAt();
+
+        if (checkIn == null && checkOut == null) {
+            throw new ApiException("At least one of requestedCheckInAt or requestedCheckOutAt is required.");
+        }
+        if (checkIn != null && checkOut != null && checkOut.isBefore(checkIn)) {
+            throw new ApiException("requestedCheckOutAt must be later than requestedCheckInAt.");
+        }
+        if (checkIn != null && checkOut != null) {
+            return "BOTH_EDIT";
+        }
+        if (checkIn != null) {
+            return "CHECK_IN_EDIT";
+        }
+        return "CHECK_OUT_EDIT";
+    }
+
+    private int calculateWorkedMinutes(LocalDateTime from, LocalDateTime to) {
+        return (int) Math.max(Duration.between(from, to).toMinutes(), 0);
+    }
+
+    private BigDecimal calculateWage(BigDecimal hourlyWage, int workedMinutes) {
+        return hourlyWage
+                .multiply(BigDecimal.valueOf(workedMinutes))
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+    }
+
+    private int safeMinutes(Integer workedMinutes) {
+        return workedMinutes == null ? 0 : workedMinutes;
+    }
+
+    private BigDecimal safeWage(BigDecimal wage) {
+        return wage == null ? BigDecimal.ZERO : wage;
+    }
+}
