@@ -24,4 +24,10 @@
         WHERE ID = #{id}
     </select>
 
+    <select id="findByInviteCode" resultMap="workplaceMap">
+        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, CREATED_AT
+        FROM WORKPLACES
+        WHERE INVITE_CODE = #{inviteCode}
+    </select>
+
 </mapper>

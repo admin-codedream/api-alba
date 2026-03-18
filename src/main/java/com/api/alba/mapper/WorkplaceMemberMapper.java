@@ -8,6 +8,11 @@ import org.apache.ibatis.annotations.Param;
 public interface WorkplaceMemberMapper {
     int insert(WorkplaceMember workplaceMember);
 
+    WorkplaceMember findMember(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId
+    );
+
     WorkplaceMember findActiveMember(
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId
@@ -17,4 +22,6 @@ public interface WorkplaceMemberMapper {
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId
     );
+
+    int updateStatus(@Param("id") Long id, @Param("status") String status);
 }

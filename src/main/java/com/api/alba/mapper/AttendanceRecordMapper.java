@@ -2,6 +2,7 @@ package com.api.alba.mapper;
 
 import com.api.alba.domain.AttendanceRecord;
 import com.api.alba.dto.EmployeeWageSummary;
+import com.api.alba.dto.MyAggregateSummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -53,6 +54,11 @@ public interface AttendanceRecordMapper {
             @Param("workplaceId") Long workplaceId,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
+    );
+
+    MyAggregateSummary findMyAggregateSummary(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId
     );
 
     int updateByOwnerDecision(

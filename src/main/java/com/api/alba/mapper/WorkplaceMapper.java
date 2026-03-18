@@ -9,4 +9,6 @@ public interface WorkplaceMapper {
     int insert(Workplace workplace);
 
     Workplace findById(@Param("id") Long id);
+
+    Workplace findByInviteCode(@Param("inviteCode") String inviteCode);
 }

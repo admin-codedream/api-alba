@@ -18,6 +18,13 @@
         VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{status})
     </insert>
 
+    <select id="findMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </select>
+
     <select id="findActiveMember" resultMap="workplaceMemberMap">
         SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
         FROM WORKPLACE_MEMBERS
@@ -34,5 +41,11 @@
           AND ROLE = 'OWNER'
           AND STATUS = 'ACTIVE'
     </select>
+
+    <update id="updateStatus">
+        UPDATE WORKPLACE_MEMBERS
+        SET STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
 
 </mapper>

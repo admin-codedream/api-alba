@@ -106,6 +106,14 @@
         ORDER BY totalExpectedWage DESC
     </select>
 
+    <select id="findMyAggregateSummary" resultType="com.api.alba.dto.MyAggregateSummary">
+        SELECT COALESCE(SUM(WORKED_MINUTES), 0) AS totalWorkedMinutes,
+               COALESCE(SUM(FINAL_WAGE), 0) AS totalExpectedWage
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </select>
+
     <update id="updateByOwnerDecision">
         UPDATE ATTENDANCE_RECORDS
         SET CHECK_IN_AT = #{checkInAt},

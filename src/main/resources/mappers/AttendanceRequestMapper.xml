@@ -16,6 +16,14 @@
         <result property="createdAt" column="CREATED_AT"/>
     </resultMap>
 
+    <insert id="insert" parameterType="com.api.alba.domain.AttendanceRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ATTENDANCE_REQUESTS (
+            ATTENDANCE_RECORD_ID, USER_ID, TYPE, REQUESTED_CHECK_IN_AT, REQUESTED_CHECK_OUT_AT, REASON, STATUS
+        ) VALUES (
+            #{attendanceRecordId}, #{userId}, #{type}, #{requestedCheckInAt}, #{requestedCheckOutAt}, #{reason}, #{status}
+        )
+    </insert>
+
     <select id="findById" resultMap="attendanceRequestMap">
         SELECT ID, ATTENDANCE_RECORD_ID, USER_ID, TYPE, REQUESTED_CHECK_IN_AT, REQUESTED_CHECK_OUT_AT, REASON, STATUS, CREATED_AT
         FROM ATTENDANCE_REQUESTS
@@ -27,5 +35,13 @@
         SET STATUS = #{status}
         WHERE ID = #{id}
     </update>
+
+    <select id="countPendingByRecordAndUser" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_REQUESTS
+        WHERE ATTENDANCE_RECORD_ID = #{attendanceRecordId}
+          AND USER_ID = #{userId}
+          AND STATUS = 'PENDING'
+    </select>
 
 </mapper>
