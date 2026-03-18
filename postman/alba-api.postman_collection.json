@@ -1,0 +1,503 @@
+{
+  "info": {
+    "name": "Alba API",
+    "_postman_id": "0b2ad8a3-21b2-4f59-b1e3-298080b3f1d1",
+    "description": "Collection for auth, staff(3.1), owner(3.2), and attendance APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign Up Owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\",\n  \"name\": \"Owner User\",\n  \"userType\": \"OWNER\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          }
+        },
+        {
+          "name": "Sign Up Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"staff01\",\n  \"password\": \"password1234\",\n  \"name\": \"Staff User\",\n  \"userType\": \"STAFF\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/signup"
+          }
+        },
+        {
+          "name": "Login Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) pm.collectionVariables.set('jwtOwner', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) pm.collectionVariables.set('jwtStaff', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"staff01\",\n  \"password\": \"password1234\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Owner",
+      "item": [
+        {
+          "name": "Create Workplace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('workplaceId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sample Store\",\n  \"address\": \"Seoul\"\n}"
+            },
+            "url": "{{baseUrl}}/api/owner/workplaces"
+          }
+        },
+        {
+          "name": "Get Invite Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.workplaceId) pm.collectionVariables.set('workplaceId', json.workplaceId);",
+                  "  if (json.inviteCode) pm.collectionVariables.set('inviteCode', json.inviteCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/invite-code"
+          }
+        },
+        {
+          "name": "Today Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/dashboard/today"
+          }
+        },
+        {
+          "name": "Staff Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/attendance-records?fromDate={{fromDate}}&toDate={{toDate}}"
+          }
+        },
+        {
+          "name": "Expected Wage Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/wages/expected?fromDate={{fromDate}}&toDate={{toDate}}"
+          }
+        },
+        {
+          "name": "Approve Attendance Request",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtOwner}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/owner/attendance-requests/{{requestId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "item": [
+        {
+          "name": "Join Workplace By Invite Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/workplaces/join"
+          }
+        },
+        {
+          "name": "Check In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('attendanceRecordId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workplaceId\": {{workplaceId}},\n  \"note\": \"start shift\"\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/check-in"
+          }
+        },
+        {
+          "name": "Home Today",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/home/today"
+          }
+        },
+        {
+          "name": "Check Out",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('attendanceRecordId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workplaceId\": {{workplaceId}}\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/check-out"
+          }
+        },
+        {
+          "name": "Today Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/summary/today"
+          }
+        },
+        {
+          "name": "My Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/attendance/me?workplaceId={{workplaceId}}&fromDate={{fromDate}}&toDate={{toDate}}"
+          }
+        },
+        {
+          "name": "Submit Correction Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.requestId) pm.collectionVariables.set('requestId', json.requestId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "{{apiKeyHeaderName}}",
+                "value": "{{apiKeyValue}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtStaff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestedCheckInAt\": \"2026-03-18T09:00:00\",\n  \"requestedCheckOutAt\": \"2026-03-18T18:00:00\",\n  \"reason\": \"Forgot to check out on time\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/attendance-records/{{attendanceRecordId}}/requests"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "jwtOwner",
+      "value": ""
+    },
+    {
+      "key": "jwtStaff",
+      "value": ""
+    },
+    {
+      "key": "workplaceId",
+      "value": "1"
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    },
+    {
+      "key": "attendanceRecordId",
+      "value": "1"
+    },
+    {
+      "key": "requestId",
+      "value": "1"
+    }
+  ]
+}
