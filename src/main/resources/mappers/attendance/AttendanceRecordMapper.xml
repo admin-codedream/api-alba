@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.attendance.AttendanceRecordMapper">
+
+    <resultMap id="attendanceRecordMap" type="com.api.alba.domain.attendance.AttendanceRecord">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="workDate" column="WORK_DATE"/>
+        <result property="checkInAt" column="CHECK_IN_AT"/>
+        <result property="checkOutAt" column="CHECK_OUT_AT"/>
+        <result property="status" column="STATUS"/>
+        <result property="workedMinutes" column="WORKED_MINUTES"/>
+        <result property="baseWage" column="BASE_WAGE"/>
+        <result property="finalWage" column="FINAL_WAGE"/>
+        <result property="note" column="NOTE"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.attendance.AttendanceRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ATTENDANCE_RECORDS (
+            WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, STATUS, NOTE, WORKED_MINUTES, BASE_WAGE, FINAL_WAGE
+        ) VALUES (
+            #{workplaceId}, #{userId}, #{workDate}, #{checkInAt}, #{status}, #{note}, #{workedMinutes}, #{baseWage}, #{finalWage}
+        )
+    </insert>
+
+    <select id="findByWorkplaceUserAndDate" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND WORK_DATE = #{workDate}
+    </select>
+
+    <select id="findById" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE ID = #{id}
+    </select>
+
+    <update id="updateCheckOut">
+        UPDATE ATTENDANCE_RECORDS
+        SET CHECK_OUT_AT = #{checkOutAt},
+            WORKED_MINUTES = #{workedMinutes},
+            BASE_WAGE = #{baseWage},
+            FINAL_WAGE = #{finalWage},
+            STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+    <select id="findMyRecordsByPeriod" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        ORDER BY WORK_DATE DESC
+    </select>
+
+    <select id="countTodayCheckedIn" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE = #{today}
+          AND CHECK_IN_AT IS NOT NULL
+    </select>
+
+    <select id="countTodayWorking" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE = #{today}
+          AND CHECK_IN_AT IS NOT NULL
+          AND CHECK_OUT_AT IS NULL
+    </select>
+
+    <select id="findWorkplaceRecordsByPeriod" resultMap="attendanceRecordMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
+               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        <if test="userId != null">
+          AND USER_ID = #{userId}
+        </if>
+        ORDER BY WORK_DATE DESC, USER_ID ASC
+    </select>
+
+    <select id="findEmployeeWageSummaryByPeriod" resultType="com.api.alba.dto.staff.EmployeeWageSummary">
+        SELECT ar.USER_ID AS userId,
+               u.NAME AS userName,
+               COALESCE(SUM(ar.WORKED_MINUTES), 0) AS totalWorkedMinutes,
+               COALESCE(SUM(ar.FINAL_WAGE), 0) AS totalExpectedWage
+        FROM ATTENDANCE_RECORDS ar
+        JOIN USERS u ON u.ID = ar.USER_ID
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        GROUP BY ar.USER_ID, u.NAME
+        ORDER BY totalExpectedWage DESC
+    </select>
+
+    <select id="findMyAggregateSummary" resultType="com.api.alba.dto.staff.MyAggregateSummary">
+        SELECT COALESCE(SUM(WORKED_MINUTES), 0) AS totalWorkedMinutes,
+               COALESCE(SUM(FINAL_WAGE), 0) AS totalExpectedWage
+        FROM ATTENDANCE_RECORDS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </select>
+
+    <update id="updateByOwnerDecision">
+        UPDATE ATTENDANCE_RECORDS
+        SET CHECK_IN_AT = #{checkInAt},
+            CHECK_OUT_AT = #{checkOutAt},
+            WORKED_MINUTES = #{workedMinutes},
+            BASE_WAGE = #{baseWage},
+            FINAL_WAGE = #{finalWage},
+            STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+</mapper>

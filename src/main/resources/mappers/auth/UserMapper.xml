@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.auth.UserMapper">
+
+    <resultMap id="userMap" type="com.api.alba.domain.auth.User">
+        <id property="id" column="ID"/>
+        <result property="loginId" column="LOGIN_ID"/>
+        <result property="passwordHash" column="PASSWORD_HASH"/>
+        <result property="name" column="NAME"/>
+        <result property="profileInitial" column="PROFILE_INITIAL"/>
+        <result property="profileColor" column="PROFILE_COLOR"/>
+        <result property="userType" column="USER_TYPE"/>
+        <result property="status" column="STATUS"/>
+        <result property="lastLoginAt" column="LAST_LOGIN_AT"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.auth.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USERS (LOGIN_ID, PASSWORD_HASH, NAME, PROFILE_INITIAL, PROFILE_COLOR, USER_TYPE, STATUS)
+        VALUES (#{loginId}, #{passwordHash}, #{name}, #{profileInitial}, #{profileColor}, #{userType}, #{status})
+    </insert>
+
+    <select id="findByLoginId" resultMap="userMap">
+        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, PROFILE_INITIAL, PROFILE_COLOR, USER_TYPE, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
+        FROM USERS
+        WHERE LOGIN_ID = #{loginId}
+    </select>
+
+    <select id="findById" resultMap="userMap">
+        SELECT ID, LOGIN_ID, PASSWORD_HASH, NAME, PROFILE_INITIAL, PROFILE_COLOR, USER_TYPE, STATUS, LAST_LOGIN_AT, CREATED_AT, UPDATED_AT
+        FROM USERS
+        WHERE ID = #{id}
+    </select>
+
+    <update id="updateLastLoginAt">
+        UPDATE USERS
+        SET LAST_LOGIN_AT = #{lastLoginAt}
+        WHERE ID = #{id}
+    </update>
+
+</mapper>

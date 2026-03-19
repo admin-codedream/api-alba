@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.push.PushTokenMapper">
+
+    <resultMap id="pushTokenMap" type="com.api.alba.domain.push.PushToken">
+        <id property="id" column="ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="platform" column="PLATFORM"/>
+        <result property="token" column="TOKEN"/>
+        <result property="isActive" column="IS_ACTIVE"/>
+        <result property="lastSeenAt" column="LAST_SEEN_AT"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.push.PushToken" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO PUSH_TOKENS (USER_ID, PLATFORM, TOKEN, IS_ACTIVE, LAST_SEEN_AT)
+        VALUES (#{userId}, #{platform}, #{token}, #{isActive}, #{lastSeenAt})
+    </insert>
+
+    <select id="findByToken" resultMap="pushTokenMap">
+        SELECT ID, USER_ID, PLATFORM, TOKEN, IS_ACTIVE, LAST_SEEN_AT, CREATED_AT, UPDATED_AT
+        FROM PUSH_TOKENS
+        WHERE TOKEN = #{token}
+    </select>
+
+    <update id="updateRegistration">
+        UPDATE PUSH_TOKENS
+        SET USER_ID = #{userId},
+            PLATFORM = #{platform},
+            IS_ACTIVE = 1,
+            LAST_SEEN_AT = #{lastSeenAt}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="deactivateByUserIdAndToken">
+        UPDATE PUSH_TOKENS
+        SET IS_ACTIVE = 0
+        WHERE USER_ID = #{userId}
+          AND TOKEN = #{token}
+          AND IS_ACTIVE = 1
+    </update>
+
+</mapper>

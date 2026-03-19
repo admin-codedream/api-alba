@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.settings.WorkplaceSettingMapper">
+
+    <resultMap id="workplaceSettingMap" type="com.api.alba.domain.settings.WorkplaceSetting">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="lateGraceMinutes" column="LATE_GRACE_MINUTES"/>
+        <result property="salaryCalcUnit" column="SALARY_CALC_UNIT"/>
+        <result property="roundingPolicy" column="ROUNDING_POLICY"/>
+        <result property="defaultHourlyWage" column="DEFAULT_HOURLY_WAGE"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.settings.WorkplaceSetting" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACE_SETTINGS (WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE)
+        VALUES (#{workplaceId}, #{lateGraceMinutes}, #{salaryCalcUnit}, #{roundingPolicy}, #{defaultHourlyWage})
+    </insert>
+
+    <select id="findByWorkplaceId" resultMap="workplaceSettingMap">
+        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE
+        FROM WORKPLACE_SETTINGS
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </select>
+
+    <update id="updateDefaultHourlyWage">
+        UPDATE WORKPLACE_SETTINGS
+        SET DEFAULT_HOURLY_WAGE = #{defaultHourlyWage}
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </update>
+
+</mapper>

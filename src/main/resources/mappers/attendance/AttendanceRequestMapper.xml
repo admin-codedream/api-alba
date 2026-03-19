@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.attendance.AttendanceRequestMapper">
+
+    <resultMap id="attendanceRequestMap" type="com.api.alba.domain.attendance.AttendanceRequest">
+        <id property="id" column="ID"/>
+        <result property="attendanceRecordId" column="ATTENDANCE_RECORD_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="type" column="TYPE"/>
+        <result property="requestedCheckInAt" column="REQUESTED_CHECK_IN_AT"/>
+        <result property="requestedCheckOutAt" column="REQUESTED_CHECK_OUT_AT"/>
+        <result property="reason" column="REASON"/>
+        <result property="status" column="STATUS"/>
+        <result property="createdAt" column="CREATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.attendance.AttendanceRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ATTENDANCE_REQUESTS (
+            ATTENDANCE_RECORD_ID, USER_ID, TYPE, REQUESTED_CHECK_IN_AT, REQUESTED_CHECK_OUT_AT, REASON, STATUS
+        ) VALUES (
+            #{attendanceRecordId}, #{userId}, #{type}, #{requestedCheckInAt}, #{requestedCheckOutAt}, #{reason}, #{status}
+        )
+    </insert>
+
+    <select id="findById" resultMap="attendanceRequestMap">
+        SELECT ID, ATTENDANCE_RECORD_ID, USER_ID, TYPE, REQUESTED_CHECK_IN_AT, REQUESTED_CHECK_OUT_AT, REASON, STATUS, CREATED_AT
+        FROM ATTENDANCE_REQUESTS
+        WHERE ID = #{id}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE ATTENDANCE_REQUESTS
+        SET STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+    <select id="countPendingByRecordAndUser" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_REQUESTS
+        WHERE ATTENDANCE_RECORD_ID = #{attendanceRecordId}
+          AND USER_ID = #{userId}
+          AND STATUS = 'PENDING'
+    </select>
+
+</mapper>

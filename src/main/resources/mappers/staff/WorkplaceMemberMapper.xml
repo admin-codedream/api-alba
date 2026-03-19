@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.staff.WorkplaceMemberMapper">
+
+    <resultMap id="workplaceMemberMap" type="com.api.alba.domain.staff.WorkplaceMember">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="role" column="ROLE"/>
+        <result property="hourlyWage" column="HOURLY_WAGE"/>
+        <result property="status" column="STATUS"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS)
+        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{status})
+    </insert>
+
+    <select id="findMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </select>
+
+    <select id="findActiveMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND STATUS = 'ACTIVE'
+    </select>
+
+    <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND ROLE = 'OWNER'
+          AND STATUS = 'ACTIVE'
+    </select>
+
+    <update id="updateStatus">
+        UPDATE WORKPLACE_MEMBERS
+        SET STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+</mapper>

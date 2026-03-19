@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.auth.UserSocialAccountMapper">
+
+    <resultMap id="userSocialAccountMap" type="com.api.alba.domain.auth.UserSocialAccount">
+        <id property="id" column="ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="provider" column="PROVIDER"/>
+        <result property="providerUserId" column="PROVIDER_USER_ID"/>
+        <result property="providerEmail" column="PROVIDER_EMAIL"/>
+        <result property="providerName" column="PROVIDER_NAME"/>
+        <result property="accessToken" column="ACCESS_TOKEN"/>
+        <result property="refreshToken" column="REFRESH_TOKEN"/>
+        <result property="tokenExpiresAt" column="TOKEN_EXPIRES_AT"/>
+        <result property="connectedAt" column="CONNECTED_AT"/>
+        <result property="lastLoginAt" column="LAST_LOGIN_AT"/>
+    </resultMap>
+
+    <select id="findByProviderAndProviderUserId" resultMap="userSocialAccountMap">
+        SELECT ID, USER_ID, PROVIDER, PROVIDER_USER_ID, PROVIDER_EMAIL, PROVIDER_NAME,
+               ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_EXPIRES_AT, CONNECTED_AT, LAST_LOGIN_AT
+        FROM USER_SOCIAL_ACCOUNTS
+        WHERE PROVIDER = #{provider}
+          AND PROVIDER_USER_ID = #{providerUserId}
+    </select>
+
+    <select id="findByUserIdAndProvider" resultMap="userSocialAccountMap">
+        SELECT ID, USER_ID, PROVIDER, PROVIDER_USER_ID, PROVIDER_EMAIL, PROVIDER_NAME,
+               ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_EXPIRES_AT, CONNECTED_AT, LAST_LOGIN_AT
+        FROM USER_SOCIAL_ACCOUNTS
+        WHERE USER_ID = #{userId}
+          AND PROVIDER = #{provider}
+    </select>
+
+    <insert id="insert" parameterType="com.api.alba.domain.auth.UserSocialAccount" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USER_SOCIAL_ACCOUNTS (
+            USER_ID, PROVIDER, PROVIDER_USER_ID, PROVIDER_EMAIL, PROVIDER_NAME,
+            ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_EXPIRES_AT
+        )
+        VALUES (
+            #{userId}, #{provider}, #{providerUserId}, #{providerEmail}, #{providerName},
+            #{accessToken}, #{refreshToken}, #{tokenExpiresAt}
+        )
+    </insert>
+
+    <update id="updateLastLoginAt">
+        UPDATE USER_SOCIAL_ACCOUNTS
+        SET LAST_LOGIN_AT = #{lastLoginAt}
+        WHERE ID = #{id}
+    </update>
+
+</mapper>
