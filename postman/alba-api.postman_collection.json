@@ -1,503 +1,574 @@
-{
-  "info": {
-    "name": "Alba API",
-    "_postman_id": "0b2ad8a3-21b2-4f59-b1e3-298080b3f1d1",
-    "description": "Collection for auth, staff(3.1), owner(3.2), and attendance APIs.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+﻿{
+  "info":  {
+    "_postman_id":  "e5d4af5a-5f1b-4fe3-a95f-f7ce68270ea7",
+    "name":  "Alba API",
+    "description":  "Alba backend API collection (API Key + JWT). 각 요청에는 호출 시점과 시나리오 순서가 설명되어 있습니다.",
+    "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "item": [
+  "variable":  [
     {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Sign Up Owner",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\",\n  \"name\": \"Owner User\",\n  \"userType\": \"OWNER\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/signup"
-          }
-        },
-        {
-          "name": "Sign Up Staff",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"loginId\": \"staff01\",\n  \"password\": \"password1234\",\n  \"name\": \"Staff User\",\n  \"userType\": \"STAFF\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/signup"
-          }
-        },
-        {
-          "name": "Login Owner",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.token) pm.collectionVariables.set('jwtOwner', json.token);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login"
-          }
-        },
-        {
-          "name": "Login Staff",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.token) pm.collectionVariables.set('jwtStaff', json.token);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"loginId\": \"staff01\",\n  \"password\": \"password1234\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login"
-          }
-        }
-      ]
+      "key":  "baseUrl",
+      "value":  "http://localhost:8080"
     },
     {
-      "name": "Owner",
-      "item": [
-        {
-          "name": "Create Workplace",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.id) pm.collectionVariables.set('workplaceId', json.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Sample Store\",\n  \"address\": \"Seoul\"\n}"
-            },
-            "url": "{{baseUrl}}/api/owner/workplaces"
-          }
-        },
-        {
-          "name": "Get Invite Code",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.workplaceId) pm.collectionVariables.set('workplaceId', json.workplaceId);",
-                  "  if (json.inviteCode) pm.collectionVariables.set('inviteCode', json.inviteCode);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/invite-code"
-          }
-        },
-        {
-          "name": "Today Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/dashboard/today"
-          }
-        },
-        {
-          "name": "Staff Attendance Records",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/attendance-records?fromDate={{fromDate}}&toDate={{toDate}}"
-          }
-        },
-        {
-          "name": "Expected Wage Summary",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/wages/expected?fromDate={{fromDate}}&toDate={{toDate}}"
-          }
-        },
-        {
-          "name": "Approve Attendance Request",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtOwner}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"APPROVED\"\n}"
-            },
-            "url": "{{baseUrl}}/api/owner/attendance-requests/{{requestId}}"
-          }
-        }
-      ]
+      "key":  "apiKey",
+      "value":  "53d5457135e3422f810aad1308f18ed4d8108a53d1a04e29"
     },
     {
-      "name": "Staff",
-      "item": [
-        {
-          "name": "Join Workplace By Invite Code",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/staff/workplaces/join"
-          }
-        },
-        {
-          "name": "Check In",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 201 || pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.id) pm.collectionVariables.set('attendanceRecordId', json.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"workplaceId\": {{workplaceId}},\n  \"note\": \"start shift\"\n}"
-            },
-            "url": "{{baseUrl}}/api/attendance/check-in"
-          }
-        },
-        {
-          "name": "Home Today",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/home/today"
-          }
-        },
-        {
-          "name": "Check Out",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.id) pm.collectionVariables.set('attendanceRecordId', json.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"workplaceId\": {{workplaceId}}\n}"
-            },
-            "url": "{{baseUrl}}/api/attendance/check-out"
-          }
-        },
-        {
-          "name": "Today Summary",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/summary/today"
-          }
-        },
-        {
-          "name": "My Attendance Records",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/attendance/me?workplaceId={{workplaceId}}&fromDate={{fromDate}}&toDate={{toDate}}"
-          }
-        },
-        {
-          "name": "Submit Correction Request",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "  const json = pm.response.json();",
-                  "  if (json.requestId) pm.collectionVariables.set('requestId', json.requestId);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "{{apiKeyHeaderName}}",
-                "value": "{{apiKeyValue}}"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwtStaff}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"requestedCheckInAt\": \"2026-03-18T09:00:00\",\n  \"requestedCheckOutAt\": \"2026-03-18T18:00:00\",\n  \"reason\": \"Forgot to check out on time\"\n}"
-            },
-            "url": "{{baseUrl}}/api/staff/attendance-records/{{attendanceRecordId}}/requests"
-          }
-        }
-      ]
+      "key":  "accessToken",
+      "value":  ""
+    },
+    {
+      "key":  "workplaceId",
+      "value":  "1"
+    },
+    {
+      "key":  "userId",
+      "value":  "1"
+    },
+    {
+      "key":  "requestId",
+      "value":  "1"
+    },
+    {
+      "key":  "attendanceRecordId",
+      "value":  "1"
+    },
+    {
+      "key":  "inviteCode",
+      "value":  ""
     }
   ],
-  "variable": [
+  "item":  [
     {
-      "key": "jwtOwner",
-      "value": ""
+      "name":  "Auth",
+      "item":  [
+        {
+          "name":  "01. Sign Up (OWNER/STAFF)",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set(\u0027accessToken\u0027, json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\",\n  \"name\": \"Hong\",\n  \"userType\": \"OWNER\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/auth/signup",
+            "description":  "호출 시점: 최초 계정 생성 시. 시나리오 순서: Auth 1단계. 성공 시 accessToken이 collection 변수(accessToken)에 저장됩니다."
+          }
+        },
+        {
+          "name":  "02. Login",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set(\u0027accessToken\u0027, json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/auth/login",
+            "description":  "호출 시점: 기존 계정 로그인 시. 시나리오 순서: Auth 2단계. 성공 시 accessToken이 collection 변수(accessToken)에 저장됩니다."
+          }
+        },
+        {
+          "name":  "03. Social Login",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.accessToken) pm.collectionVariables.set(\u0027accessToken\u0027, json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"provider\": \"KAKAO\",\n  \"providerUserId\": \"kakao-uid-001\",\n  \"providerEmail\": \"user@example.com\",\n  \"providerName\": \"Kakao User\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/auth/social/login",
+            "description":  "호출 시점: 소셜 계정으로 로그인/최초 가입 시. 시나리오 순서: Auth 3단계. 성공 시 accessToken이 collection 변수(accessToken)에 저장됩니다."
+          }
+        },
+        {
+          "name":  "04. Connect Social",
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"provider\": \"GOOGLE\",\n  \"providerUserId\": \"google-uid-001\",\n  \"providerEmail\": \"user@example.com\",\n  \"providerName\": \"Google User\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/auth/social/connect",
+            "description":  "호출 시점: 로그인된 계정에 추가 소셜 계정을 연동할 때. 시나리오 순서: Auth 4단계. Authorization Bearer 토큰 필요."
+          }
+        },
+        {
+          "name":  "05. Me",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/auth/me",
+            "description":  "호출 시점: 현재 로그인 사용자 정보 확인 시. 시나리오 순서: Auth 5단계. Authorization Bearer 토큰 필요."
+          }
+        }
+      ],
+      "description":  "인증 시나리오. 1) 회원가입/로그인으로 토큰 발급, 2) 발급 토큰으로 내 정보 및 소셜 연동 호출."
     },
     {
-      "key": "jwtStaff",
-      "value": ""
+      "name":  "Attendance",
+      "item":  [
+        {
+          "name":  "01. Check In",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set(\u0027attendanceRecordId\u0027, json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"workplaceId\": {{workplaceId}},\n  \"workDate\": \"2026-03-19\",\n  \"note\": \"출근\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/attendance/check-in",
+            "description":  "호출 시점: 출근 처리 시. 시나리오 순서: Attendance 1단계. 성공 시 attendanceRecordId가 변수로 저장됩니다."
+          }
+        },
+        {
+          "name":  "02. Check Out",
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"workplaceId\": {{workplaceId}},\n  \"workDate\": \"2026-03-19\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/attendance/check-out",
+            "description":  "호출 시점: 퇴근 처리 시. 시나리오 순서: Attendance 2단계."
+          }
+        },
+        {
+          "name":  "03. My Attendance Records",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/attendance/me?workplaceId={{workplaceId}}\u0026fromDate=2026-03-01\u0026toDate=2026-03-31",
+            "description":  "호출 시점: 본인 근태를 기간으로 조회할 때. 시나리오 순서: Attendance 3단계."
+          }
+        }
+      ],
+      "description":  "공통 출퇴근 시나리오. 출근 -\u003e 퇴근 -\u003e 기간별 내 근태 조회."
     },
     {
-      "key": "workplaceId",
-      "value": "1"
+      "name":  "Owner",
+      "item":  [
+        {
+          "name":  "01. Create Workplace",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set(\u0027workplaceId\u0027, json.id);",
+                  "  if (json.inviteCode) pm.collectionVariables.set(\u0027inviteCode\u0027, json.inviteCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"name\": \"Gangnam Store\",\n  \"address\": \"Seoul\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/owner/workplaces",
+            "description":  "호출 시점: OWNER가 신규 사업장을 만들 때. 시나리오 순서: Owner 1단계. 성공 시 workplaceId/inviteCode가 변수로 저장됩니다."
+          }
+        },
+        {
+          "name":  "02. Get Invite Code",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.workplaceId) pm.collectionVariables.set(\u0027workplaceId\u0027, json.workplaceId);",
+                  "  if (json.inviteCode) pm.collectionVariables.set(\u0027inviteCode\u0027, json.inviteCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/invite-code",
+            "description":  "호출 시점: STAFF를 초대하기 위한 코드가 필요할 때. 시나리오 순서: Owner 2단계. 성공 시 inviteCode가 변수로 저장됩니다."
+          }
+        },
+        {
+          "name":  "03. Today Dashboard",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/dashboard/today",
+            "description":  "호출 시점: 오늘 운영 현황을 요약해서 볼 때. 시나리오 순서: Owner 3단계."
+          }
+        },
+        {
+          "name":  "04. Attendance Records",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/attendance-records?userId={{userId}}\u0026fromDate=2026-03-01\u0026toDate=2026-03-31",
+            "description":  "호출 시점: 기간별 직원 근태 상세를 조회할 때. 시나리오 순서: Owner 4단계. userId 쿼리는 선택값입니다."
+          }
+        },
+        {
+          "name":  "05. Decide Attendance Request",
+          "request":  {
+            "method":  "PATCH",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/owner/attendance-requests/{{requestId}}",
+            "description":  "호출 시점: 직원 정정요청을 승인(APPROVED)/반려(REJECTED)할 때. 시나리오 순서: Owner 5단계."
+          }
+        },
+        {
+          "name":  "06. Expected Wage Summary",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/wages/expected?fromDate=2026-03-01\u0026toDate=2026-03-31",
+            "description":  "호출 시점: 기간별 직원 예상 급여를 확인할 때. 시나리오 순서: Owner 6단계."
+          }
+        }
+      ],
+      "description":  "사장(OWNER) 시나리오. 사업장 생성 -\u003e 초대코드 조회 -\u003e 대시보드/근태/급여 조회 -\u003e 정정요청 승인/반려."
     },
     {
-      "key": "inviteCode",
-      "value": ""
-    },
-    {
-      "key": "attendanceRecordId",
-      "value": "1"
-    },
-    {
-      "key": "requestId",
-      "value": "1"
+      "name":  "Staff",
+      "item":  [
+        {
+          "name":  "01. Join Workplace",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.workplaceId) pm.collectionVariables.set(\u0027workplaceId\u0027, json.workplaceId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/staff/workplaces/join",
+            "description":  "호출 시점: STAFF가 초대코드로 사업장에 합류할 때. 시나리오 순서: Staff 1단계. inviteCode 변수 필요."
+          }
+        },
+        {
+          "name":  "02. Home Today",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/home/today",
+            "description":  "호출 시점: STAFF가 오늘 근무 현황(홈)을 볼 때. 시나리오 순서: Staff 2단계."
+          }
+        },
+        {
+          "name":  "03. Summary Today",
+          "request":  {
+            "method":  "GET",
+            "header":  [
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "url":  "{{baseUrl}}/api/staff/workplaces/{{workplaceId}}/summary/today",
+            "description":  "호출 시점: STAFF가 오늘/누적 요약 정보를 볼 때. 시나리오 순서: Staff 3단계."
+          }
+        },
+        {
+          "name":  "04. Submit Correction Request",
+          "event":  [
+            {
+              "listen":  "test",
+              "script":  {
+                "type":  "text/javascript",
+                "exec":  [
+                  "if (pm.response.code \u003c 300) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.requestId) pm.collectionVariables.set(\u0027requestId\u0027, json.requestId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request":  {
+            "method":  "POST",
+            "header":  [
+              {
+                "key":  "Content-Type",
+                "value":  "application/json"
+              },
+              {
+                "key":  "X-API-KEY",
+                "value":  "{{apiKey}}"
+              },
+              {
+                "key":  "Authorization",
+                "value":  "Bearer {{accessToken}}"
+              }
+            ],
+            "body":  {
+              "mode":  "raw",
+              "raw":  "{\n  \"requestedCheckInAt\": \"2026-03-19T09:00:00\",\n  \"requestedCheckOutAt\": \"2026-03-19T18:00:00\",\n  \"reason\": \"퇴근 누락 정정 요청\"\n}"
+            },
+            "url":  "{{baseUrl}}/api/staff/attendance-records/{{attendanceRecordId}}/requests",
+            "description":  "호출 시점: STAFF가 근태 정정 요청을 등록할 때. 시나리오 순서: Staff 4단계. 성공 시 requestId가 변수로 저장됩니다."
+          }
+        }
+      ],
+      "description":  "직원(STAFF) 시나리오. 초대코드로 합류 -\u003e 홈/요약 조회 -\u003e 근태 정정요청 등록."
     }
   ]
 }
