@@ -57,6 +57,10 @@
                      {
                          "key":  "hourlyWage",
                          "value":  "12000.00"
+                     },
+                     {
+                         "key":  "addressQuery",
+                         "value":  "분당구 불정로 6"
                      }
                  ],
     "item":  [
@@ -670,6 +674,30 @@
                                                                },
                                                       "url":  "{{baseUrl}}/api/push-tokens/deactivate",
                                                       "description":  "호출 시점: 로그아웃 또는 수신 해제 시 토큰을 비활성화할 때. 시나리오 순서: Push Tokens 2단계."
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Naver Map",
+                     "description":  "네이버 지도 지오코딩 연동 API. 주소 문자열을 좌표로 변환.",
+                     "item":  [
+                                  {
+                                      "name":  "01. Geocode Address",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "X-API-KEY",
+                                                                         "value":  "{{apiKey}}"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Authorization",
+                                                                         "value":  "Bearer {{accessToken}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/naver/geocode?address={{addressQuery}}",
+                                                      "description":  "호출 시점: 주소를 좌표로 변환해야 할 때. 내부에서 네이버 map-geocode API를 호출합니다."
                                                   }
                                   }
                               ]
