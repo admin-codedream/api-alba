@@ -13,5 +13,8 @@ public class Workplace {
     private String name;
     private String address;
     private String inviteCode;
+    private Double latitude;
+    private Double longitude;
+    private Integer allowedRadiusMeters;
     private LocalDateTime createdAt;
 }

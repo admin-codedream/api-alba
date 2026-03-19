@@ -28,6 +28,7 @@ import javax.validation.Valid;
 public class StaffController {
     private final StaffService staffService;
 
+    // 초대코드로 사업장에 합류합니다.
     @PostMapping("/workplaces/join")
     public JoinWorkplaceResponse joinWorkplace(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -36,6 +37,7 @@ public class StaffController {
         return staffService.joinWorkplaceByInviteCode(requiredPrincipal(principal), request);
     }
 
+    // 직원 홈(오늘 근무 상태/예상 급여) 정보를 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/home/today")
     public StaffHomeTodayResponse homeToday(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -44,6 +46,7 @@ public class StaffController {
         return staffService.getHomeToday(requiredPrincipal(principal), workplaceId);
     }
 
+    // 직원의 오늘/누적 요약 정보를 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/summary/today")
     public StaffTodaySummaryResponse todaySummary(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -52,6 +55,7 @@ public class StaffController {
         return staffService.getTodaySummary(requiredPrincipal(principal), workplaceId);
     }
 
+    // 근태 정정 요청을 생성합니다.
     @PostMapping("/attendance-records/{attendanceRecordId}/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public AttendanceRequestCreatedResponse submitCorrectionRequest(

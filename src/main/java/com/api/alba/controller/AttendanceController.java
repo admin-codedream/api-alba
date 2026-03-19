@@ -28,6 +28,7 @@ import java.util.List;
 public class AttendanceController {
     private final AttendanceService attendanceService;
 
+    // 출근을 등록합니다.
     @PostMapping("/check-in")
     @ResponseStatus(HttpStatus.CREATED)
     public AttendanceRecord checkIn(
@@ -40,6 +41,7 @@ public class AttendanceController {
         return attendanceService.checkIn(principal.getUserId(), request);
     }
 
+    // 퇴근을 등록하고 근무 시간/급여를 계산합니다.
     @PostMapping("/check-out")
     public AttendanceRecord checkOut(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -51,6 +53,7 @@ public class AttendanceController {
         return attendanceService.checkOut(principal.getUserId(), request);
     }
 
+    // 본인의 기간별 근태 기록을 조회합니다.
     @GetMapping("/me")
     public List<AttendanceRecord> myRecords(
             @AuthenticationPrincipal UserPrincipal principal,

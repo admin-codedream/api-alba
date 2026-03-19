@@ -4,17 +4,20 @@ import com.api.alba.domain.AttendanceRecord;
 import com.api.alba.domain.AttendanceRequest;
 import com.api.alba.domain.Workplace;
 import com.api.alba.domain.WorkplaceMember;
+import com.api.alba.domain.WorkplaceSetting;
 import com.api.alba.dto.CreateWorkplaceRequest;
 import com.api.alba.dto.DashboardTodayResponse;
 import com.api.alba.dto.EmployeeWageSummary;
 import com.api.alba.dto.InviteCodeResponse;
 import com.api.alba.dto.OwnerDecisionRequest;
+import com.api.alba.dto.UpdateWorkplaceHourlyWageRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.AttendanceRecordMapper;
 import com.api.alba.mapper.AttendanceRequestMapper;
 import com.api.alba.mapper.UserMapper;
 import com.api.alba.mapper.WorkplaceMapper;
 import com.api.alba.mapper.WorkplaceMemberMapper;
+import com.api.alba.mapper.WorkplaceSettingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,8 +34,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
+    private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
+    private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
+
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
+    private final WorkplaceSettingMapper workplaceSettingMapper;
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final UserMapper userMapper;
@@ -40,12 +47,20 @@ public class OwnerService {
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
         validateOwnerUserType(ownerUserId);
+        validateWorkplaceLocationRequest(request);
 
         Workplace workplace = new Workplace();
         workplace.setOwnerId(ownerUserId);
         workplace.setName(request.getName());
         workplace.setAddress(request.getAddress());
         workplace.setInviteCode(generateInviteCode());
+        workplace.setLatitude(request.getLatitude());
+        workplace.setLongitude(request.getLongitude());
+        workplace.setAllowedRadiusMeters(
+                request.getAllowedRadiusMeters() == null
+                        ? DEFAULT_ALLOWED_RADIUS_METERS
+                        : request.getAllowedRadiusMeters()
+        );
         workplaceMapper.insert(workplace);
 
         WorkplaceMember member = new WorkplaceMember();
@@ -55,6 +70,16 @@ public class OwnerService {
         member.setStatus("ACTIVE");
         member.setHourlyWage(null);
         workplaceMemberMapper.insert(member);
+
+        WorkplaceSetting workplaceSetting = new WorkplaceSetting();
+        workplaceSetting.setWorkplaceId(workplace.getId());
+        workplaceSetting.setLateGraceMinutes(0);
+        workplaceSetting.setSalaryCalcUnit("MINUTE");
+        workplaceSetting.setRoundingPolicy("NONE");
+        workplaceSetting.setDefaultHourlyWage(
+                request.getHourlyWage() == null ? DEFAULT_WORKPLACE_HOURLY_WAGE : request.getHourlyWage()
+        );
+        workplaceSettingMapper.insert(workplaceSetting);
 
         return workplaceMapper.findById(workplace.getId());
     }
@@ -130,6 +155,20 @@ public class OwnerService {
         return attendanceRecordMapper.findEmployeeWageSummaryByPeriod(workplaceId, fromDate, toDate);
     }
 
+    @Transactional
+    public void updateWorkplaceHourlyWage(
+            Long ownerUserId,
+            Long workplaceId,
+            UpdateWorkplaceHourlyWageRequest request
+    ) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException("Workplace setting not found.");
+        }
+        workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
+    }
+
     private void applyApprovedRequest(AttendanceRecord record, AttendanceRequest request) {
         LocalDateTime newCheckIn = request.getRequestedCheckInAt() != null ? request.getRequestedCheckInAt() : record.getCheckInAt();
         LocalDateTime newCheckOut = request.getRequestedCheckOutAt() != null ? request.getRequestedCheckOutAt() : record.getCheckOutAt();
@@ -140,9 +179,7 @@ public class OwnerService {
         }
 
         WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(record.getWorkplaceId(), record.getUserId());
-        BigDecimal hourlyWage = (staffMember == null || staffMember.getHourlyWage() == null)
-                ? BigDecimal.ZERO
-                : staffMember.getHourlyWage();
+        BigDecimal hourlyWage = resolveHourlyWage(record.getWorkplaceId(), staffMember);
         BigDecimal wage = hourlyWage
                 .multiply(BigDecimal.valueOf(workedMinutes))
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
@@ -180,5 +217,24 @@ public class OwnerService {
         if (!"OWNER".equalsIgnoreCase(user.getUserType())) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Only OWNER user type can create workplace.");
         }
+    }
+
+    private void validateWorkplaceLocationRequest(CreateWorkplaceRequest request) {
+        boolean hasLatitude = request.getLatitude() != null;
+        boolean hasLongitude = request.getLongitude() != null;
+        if (hasLatitude != hasLongitude) {
+            throw new ApiException("latitude and longitude must be provided together.");
+        }
+    }
+
+    private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting != null && setting.getDefaultHourlyWage() != null) {
+            return setting.getDefaultHourlyWage();
+        }
+        if (member != null && member.getHourlyWage() != null) {
+            return member.getHourlyWage();
+        }
+        return BigDecimal.ZERO;
     }
 }

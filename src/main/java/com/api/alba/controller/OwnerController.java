@@ -7,6 +7,7 @@ import com.api.alba.dto.DashboardTodayResponse;
 import com.api.alba.dto.EmployeeWageSummary;
 import com.api.alba.dto.InviteCodeResponse;
 import com.api.alba.dto.OwnerDecisionRequest;
+import com.api.alba.dto.UpdateWorkplaceHourlyWageRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
 import com.api.alba.service.OwnerService;
@@ -34,6 +35,7 @@ import java.util.List;
 public class OwnerController {
     private final OwnerService ownerService;
 
+    // OWNER가 신규 사업장을 생성합니다.
     @PostMapping("/workplaces")
     @ResponseStatus(HttpStatus.CREATED)
     public Workplace createWorkplace(
@@ -43,6 +45,7 @@ public class OwnerController {
         return ownerService.createWorkplace(requiredPrincipal(principal), request);
     }
 
+    // 사업장의 초대 코드를 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/invite-code")
     public InviteCodeResponse inviteCode(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -51,6 +54,7 @@ public class OwnerController {
         return ownerService.getInviteCode(requiredPrincipal(principal), workplaceId);
     }
 
+    // 오늘 기준 사업장 대시보드 요약을 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/dashboard/today")
     public DashboardTodayResponse dashboardToday(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -59,6 +63,7 @@ public class OwnerController {
         return ownerService.getTodayDashboard(requiredPrincipal(principal), workplaceId);
     }
 
+    // 사업장 근태 기록을 기간 조건으로 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/attendance-records")
     public List<AttendanceRecord> attendanceRecords(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -70,6 +75,7 @@ public class OwnerController {
         return ownerService.getWorkplaceAttendanceRecords(requiredPrincipal(principal), workplaceId, userId, fromDate, toDate);
     }
 
+    // 직원의 근태 정정 요청을 승인/반려 처리합니다.
     @PatchMapping("/attendance-requests/{requestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void decideRequest(
@@ -80,6 +86,7 @@ public class OwnerController {
         ownerService.decideAttendanceRequest(requiredPrincipal(principal), requestId, request);
     }
 
+    // 사업장의 직원별 예상 급여를 기간 조건으로 조회합니다.
     @GetMapping("/workplaces/{workplaceId}/wages/expected")
     public List<EmployeeWageSummary> expectedWageSummary(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -88,6 +95,17 @@ public class OwnerController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ownerService.getExpectedWageSummary(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+    }
+
+    // 사업장 기본 시급을 설정합니다.
+    @PatchMapping("/workplaces/{workplaceId}/settings/hourly-wage")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateWorkplaceHourlyWage(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateWorkplaceHourlyWageRequest request
+    ) {
+        ownerService.updateWorkplaceHourlyWage(requiredPrincipal(principal), workplaceId, request);
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

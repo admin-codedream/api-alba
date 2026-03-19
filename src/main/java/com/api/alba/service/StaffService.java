@@ -4,6 +4,7 @@ import com.api.alba.domain.AttendanceRecord;
 import com.api.alba.domain.AttendanceRequest;
 import com.api.alba.domain.Workplace;
 import com.api.alba.domain.WorkplaceMember;
+import com.api.alba.domain.WorkplaceSetting;
 import com.api.alba.dto.AttendanceCorrectionRequestCreateRequest;
 import com.api.alba.dto.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.JoinWorkplaceRequest;
@@ -16,6 +17,7 @@ import com.api.alba.mapper.AttendanceRecordMapper;
 import com.api.alba.mapper.AttendanceRequestMapper;
 import com.api.alba.mapper.WorkplaceMapper;
 import com.api.alba.mapper.WorkplaceMemberMapper;
+import com.api.alba.mapper.WorkplaceSettingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ import java.util.Locale;
 public class StaffService {
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
+    private final WorkplaceSettingMapper workplaceSettingMapper;
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
 
@@ -74,7 +77,7 @@ public class StaffService {
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
 
-        BigDecimal hourlyWage = safeWage(member.getHourlyWage());
+        BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
         if (record == null) {
             return new StaffHomeTodayResponse(
                     workplaceId,
@@ -112,7 +115,7 @@ public class StaffService {
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
 
-        BigDecimal hourlyWage = safeWage(member.getHourlyWage());
+        BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
         int todayWorkedMinutes = 0;
         BigDecimal todayExpectedWage = BigDecimal.ZERO;
         if (record != null) {
@@ -215,5 +218,13 @@ public class StaffService {
 
     private BigDecimal safeWage(BigDecimal wage) {
         return wage == null ? BigDecimal.ZERO : wage;
+    }
+
+    private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting != null && setting.getDefaultHourlyWage() != null) {
+            return setting.getDefaultHourlyWage();
+        }
+        return safeWage(member.getHourlyWage());
     }
 }
