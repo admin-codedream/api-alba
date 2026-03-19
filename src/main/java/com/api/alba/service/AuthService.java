@@ -20,6 +20,13 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final String[] PROFILE_COLORS = {
+            "#EF4444", "#F97316", "#F59E0B", "#EAB308", "#84CC16",
+            "#22C55E", "#10B981", "#14B8A6", "#06B6D4", "#0EA5E9",
+            "#3B82F6", "#6366F1", "#8B5CF6", "#A855F7", "#D946EF",
+            "#EC4899", "#F43F5E", "#64748B", "#334155", "#0F172A"
+    };
+
     private final UserMapper userMapper;
     private final UserSocialAccountMapper userSocialAccountMapper;
     private final PasswordEncoder passwordEncoder;
@@ -35,6 +42,8 @@ public class AuthService {
         user.setLoginId(request.getLoginId());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
+        user.setProfileInitial(resolveProfileInitial(request.getName()));
+        user.setProfileColor(resolveProfileColor(request.getLoginId(), request.getName()));
         user.setUserType(request.getUserType().toUpperCase());
         user.setStatus("ACTIVE");
         userMapper.insert(user);
@@ -66,7 +75,21 @@ public class AuthService {
         if (user == null) {
             throw new ApiException("User not found.");
         }
-        return new MeResponse(user.getId(), user.getLoginId(), user.getName(), user.getUserType(), user.getStatus());
+        String profileInitial = user.getProfileInitial() == null
+                ? resolveProfileInitial(user.getName())
+                : user.getProfileInitial();
+        String profileColor = user.getProfileColor() == null
+                ? resolveProfileColor(user.getLoginId(), user.getName())
+                : user.getProfileColor();
+        return new MeResponse(
+                user.getId(),
+                user.getLoginId(),
+                user.getName(),
+                profileInitial,
+                profileColor,
+                user.getUserType(),
+                user.getStatus()
+        );
     }
 
     @Transactional
@@ -81,6 +104,8 @@ public class AuthService {
         if (account == null) {
             user = new User();
             user.setName(resolveUserName(request));
+            user.setProfileInitial(resolveProfileInitial(user.getName()));
+            user.setProfileColor(resolveProfileColor(user.getLoginId(), user.getName()));
             user.setUserType("STAFF");
             user.setStatus("ACTIVE");
             userMapper.insert(user);
@@ -150,5 +175,18 @@ public class AuthService {
         String externalId = request.getProviderUserId();
         int suffixLength = Math.min(8, externalId.length());
         return provider + "_" + externalId.substring(externalId.length() - suffixLength);
+    }
+
+    private String resolveProfileInitial(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "?";
+        }
+        return name.trim().substring(0, 1);
+    }
+
+    private String resolveProfileColor(String loginId, String name) {
+        String seed = (loginId == null ? "" : loginId) + "|" + (name == null ? "" : name);
+        int idx = Math.floorMod(seed.hashCode(), PROFILE_COLORS.length);
+        return PROFILE_COLORS[idx];
     }
 }

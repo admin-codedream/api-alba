@@ -12,6 +12,8 @@ public class User {
     private String loginId;
     private String passwordHash;
     private String name;
+    private String profileInitial;
+    private String profileColor;
     private String userType;
     private String status;
     private LocalDateTime lastLoginAt;
