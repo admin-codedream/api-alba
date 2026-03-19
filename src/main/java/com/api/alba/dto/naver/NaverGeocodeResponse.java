@@ -1,4 +1,4 @@
-﻿package com.api.alba.dto.naver;
+package com.api.alba.dto.naver;
 
 import lombok.Getter;
 import lombok.Setter;

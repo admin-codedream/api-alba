@@ -1,4 +1,4 @@
-﻿package com.api.alba.controller.naver;
+package com.api.alba.controller.naver;
 
 import com.api.alba.dto.naver.NaverGeocodeResponse;
 import com.api.alba.service.naver.NaverMapService;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/naver")
 @RequiredArgsConstructor
 public class NaverMapController {
+
     private final NaverMapService naverMapService;
 
     // 주소 문자열을 네이버 지오코딩 API로 변환합니다.
