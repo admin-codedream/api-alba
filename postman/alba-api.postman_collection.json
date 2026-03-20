@@ -61,6 +61,10 @@
                      {
                          "key":  "addressQuery",
                          "value":  "분당구 불정로 6"
+                     },
+                     {
+                         "key":  "noticeId",
+                         "value":  "1"
                      }
                  ],
     "item":  [
@@ -698,6 +702,86 @@
                                                                  ],
                                                       "url":  "{{baseUrl}}/api/naver/geocode?address={{addressQuery}}",
                                                       "description":  "호출 시점: 주소를 좌표로 변환해야 할 때. 내부에서 네이버 map-geocode API를 호출합니다."
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Notices",
+                     "description":  "공지사항 API. 인증/API Key 없이 호출 가능합니다.",
+                     "item":  [
+                                  {
+                                      "name":  "01. List Notices",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/api/notices",
+                                                      "description":  "호출 시점: 앱/웹 공지사항 목록 조회 시. 고정 공지가 상단으로 정렬됩니다."
+                                                  }
+                                  },
+                                  {
+                                      "name":  "02. Get Notice",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/api/notices/{{noticeId}}",
+                                                      "description":  "호출 시점: 공지 상세 화면 조회 시."
+                                                  }
+                                  },
+                                  {
+                                      "name":  "03. Create Notice",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "if (pm.response.code \u003c 300) {",
+                                                                                    "  var json = pm.response.json();",
+                                                                                    "  if (json.id) pm.collectionVariables.set(\u0027noticeId\u0027, json.id);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"3월 근무 정책 안내\",\n  \"content\": \"3월 25일 전 직원 회의가 있습니다.\",\n  \"pinned\": true\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/notices",
+                                                      "description":  "호출 시점: 공지 등록 시. 성공 시 noticeId 변수에 저장됩니다."
+                                                  }
+                                  },
+                                  {
+                                      "name":  "04. Update Notice",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"3월 근무 정책 안내 (수정)\",\n  \"content\": \"3월 25일 14시 전 직원 회의가 있습니다.\",\n  \"pinned\": false\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/notices/{{noticeId}}",
+                                                      "description":  "호출 시점: 기존 공지 수정 시."
+                                                  }
+                                  },
+                                  {
+                                      "name":  "05. Delete Notice",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "url":  "{{baseUrl}}/api/notices/{{noticeId}}",
+                                                      "description":  "호출 시점: 공지 삭제 시."
                                                   }
                                   }
                               ]
