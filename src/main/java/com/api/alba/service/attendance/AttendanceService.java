@@ -92,7 +92,9 @@ public class AttendanceService {
         long diff = Duration.between(record.getCheckInAt(), checkOutAt).toMinutes();
         int workedMinutes = (int) Math.max(diff, 0);
 
+        // 사업장별 시급
         BigDecimal hourlyWage = resolveHourlyWage(member);
+        // 시급 * 근무시간 / 60
         BigDecimal baseWage = hourlyWage
                 .multiply(BigDecimal.valueOf(workedMinutes))
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
@@ -138,7 +140,7 @@ public class AttendanceService {
             throw new ApiException("Workplace not found.");
         }
         if (workplace.getLatitude() == null || workplace.getLongitude() == null) {
-            throw new ApiException("Workplace location is not configured.");
+            return;
         }
 
         int allowedRadiusMeters = workplace.getAllowedRadiusMeters() == null
