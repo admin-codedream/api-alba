@@ -32,7 +32,10 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return "/api/naver/geocode".equals(request.getRequestURI());
+        String requestUri = request.getRequestURI();
+        return "/api/naver/geocode".equals(requestUri)
+                || "/api/notices".equals(requestUri)
+                || requestUri.startsWith("/api/notices/");
     }
 
     @Override

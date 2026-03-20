@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.notice.NoticeMapper">
+
+    <resultMap id="noticeMap" type="com.api.alba.domain.notice.Notice">
+        <id property="id" column="ID"/>
+        <result property="title" column="TITLE"/>
+        <result property="content" column="CONTENT"/>
+        <result property="pinned" column="IS_PINNED"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.notice.Notice" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO NOTICES (TITLE, CONTENT, IS_PINNED)
+        VALUES (#{title}, #{content}, #{pinned})
+    </insert>
+
+    <select id="findById" resultMap="noticeMap">
+        SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
+        FROM NOTICES
+        WHERE ID = #{id}
+    </select>
+
+    <select id="findAll" resultMap="noticeMap">
+        SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
+        FROM NOTICES
+        ORDER BY IS_PINNED DESC, CREATED_AT DESC
+    </select>
+
+    <update id="update" parameterType="com.api.alba.domain.notice.Notice">
+        UPDATE NOTICES
+        SET TITLE = #{title},
+            CONTENT = #{content},
+            IS_PINNED = #{pinned}
+        WHERE ID = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM NOTICES
+        WHERE ID = #{id}
+    </delete>
+
+</mapper>

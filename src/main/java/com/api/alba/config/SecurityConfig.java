@@ -41,7 +41,14 @@ public class SecurityConfig {
                 .exceptionHandling().authenticationEntryPoint(jsonAuthenticationEntryPoint)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/social/login", "/api/naver/geocode").permitAll()
+                .antMatchers(
+                        "/api/auth/signup",
+                        "/api/auth/login",
+                        "/api/auth/social/login",
+                        "/api/naver/geocode",
+                        "/api/notices",
+                        "/api/notices/**"
+                ).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
