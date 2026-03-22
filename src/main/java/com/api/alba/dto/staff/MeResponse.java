@@ -7,6 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class MeResponse {
     private Long id;
+    private Long workplaceId;
+    private String workplaceName;
     private String loginId;
     private String name;
     private String profileInitial;

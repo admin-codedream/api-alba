@@ -17,6 +17,8 @@
     </appender>
 
     <springProfile name="dev">
+        <logger name="jdbc.resultsettable" level="WARN"/>
+
         <root level="INFO">
             <appender-ref ref="CONSOLE" />
         </root>

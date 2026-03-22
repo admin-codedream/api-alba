@@ -159,7 +159,7 @@ public class StaffService {
 
         String type = resolveRequestType(request);
         if (attendanceRequestMapper.countPendingByRecordAndUser(attendanceRecordId, userId) > 0) {
-            throw new ApiException("Pending correction request already exists for this record.");
+            throw new ApiException("현재 처리 중인 정정 요청이 있습니다.");
         }
 
         AttendanceRequest attendanceRequest = new AttendanceRequest();

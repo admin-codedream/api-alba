@@ -2,6 +2,8 @@ package com.api.alba.service.auth;
 
 import com.api.alba.domain.auth.User;
 import com.api.alba.domain.auth.UserSocialAccount;
+import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
 import com.api.alba.dto.staff.MeResponse;
@@ -10,6 +12,8 @@ import com.api.alba.dto.auth.SocialLoginRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.auth.UserSocialAccountMapper;
+import com.api.alba.mapper.owner.WorkplaceMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +34,8 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final UserSocialAccountMapper userSocialAccountMapper;
+    private final WorkplaceMapper workplaceMapper;
+    private final WorkplaceMemberMapper workplaceMemberMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -76,6 +82,10 @@ public class AuthService {
         if (user == null) {
             throw new ApiException("User not found.");
         }
+        WorkplaceMember activeMember = workplaceMemberMapper.findFirstActiveByUserId(userId);
+        Long workplaceId = activeMember == null ? null : activeMember.getWorkplaceId();
+        Workplace workplace = workplaceId == null ? null : workplaceMapper.findById(workplaceId);
+        String workplaceName = workplace == null ? null : workplace.getName();
         String profileInitial = user.getProfileInitial() == null
                 ? resolveProfileInitial(user.getName())
                 : user.getProfileInitial();
@@ -84,6 +94,8 @@ public class AuthService {
                 : user.getProfileColor();
         return new MeResponse(
                 user.getId(),
+                workplaceId,
+                workplaceName,
                 user.getLoginId(),
                 user.getName(),
                 profileInitial,

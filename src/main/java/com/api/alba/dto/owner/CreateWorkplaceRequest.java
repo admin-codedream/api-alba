@@ -34,6 +34,8 @@ public class CreateWorkplaceRequest {
     @Max(value = 5000, message = "allowedRadiusMeters must be 5000 or fewer.")
     private Integer allowedRadiusMeters;
 
+    private Boolean useLocationRestriction;
+
     @DecimalMin(value = "0.00", inclusive = true, message = "hourlyWage must be 0 or greater.")
     @Digits(integer = 8, fraction = 2, message = "hourlyWage must have up to 8 integer digits and 2 decimal places.")
     private BigDecimal hourlyWage;

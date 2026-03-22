@@ -8,6 +8,8 @@
         <id property="id" column="ID"/>
         <result property="workplaceId" column="WORKPLACE_ID"/>
         <result property="userId" column="USER_ID"/>
+        <result property="userName" column="USER_NAME"/>
+        <result property="profileColor" column="PROFILE_COLOR"/>
         <result property="workDate" column="WORK_DATE"/>
         <result property="checkInAt" column="CHECK_IN_AT"/>
         <result property="checkOutAt" column="CHECK_OUT_AT"/>
@@ -82,15 +84,17 @@
     </select>
 
     <select id="findWorkplaceRecordsByPeriod" resultMap="attendanceRecordMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
-               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
-        FROM ATTENDANCE_RECORDS
-        WHERE WORKPLACE_ID = #{workplaceId}
-          AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, u.NAME AS USER_NAME, u.PROFILE_COLOR AS PROFILE_COLOR,
+               ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
+               ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT
+        FROM ATTENDANCE_RECORDS ar
+        JOIN USERS u ON u.ID = ar.USER_ID
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
         <if test="userId != null">
-          AND USER_ID = #{userId}
+          AND ar.USER_ID = #{userId}
         </if>
-        ORDER BY WORK_DATE DESC, USER_ID ASC
+        ORDER BY ar.WORK_DATE DESC, ar.USER_ID ASC
     </select>
 
     <select id="findEmployeeWageSummaryByPeriod" resultType="com.api.alba.dto.staff.EmployeeWageSummary">

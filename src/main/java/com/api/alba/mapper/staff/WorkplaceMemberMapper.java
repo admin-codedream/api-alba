@@ -23,5 +23,7 @@ public interface WorkplaceMemberMapper {
             @Param("userId") Long userId
     );
 
+    WorkplaceMember findFirstActiveByUserId(@Param("userId") Long userId);
+
     int updateStatus(@Param("id") Long id, @Param("status") String status);
 }

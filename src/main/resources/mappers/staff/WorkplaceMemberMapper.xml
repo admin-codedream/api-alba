@@ -42,6 +42,15 @@
           AND STATUS = 'ACTIVE'
     </select>
 
+    <select id="findFirstActiveByUserId" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE USER_ID = #{userId}
+          AND STATUS = 'ACTIVE'
+        ORDER BY ID ASC
+        LIMIT 1
+    </select>
+
     <update id="updateStatus">
         UPDATE WORKPLACE_MEMBERS
         SET STATUS = #{status}

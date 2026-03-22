@@ -29,6 +29,7 @@ import java.util.List;
 public class AttendanceService {
     private static final double EARTH_RADIUS_METERS = 6371000.0;
     private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
+    private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
 
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
@@ -98,6 +99,7 @@ public class AttendanceService {
         BigDecimal baseWage = hourlyWage
                 .multiply(BigDecimal.valueOf(workedMinutes))
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        baseWage = truncateToTenWonUnit(baseWage);
 
         attendanceRecordMapper.updateCheckOut(
                 record.getId(),
@@ -128,19 +130,22 @@ public class AttendanceService {
     }
 
     private void validateGeofence(Long workplaceId, Double latitude, Double longitude) {
-        if (latitude == null && longitude == null) {
-            return;
-        }
-        if (latitude == null || longitude == null) {
-            throw new ApiException("latitude and longitude must be provided together.");
-        }
-
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
             throw new ApiException("Workplace not found.");
         }
-        if (workplace.getLatitude() == null || workplace.getLongitude() == null) {
+        if (!Boolean.TRUE.equals(workplace.getUseLocationRestriction())) {
             return;
+        }
+
+        if (latitude == null && longitude == null) {
+            throw new ApiException("latitude and longitude are required.");
+        }
+        if (latitude == null || longitude == null) {
+            throw new ApiException("latitude and longitude must be provided together.");
+        }
+        if (workplace.getLatitude() == null || workplace.getLongitude() == null) {
+            throw new ApiException("Workplace location is not configured.");
         }
 
         int allowedRadiusMeters = workplace.getAllowedRadiusMeters() == null
@@ -177,5 +182,15 @@ public class AttendanceService {
             return setting.getDefaultHourlyWage();
         }
         return member.getHourlyWage() == null ? BigDecimal.ZERO : member.getHourlyWage();
+    }
+
+    private BigDecimal truncateToTenWonUnit(BigDecimal wage) {
+        if (wage == null) {
+            return BigDecimal.ZERO;
+        }
+        return wage
+                .divide(TEN_WON_UNIT, 0, RoundingMode.DOWN)
+                .multiply(TEN_WON_UNIT)
+                .setScale(2, RoundingMode.DOWN);
     }
 }

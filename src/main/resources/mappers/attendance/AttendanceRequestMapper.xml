@@ -44,4 +44,34 @@
           AND STATUS = 'PENDING'
     </select>
 
+    <select id="countPendingByWorkplaceId" resultType="int">
+        SELECT COUNT(*)
+        FROM ATTENDANCE_REQUESTS ar
+        INNER JOIN ATTENDANCE_RECORDS rec ON rec.ID = ar.ATTENDANCE_RECORD_ID
+        WHERE rec.WORKPLACE_ID = #{workplaceId}
+          AND ar.STATUS = 'PENDING'
+    </select>
+
+    <select id="findByWorkplaceId" resultType="com.api.alba.dto.owner.AttendanceRequestListItemResponse">
+        SELECT ar.ID AS requestId,
+               ar.ATTENDANCE_RECORD_ID AS attendanceRecordId,
+               ar.USER_ID AS userId,
+               u.NAME AS userName,
+               rec.WORK_DATE AS workDate,
+               ar.TYPE AS type,
+               ar.REQUESTED_CHECK_IN_AT AS requestedCheckInAt,
+               ar.REQUESTED_CHECK_OUT_AT AS requestedCheckOutAt,
+               ar.REASON AS reason,
+               ar.STATUS AS status,
+               ar.CREATED_AT AS requestedAt
+        FROM ATTENDANCE_REQUESTS ar
+        JOIN ATTENDANCE_RECORDS rec ON rec.ID = ar.ATTENDANCE_RECORD_ID
+        JOIN USERS u ON u.ID = ar.USER_ID
+        WHERE rec.WORKPLACE_ID = #{workplaceId}
+        <if test="status != null and status != ''">
+          AND ar.STATUS = #{status}
+        </if>
+        ORDER BY ar.CREATED_AT DESC, ar.ID DESC
+    </select>
+
 </mapper>

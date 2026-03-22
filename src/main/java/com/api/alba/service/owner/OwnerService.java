@@ -8,6 +8,7 @@ import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.auth.User;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
+import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
@@ -30,13 +31,16 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
     private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
+    private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
+    private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
 
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
@@ -61,6 +65,11 @@ public class OwnerService {
                 request.getAllowedRadiusMeters() == null
                         ? DEFAULT_ALLOWED_RADIUS_METERS
                         : request.getAllowedRadiusMeters()
+        );
+        workplace.setUseLocationRestriction(
+                request.getUseLocationRestriction() == null
+                        ? DEFAULT_USE_LOCATION_RESTRICTION
+                        : request.getUseLocationRestriction()
         );
         workplaceMapper.insert(workplace);
 
@@ -99,7 +108,8 @@ public class OwnerService {
         LocalDate today = LocalDate.now();
         int checkedIn = attendanceRecordMapper.countTodayCheckedIn(workplaceId, today);
         int working = attendanceRecordMapper.countTodayWorking(workplaceId, today);
-        return new DashboardTodayResponse(checkedIn, working);
+        int pendingAttendanceRequestCount = attendanceRequestMapper.countPendingByWorkplaceId(workplaceId);
+        return new DashboardTodayResponse(checkedIn, working, pendingAttendanceRequestCount);
     }
 
     public List<AttendanceRecord> getWorkplaceAttendanceRecords(
@@ -114,6 +124,16 @@ public class OwnerService {
             throw new ApiException("fromDate must be earlier than or equal to toDate.");
         }
         return attendanceRecordMapper.findWorkplaceRecordsByPeriod(workplaceId, userId, fromDate, toDate);
+    }
+
+    public List<AttendanceRequestListItemResponse> getAttendanceRequests(
+            Long ownerUserId,
+            Long workplaceId,
+            String status
+    ) {
+        ensureOwner(workplaceId, ownerUserId);
+        String normalizedStatus = normalizeRequestStatus(status);
+        return attendanceRequestMapper.findByWorkplaceId(workplaceId, normalizedStatus);
     }
 
     @Transactional
@@ -184,6 +204,7 @@ public class OwnerService {
         BigDecimal wage = hourlyWage
                 .multiply(BigDecimal.valueOf(workedMinutes))
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        wage = truncateToTenWonUnit(wage);
 
         String attendanceStatus = newCheckOut == null ? "WORKING" : "COMPLETED";
         attendanceRecordMapper.updateByOwnerDecision(
@@ -226,6 +247,9 @@ public class OwnerService {
         if (hasLatitude != hasLongitude) {
             throw new ApiException("latitude and longitude must be provided together.");
         }
+        if (Boolean.TRUE.equals(request.getUseLocationRestriction()) && !hasLatitude) {
+            throw new ApiException("latitude and longitude are required when useLocationRestriction is true.");
+        }
     }
 
     private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {
@@ -237,5 +261,28 @@ public class OwnerService {
             return member.getHourlyWage();
         }
         return BigDecimal.ZERO;
+    }
+
+    private BigDecimal truncateToTenWonUnit(BigDecimal wage) {
+        if (wage == null) {
+            return BigDecimal.ZERO;
+        }
+        return wage
+                .divide(TEN_WON_UNIT, 0, RoundingMode.DOWN)
+                .multiply(TEN_WON_UNIT)
+                .setScale(2, RoundingMode.DOWN);
+    }
+
+    private String normalizeRequestStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        String normalized = status.trim().toUpperCase(Locale.ROOT);
+        if (!"PENDING".equals(normalized)
+                && !"APPROVED".equals(normalized)
+                && !"REJECTED".equals(normalized)) {
+            throw new ApiException("status must be one of PENDING, APPROVED, REJECTED.");
+        }
+        return normalized;
     }
 }

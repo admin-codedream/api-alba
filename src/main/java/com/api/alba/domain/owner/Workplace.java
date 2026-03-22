@@ -16,5 +16,6 @@ public class Workplace {
     private Double latitude;
     private Double longitude;
     private Integer allowedRadiusMeters;
+    private Boolean useLocationRestriction;
     private LocalDateTime createdAt;
 }

@@ -8,4 +8,5 @@ import lombok.Getter;
 public class DashboardTodayResponse {
     private int checkedInCount;
     private int workingCount;
+    private int pendingAttendanceRequestCount;
 }

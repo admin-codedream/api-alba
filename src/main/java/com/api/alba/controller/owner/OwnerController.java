@@ -2,6 +2,7 @@ package com.api.alba.controller.owner;
 
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.owner.Workplace;
+import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
@@ -73,6 +74,16 @@ public class OwnerController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ownerService.getWorkplaceAttendanceRecords(requiredPrincipal(principal), workplaceId, userId, fromDate, toDate);
+    }
+
+    // 사업장의 근태 정정 요청 목록을 조회합니다.
+    @GetMapping("/workplaces/{workplaceId}/attendance-requests")
+    public List<AttendanceRequestListItemResponse> attendanceRequests(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestParam(required = false) String status
+    ) {
+        return ownerService.getAttendanceRequests(requiredPrincipal(principal), workplaceId, status);
     }
 
     // 직원의 근태 정정 요청을 승인/반려 처리합니다.

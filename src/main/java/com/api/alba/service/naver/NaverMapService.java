@@ -23,13 +23,13 @@ public class NaverMapService {
     private static final String HEADER_API_KEY_ID = "x-ncp-apigw-api-key-id";
     private static final String HEADER_API_KEY = "x-ncp-apigw-api-key";
 
-    @Value("${naver.map-geocode.base-url:https://maps.apigw.ntruss.com}")
+    @Value("${naver.cloud.base-url}")
     private String baseUrl;
 
-    @Value("${naver.map-geocode.api-key-id:}")
+    @Value("${naver.cloud.api-key}")
     private String apiKeyId;
 
-    @Value("${naver.map-geocode.api-key:}")
+    @Value("${naver.cloud.api-secret}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
