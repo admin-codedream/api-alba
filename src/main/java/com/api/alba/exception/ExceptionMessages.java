@@ -5,6 +5,7 @@ public final class ExceptionMessages {
     }
 
     public static final String INVALID_REQUEST = "잘못된 요청입니다.";
+    public static final String PUSH_SEND_FAILED = "푸쉬 발송에 실패했습니다.";
     public static final String AUTHENTICATION_REQUIRED = "로그인이 필요해요.";
     public static final String ALREADY_CHECKED_IN_FOR_DATE = "이미 출근했어요.";
     public static final String CHECK_IN_RECORD_NOT_FOUND_FOR_DATE = "출근 기록을 찾을 수 없어요.";
