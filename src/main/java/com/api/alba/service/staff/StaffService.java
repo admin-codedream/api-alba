@@ -180,7 +180,7 @@ public class StaffService {
     private WorkplaceMember ensureActiveMember(Long workplaceId, Long userId) {
         WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
         if (member == null) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Active workplace member not found.");
+            throw new ApiException(HttpStatus.FORBIDDEN, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
         }
         return member;
     }

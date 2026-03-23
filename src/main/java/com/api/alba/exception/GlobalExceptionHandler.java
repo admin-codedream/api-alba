@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -34,7 +36,7 @@ public class GlobalExceptionHandler {
             log.warn("Handled validation exception. field={}, message={}",
                     firstError.getField(), firstError.getDefaultMessage(), ex);
         }
-        body.put("message", firstError == null ? "Invalid request." : firstError.getDefaultMessage());
+        body.put("message", firstError == null ? INVALID_REQUEST : firstError.getDefaultMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

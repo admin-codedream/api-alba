@@ -4,12 +4,13 @@ public final class ExceptionMessages {
     private ExceptionMessages() {
     }
 
+    public static final String INVALID_REQUEST = "잘못된 요청입니다.";
     public static final String AUTHENTICATION_REQUIRED = "로그인이 필요해요.";
     public static final String ALREADY_CHECKED_IN_FOR_DATE = "이미 출근했어요.";
     public static final String CHECK_IN_RECORD_NOT_FOUND_FOR_DATE = "출근 기록을 찾을 수 없어요.";
     public static final String ALREADY_CHECKED_OUT_FOR_DATE = "이미 퇴근했어요.";
     public static final String INVALID_DATE_RANGE = "조회 시작일은 종료일보다 늦을 수 없어요.";
-    public static final String ACTIVE_WORKPLACE_MEMBER_NOT_FOUND = "활성화된 근무지 정보를 찾을 수 없어요.";
+    public static final String ACTIVE_WORKPLACE_MEMBER_NOT_FOUND = "근무 중인 직원 정보를 찾을 수 없어요.";
     public static final String WORKPLACE_NOT_FOUND = "근무지를 찾을 수 없어요.";
     public static final String LAT_LON_REQUIRED = "위치 정보가 필요해요.";
     public static final String LAT_LON_MUST_BE_PROVIDED_TOGETHER = "위도와 경도를 함께 입력해 주세요.";

@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
+
 @Component
 public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -23,7 +25,7 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
             AuthenticationException authException
     ) throws IOException {
         Map<String, String> body = new HashMap<>();
-        body.put("message", "Authentication is required.");
+        body.put("message", AUTHENTICATION_REQUIRED);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(objectMapper.writeValueAsString(body));
