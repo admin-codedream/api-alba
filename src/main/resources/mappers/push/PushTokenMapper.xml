@@ -51,18 +51,18 @@
     </update>
 
     <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
-        SELECT DISTINCT U.NAME AS STAFF_NAME,
+        SELECT DISTINCT SU.NAME AS STAFF_NAME,
                         PT.ID AS PUSH_TOKEN_ID,
                         WMM.USER_ID AS OWNER_USER_ID,
                         PT.TOKEN
         FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN USERS SU
+                            ON SU.ID = WM.USER_ID
                  INNER JOIN WORKPLACE_MEMBERS WMM
                             ON WM.WORKPLACE_ID = WMM.WORKPLACE_ID
                            AND WMM.ROLE = 'OWNER'
                            AND WMM.RECEIVE_ATTENDANCE_PUSH = 1
                            AND WMM.STATUS = 'ACTIVE'
-                 INNER JOIN USERS U
-                            ON U.ID = WMM.USER_ID
                  INNER JOIN PUSH_TOKENS PT
                             ON PT.USER_ID = WMM.USER_ID
                            AND PT.IS_ACTIVE = 1

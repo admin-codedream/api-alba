@@ -2,8 +2,8 @@ package com.api.alba.service.attendance;
 
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.owner.Workplace;
-import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.domain.settings.WorkplaceSetting;
+import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCheckInRequest;
 import com.api.alba.dto.attendance.AttendanceCheckOutRequest;
 import com.api.alba.dto.push.OwnerPushTokenTarget;
@@ -14,9 +14,10 @@ import com.api.alba.firebase.ProjectId;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
-import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import static com.api.alba.exception.ExceptionMessages.OUTSIDE_ALLOWED_WORKPLACE
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_LOCATION_NOT_CONFIGURED;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
@@ -84,23 +86,11 @@ public class AttendanceService {
 
         try {
             attendanceRecordMapper.insert(record);
-
-            // 알림 발송
-            List<OwnerPushTokenTarget> tokenList = pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(member.getWorkplaceId(), userId);
-            if (!CollectionUtils.isEmpty(tokenList)) {
-                List<FcmDto> fcmDtos = tokenList.stream()
-                        .map(token -> FcmDto.builder()
-                                .pushToken(token.getToken())
-                                .title("출근 완료 알림")
-                                .content(String.format("%s님 출근이 완료되었습니다.", token.getStaffName()))
-                                .build())
-                        .collect(Collectors.toList());
-
-                fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
-            }
         } catch (DuplicateKeyException e) {
             throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
         }
+
+        sendAttendancePushSafely(member.getWorkplaceId(), userId, "출근 완료 알림", "%s님 출근이 완료되었습니다.");
 
         return attendanceRecordMapper.findByWorkplaceUserAndDate(record.getWorkplaceId(), userId, workDate);
     }
@@ -127,9 +117,7 @@ public class AttendanceService {
         long diff = Duration.between(record.getCheckInAt(), checkOutAt).toMinutes();
         int workedMinutes = (int) Math.max(diff, 0);
 
-        // 사업장별 시급
         BigDecimal hourlyWage = resolveHourlyWage(member);
-        // 시급 * 근무시간 / 60
         BigDecimal baseWage = hourlyWage
                 .multiply(BigDecimal.valueOf(workedMinutes))
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
@@ -144,19 +132,7 @@ public class AttendanceService {
                 "COMPLETED"
         );
 
-        // 알림 발송
-        List<OwnerPushTokenTarget> tokenList = pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(member.getWorkplaceId(), userId);
-        if (!CollectionUtils.isEmpty(tokenList)) {
-            List<FcmDto> fcmDtos = tokenList.stream()
-                    .map(token -> FcmDto.builder()
-                            .pushToken(token.getToken())
-                            .title("퇴근 완료 알림")
-                            .content(String.format("%s님 퇴근이 완료되었습니다.", token.getStaffName()))
-                            .build())
-                    .collect(Collectors.toList());
-
-            fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
-        }
+        sendAttendancePushSafely(member.getWorkplaceId(), userId, "퇴근 완료 알림", "%s님 퇴근이 완료되었습니다.");
 
         return attendanceRecordMapper.findByWorkplaceUserAndDate(member.getWorkplaceId(), userId, workDate);
     }
@@ -240,5 +216,28 @@ public class AttendanceService {
                 .divide(TEN_WON_UNIT, 0, RoundingMode.DOWN)
                 .multiply(TEN_WON_UNIT)
                 .setScale(2, RoundingMode.DOWN);
+    }
+
+    private void sendAttendancePushSafely(Long workplaceId, Long userId, String title, String contentFormat) {
+        try {
+            List<OwnerPushTokenTarget> tokenList =
+                    pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(workplaceId, userId);
+            if (CollectionUtils.isEmpty(tokenList)) {
+                return;
+            }
+
+            List<FcmDto> fcmDtos = tokenList.stream()
+                    .map(token -> FcmDto.builder()
+                            .pushToken(token.getToken())
+                            .title(title)
+                            .content(String.format(contentFormat, token.getStaffName()))
+                            .build())
+                    .collect(Collectors.toList());
+
+            fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
+        } catch (Exception e) {
+            log.warn("Attendance push send failed. workplaceId={}, userId={}, message={}",
+                    workplaceId, userId, e.getMessage(), e);
+        }
     }
 }

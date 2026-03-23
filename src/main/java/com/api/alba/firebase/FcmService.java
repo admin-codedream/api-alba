@@ -68,6 +68,7 @@ public class FcmService {
      * @param project
      * @param fcmList
      */
+    @Async
     public void sendMultiEachMessage(
             String project,
             List<FcmDto> fcmList
