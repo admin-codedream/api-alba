@@ -10,28 +10,30 @@
         <result property="userId" column="USER_ID"/>
         <result property="role" column="ROLE"/>
         <result property="hourlyWage" column="HOURLY_WAGE"/>
+        <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
         <result property="status" column="STATUS"/>
     </resultMap>
 
     <resultMap id="userWorkplaceInfoMap" type="com.api.alba.dto.staff.UserWorkplaceInfo">
         <result property="workplaceId" column="WORKPLACE_ID"/>
         <result property="workplaceName" column="WORKPLACE_NAME"/>
+        <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS)
-        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{status})
+        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS)
+        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{receiveAttendancePush}, #{status})
     </insert>
 
     <select id="findMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
     </select>
 
     <select id="findActiveMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -39,7 +41,7 @@
     </select>
 
     <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -48,7 +50,7 @@
     </select>
 
     <select id="findFirstActiveByUserId" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE USER_ID = #{userId}
           AND STATUS = 'ACTIVE'
@@ -58,7 +60,8 @@
 
     <select id="findActiveWorkplacesByUserId" resultMap="userWorkplaceInfoMap">
         SELECT WM.WORKPLACE_ID,
-               W.NAME AS WORKPLACE_NAME
+               W.NAME AS WORKPLACE_NAME,
+               WM.RECEIVE_ATTENDANCE_PUSH
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
         WHERE WM.USER_ID = #{userId}

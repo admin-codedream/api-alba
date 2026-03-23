@@ -62,6 +62,7 @@ public class StaffService {
             newMember.setRole("STAFF");
             newMember.setStatus("ACTIVE");
             newMember.setHourlyWage(null);
+            newMember.setReceiveAttendancePush(true);
             workplaceMemberMapper.insert(newMember);
         } else {
             workplaceMemberMapper.updateStatus(existingMember.getId(), "ACTIVE");

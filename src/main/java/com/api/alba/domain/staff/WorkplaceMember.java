@@ -13,5 +13,6 @@ public class WorkplaceMember {
     private Long userId;
     private String role;
     private BigDecimal hourlyWage;
+    private Boolean receiveAttendancePush;
     private String status;
 }

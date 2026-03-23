@@ -8,4 +8,5 @@ import lombok.Setter;
 public class UserWorkplaceInfo {
     private Long workplaceId;
     private String workplaceName;
+    private Boolean receiveAttendancePush;
 }

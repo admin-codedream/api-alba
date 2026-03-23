@@ -93,6 +93,7 @@ public class OwnerService {
         member.setRole("OWNER");
         member.setStatus("ACTIVE");
         member.setHourlyWage(null);
+        member.setReceiveAttendancePush(true);
         workplaceMemberMapper.insert(member);
 
         WorkplaceSetting workplaceSetting = new WorkplaceSetting();

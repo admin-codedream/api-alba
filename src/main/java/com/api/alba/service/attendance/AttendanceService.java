@@ -6,9 +6,14 @@ import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.dto.attendance.AttendanceCheckInRequest;
 import com.api.alba.dto.attendance.AttendanceCheckOutRequest;
+import com.api.alba.dto.push.OwnerPushTokenTarget;
 import com.api.alba.exception.ApiException;
+import com.api.alba.firebase.FcmDto;
+import com.api.alba.firebase.FcmService;
+import com.api.alba.firebase.ProjectId;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
+import com.api.alba.mapper.push.PushTokenMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +21,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,6 +29,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.ACTIVE_WORKPLACE_MEMBER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.ALREADY_CHECKED_IN_FOR_DATE;
@@ -46,6 +53,8 @@ public class AttendanceService {
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
+    private final PushTokenMapper pushTokenMapper;
+    private final FcmService fcmService;
 
     @Transactional
     public AttendanceRecord checkIn(Long userId, AttendanceCheckInRequest request) {
@@ -75,6 +84,20 @@ public class AttendanceService {
 
         try {
             attendanceRecordMapper.insert(record);
+
+            // 알림 발송
+            List<OwnerPushTokenTarget> tokenList = pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(member.getWorkplaceId(), userId);
+            if (!CollectionUtils.isEmpty(tokenList)) {
+                List<FcmDto> fcmDtos = tokenList.stream()
+                        .map(token -> FcmDto.builder()
+                                .pushToken(token.getToken())
+                                .title("출근 완료 알림")
+                                .content(String.format("%s님 출근이 완료되었습니다.", token.getStaffName()))
+                                .build())
+                        .collect(Collectors.toList());
+
+                fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
+            }
         } catch (DuplicateKeyException e) {
             throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
         }
@@ -120,6 +143,20 @@ public class AttendanceService {
                 baseWage,
                 "COMPLETED"
         );
+
+        // 알림 발송
+        List<OwnerPushTokenTarget> tokenList = pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(member.getWorkplaceId(), userId);
+        if (!CollectionUtils.isEmpty(tokenList)) {
+            List<FcmDto> fcmDtos = tokenList.stream()
+                    .map(token -> FcmDto.builder()
+                            .pushToken(token.getToken())
+                            .title("퇴근 완료 알림")
+                            .content(String.format("%s님 퇴근이 완료되었습니다.", token.getStaffName()))
+                            .build())
+                    .collect(Collectors.toList());
+
+            fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
+        }
 
         return attendanceRecordMapper.findByWorkplaceUserAndDate(member.getWorkplaceId(), userId, workDate);
     }

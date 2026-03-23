@@ -15,6 +15,13 @@
         <result property="updatedAt" column="UPDATED_AT"/>
     </resultMap>
 
+    <resultMap id="ownerPushTokenTargetMap" type="com.api.alba.dto.push.OwnerPushTokenTarget">
+        <result property="staffName" column="STAFF_NAME"/>
+        <result property="pushTokenId" column="PUSH_TOKEN_ID"/>
+        <result property="ownerUserId" column="OWNER_USER_ID"/>
+        <result property="token" column="TOKEN"/>
+    </resultMap>
+
     <insert id="insert" parameterType="com.api.alba.domain.push.PushToken" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO PUSH_TOKENS (USER_ID, PLATFORM, TOKEN, IS_ACTIVE, LAST_SEEN_AT)
         VALUES (#{userId}, #{platform}, #{token}, #{isActive}, #{lastSeenAt})
@@ -42,5 +49,26 @@
           AND TOKEN = #{token}
           AND IS_ACTIVE = 1
     </update>
+
+    <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
+        SELECT DISTINCT U.NAME AS STAFF_NAME,
+                        PT.ID AS PUSH_TOKEN_ID,
+                        WMM.USER_ID AS OWNER_USER_ID,
+                        PT.TOKEN
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACE_MEMBERS WMM
+                            ON WM.WORKPLACE_ID = WMM.WORKPLACE_ID
+                           AND WMM.ROLE = 'OWNER'
+                           AND WMM.RECEIVE_ATTENDANCE_PUSH = 1
+                           AND WMM.STATUS = 'ACTIVE'
+                 INNER JOIN USERS U
+                            ON U.ID = WMM.USER_ID
+                 INNER JOIN PUSH_TOKENS PT
+                            ON PT.USER_ID = WMM.USER_ID
+                           AND PT.IS_ACTIVE = 1
+        WHERE WM.WORKPLACE_ID = #{workplaceId}
+          AND WM.USER_ID = #{userId}
+          AND WM.STATUS = 'ACTIVE'
+    </select>
 
 </mapper>
