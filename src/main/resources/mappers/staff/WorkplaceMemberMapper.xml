@@ -13,6 +13,11 @@
         <result property="status" column="STATUS"/>
     </resultMap>
 
+    <resultMap id="userWorkplaceInfoMap" type="com.api.alba.dto.staff.UserWorkplaceInfo">
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="workplaceName" column="WORKPLACE_NAME"/>
+    </resultMap>
+
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, STATUS)
         VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{status})
@@ -49,6 +54,16 @@
           AND STATUS = 'ACTIVE'
         ORDER BY ID ASC
         LIMIT 1
+    </select>
+
+    <select id="findActiveWorkplacesByUserId" resultMap="userWorkplaceInfoMap">
+        SELECT WM.WORKPLACE_ID,
+               W.NAME AS WORKPLACE_NAME
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+        WHERE WM.USER_ID = #{userId}
+          AND WM.STATUS = 'ACTIVE'
+        ORDER BY WM.ID ASC
     </select>
 
     <update id="updateStatus">

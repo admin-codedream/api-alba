@@ -3,12 +3,13 @@ package com.api.alba.dto.staff;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public class MeResponse {
     private Long id;
-    private Long workplaceId;
-    private String workplaceName;
+    private List<UserWorkplaceInfo> workplaces;
     private String loginId;
     private String name;
     private String profileInitial;

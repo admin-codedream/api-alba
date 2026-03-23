@@ -2,17 +2,15 @@ package com.api.alba.service.auth;
 
 import com.api.alba.domain.auth.User;
 import com.api.alba.domain.auth.UserSocialAccount;
-import com.api.alba.domain.owner.Workplace;
-import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
 import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
+import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.auth.UserSocialAccountMapper;
-import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
@@ -42,7 +41,6 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final UserSocialAccountMapper userSocialAccountMapper;
-    private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -90,10 +88,7 @@ public class AuthService {
         if (user == null) {
             throw new ApiException(USER_NOT_FOUND);
         }
-        WorkplaceMember activeMember = workplaceMemberMapper.findFirstActiveByUserId(userId);
-        Long workplaceId = activeMember == null ? null : activeMember.getWorkplaceId();
-        Workplace workplace = workplaceId == null ? null : workplaceMapper.findById(workplaceId);
-        String workplaceName = workplace == null ? null : workplace.getName();
+        List<UserWorkplaceInfo> workplaces = workplaceMemberMapper.findActiveWorkplacesByUserId(userId);
         String profileInitial = user.getProfileInitial() == null
                 ? resolveProfileInitial(user.getName())
                 : user.getProfileInitial();
@@ -102,8 +97,7 @@ public class AuthService {
                 : user.getProfileColor();
         return new MeResponse(
                 user.getId(),
-                workplaceId,
-                workplaceName,
+                workplaces,
                 user.getLoginId(),
                 user.getName(),
                 profileInitial,
