@@ -22,6 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
+import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
+import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
+import static com.api.alba.exception.ExceptionMessages.PROVIDER_ALREADY_CONNECTED;
+import static com.api.alba.exception.ExceptionMessages.SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER;
+import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -42,7 +50,7 @@ public class AuthService {
     @Transactional
     public AuthResponse signUp(SignUpRequest request) {
         if (userMapper.findByLoginId(request.getLoginId()) != null) {
-            throw new ApiException("loginId is already in use.");
+            throw new ApiException(LOGIN_ID_ALREADY_IN_USE);
         }
 
         User user = new User();
@@ -63,13 +71,13 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userMapper.findByLoginId(request.getLoginId());
         if (user == null || user.getPasswordHash() == null) {
-            throw new ApiException("Invalid loginId or password.");
+            throw new ApiException(INVALID_LOGIN_ID_OR_PASSWORD);
         }
         if (!"ACTIVE".equals(user.getStatus())) {
-            throw new ApiException("Account is not active.");
+            throw new ApiException(ACCOUNT_NOT_ACTIVE);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new ApiException("Invalid loginId or password.");
+            throw new ApiException(INVALID_LOGIN_ID_OR_PASSWORD);
         }
 
         userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
@@ -80,7 +88,7 @@ public class AuthService {
     public MeResponse me(Long userId) {
         User user = userMapper.findById(userId);
         if (user == null) {
-            throw new ApiException("User not found.");
+            throw new ApiException(USER_NOT_FOUND);
         }
         WorkplaceMember activeMember = workplaceMemberMapper.findFirstActiveByUserId(userId);
         Long workplaceId = activeMember == null ? null : activeMember.getWorkplaceId();
@@ -133,12 +141,12 @@ public class AuthService {
         } else {
             user = userMapper.findById(account.getUserId());
             if (user == null) {
-                throw new ApiException("User not found for social account.");
+                throw new ApiException(USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT);
             }
         }
 
         if (!"ACTIVE".equals(user.getStatus())) {
-            throw new ApiException("Account is not active.");
+            throw new ApiException(ACCOUNT_NOT_ACTIVE);
         }
 
         userMapper.updateLastLoginAt(user.getId(), now);
@@ -152,7 +160,7 @@ public class AuthService {
     public void connectSocial(Long userId, SocialLoginRequest request) {
         User user = userMapper.findById(userId);
         if (user == null) {
-            throw new ApiException("User not found.");
+            throw new ApiException(USER_NOT_FOUND);
         }
 
         String provider = request.getProvider().toUpperCase();
@@ -160,13 +168,13 @@ public class AuthService {
         UserSocialAccount existingByProviderId =
                 userSocialAccountMapper.findByProviderAndProviderUserId(provider, request.getProviderUserId());
         if (existingByProviderId != null && !existingByProviderId.getUserId().equals(userId)) {
-            throw new ApiException("This social account is already connected to another user.");
+            throw new ApiException(SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER);
         }
 
         UserSocialAccount existingByUserProvider =
                 userSocialAccountMapper.findByUserIdAndProvider(userId, provider);
         if (existingByUserProvider != null) {
-            throw new ApiException("This provider is already connected.");
+            throw new ApiException(PROVIDER_ALREADY_CONNECTED);
         }
 
         if (existingByProviderId == null) {

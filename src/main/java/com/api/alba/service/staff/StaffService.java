@@ -30,6 +30,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
+import static com.api.alba.exception.ExceptionMessages.*;
+
 @Service
 @RequiredArgsConstructor
 public class StaffService {
@@ -44,7 +46,7 @@ public class StaffService {
         String inviteCode = request.getInviteCode().trim().toUpperCase(Locale.ROOT);
         Workplace workplace = workplaceMapper.findByInviteCode(inviteCode);
         if (workplace == null) {
-            throw new ApiException("Invalid invite code.");
+            throw new ApiException(INVALID_INVITE_CODE);
         }
 
         WorkplaceMember activeMember = workplaceMemberMapper.findActiveMember(workplace.getId(), userId);
@@ -67,7 +69,7 @@ public class StaffService {
 
         WorkplaceMember joinedMember = workplaceMemberMapper.findActiveMember(workplace.getId(), userId);
         if (joinedMember == null) {
-            throw new ApiException("Failed to join workplace.");
+            throw new ApiException(FAILED_TO_JOIN_WORKPLACE);
         }
         return new JoinWorkplaceResponse(workplace.getId(), workplace.getName(), joinedMember.getRole(), "JOINED");
     }
@@ -150,16 +152,16 @@ public class StaffService {
     ) {
         AttendanceRecord record = attendanceRecordMapper.findById(attendanceRecordId);
         if (record == null) {
-            throw new ApiException("Attendance record not found.");
+            throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
         }
         if (!record.getUserId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You can request correction only for your own record.");
+            throw new ApiException(HttpStatus.FORBIDDEN, CORRECTION_ONLY_FOR_OWN_RECORD);
         }
         ensureActiveMember(record.getWorkplaceId(), userId);
 
         String type = resolveRequestType(request);
         if (attendanceRequestMapper.countPendingByRecordAndUser(attendanceRecordId, userId) > 0) {
-            throw new ApiException("현재 처리 중인 정정 요청이 있습니다.");
+            throw new ApiException(PENDING_CORRECTION_REQUEST_EXISTS);
         }
 
         AttendanceRequest attendanceRequest = new AttendanceRequest();
@@ -188,10 +190,10 @@ public class StaffService {
         LocalDateTime checkOut = request.getRequestedCheckOutAt();
 
         if (checkIn == null && checkOut == null) {
-            throw new ApiException("At least one of requestedCheckInAt or requestedCheckOutAt is required.");
+            throw new ApiException(AT_LEAST_ONE_REQUESTED_CHECK_IN_OR_OUT_REQUIRED);
         }
         if (checkIn != null && checkOut != null && checkOut.isBefore(checkIn)) {
-            throw new ApiException("requestedCheckOutAt must be later than requestedCheckInAt.");
+            throw new ApiException(REQUESTED_CHECK_OUT_MUST_BE_LATER_THAN_CHECK_IN);
         }
         if (checkIn != null && checkOut != null) {
             return "BOTH_EDIT";

@@ -17,6 +17,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
+import static com.api.alba.exception.ExceptionMessages.ADDRESS_REQUIRED;
+import static com.api.alba.exception.ExceptionMessages.NAVER_GEOCODE_API_CALL_FAILED;
+import static com.api.alba.exception.ExceptionMessages.NAVER_GEOCODE_API_KEY_NOT_CONFIGURED;
+
 @Service
 @RequiredArgsConstructor
 public class NaverMapService {
@@ -37,10 +41,10 @@ public class NaverMapService {
     public NaverGeocodeResponse geocode(String address) {
         String normalizedAddress = address == null ? "" : address.trim();
         if (normalizedAddress.isEmpty()) {
-            throw new ApiException("address is required.");
+            throw new ApiException(ADDRESS_REQUIRED);
         }
         if (apiKeyId == null || apiKeyId.isBlank() || apiKey == null || apiKey.isBlank()) {
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Naver geocode API key is not configured.");
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, NAVER_GEOCODE_API_KEY_NOT_CONFIGURED);
         }
 
         URI uri = UriComponentsBuilder
@@ -66,11 +70,11 @@ public class NaverMapService {
                     NaverGeocodeResponse.class
             );
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new ApiException(HttpStatus.BAD_GATEWAY, "Failed to call Naver geocode API.");
+                throw new ApiException(HttpStatus.BAD_GATEWAY, NAVER_GEOCODE_API_CALL_FAILED);
             }
             return response.getBody();
         } catch (RestClientException ex) {
-            throw new ApiException(HttpStatus.BAD_GATEWAY, "Failed to call Naver geocode API.");
+            throw new ApiException(HttpStatus.BAD_GATEWAY, NAVER_GEOCODE_API_CALL_FAILED);
         }
     }
 }

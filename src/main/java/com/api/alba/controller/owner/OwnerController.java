@@ -30,6 +30,8 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
+
 @RestController
 @RequestMapping("/api/owner")
 @RequiredArgsConstructor
@@ -121,7 +123,7 @@ public class OwnerController {
 
     private Long requiredPrincipal(UserPrincipal principal) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return principal.getUserId();
     }

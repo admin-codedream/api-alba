@@ -22,6 +22,8 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
+
 @RestController
 @RequestMapping("/api/attendance")
 @RequiredArgsConstructor
@@ -36,7 +38,7 @@ public class AttendanceController {
             @Valid @RequestBody AttendanceCheckInRequest request
     ) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return attendanceService.checkIn(principal.getUserId(), request);
     }
@@ -48,7 +50,7 @@ public class AttendanceController {
             @Valid @RequestBody AttendanceCheckOutRequest request
     ) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return attendanceService.checkOut(principal.getUserId(), request);
     }
@@ -62,7 +64,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return attendanceService.myRecords(principal.getUserId(), workplaceId, fromDate, toDate);
     }

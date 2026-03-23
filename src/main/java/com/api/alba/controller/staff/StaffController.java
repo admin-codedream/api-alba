@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
+
 @RestController
 @RequestMapping("/api/staff")
 @RequiredArgsConstructor
@@ -68,7 +70,7 @@ public class StaffController {
 
     private Long requiredPrincipal(UserPrincipal principal) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return principal.getUserId();
     }

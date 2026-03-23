@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -53,7 +55,7 @@ public class AuthController {
             @Valid @RequestBody SocialLoginRequest request
     ) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         authService.connectSocial(principal.getUserId(), request);
     }
@@ -62,7 +64,7 @@ public class AuthController {
     @GetMapping("/me")
     public MeResponse me(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication is required.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return authService.me(principal.getUserId());
     }

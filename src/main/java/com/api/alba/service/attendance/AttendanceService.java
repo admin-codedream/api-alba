@@ -24,6 +24,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.api.alba.exception.ExceptionMessages.ACTIVE_WORKPLACE_MEMBER_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.ALREADY_CHECKED_IN_FOR_DATE;
+import static com.api.alba.exception.ExceptionMessages.ALREADY_CHECKED_OUT_FOR_DATE;
+import static com.api.alba.exception.ExceptionMessages.CHECK_IN_RECORD_NOT_FOUND_FOR_DATE;
+import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
+import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
+import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED;
+import static com.api.alba.exception.ExceptionMessages.OUTSIDE_ALLOWED_WORKPLACE_RADIUS;
+import static com.api.alba.exception.ExceptionMessages.WORKPLACE_LOCATION_NOT_CONFIGURED;
+import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 public class AttendanceService {
@@ -48,7 +59,7 @@ public class AttendanceService {
                 workDate
         );
         if (existing != null) {
-            throw new ApiException("Already checked in for this date.");
+            throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
         }
 
         AttendanceRecord record = new AttendanceRecord();
@@ -65,7 +76,7 @@ public class AttendanceService {
         try {
             attendanceRecordMapper.insert(record);
         } catch (DuplicateKeyException e) {
-            throw new ApiException("Already checked in for this date.");
+            throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
         }
 
         return attendanceRecordMapper.findByWorkplaceUserAndDate(record.getWorkplaceId(), userId, workDate);
@@ -83,10 +94,10 @@ public class AttendanceService {
                 workDate
         );
         if (record == null || record.getCheckInAt() == null) {
-            throw new ApiException("Check-in record not found for this date.");
+            throw new ApiException(CHECK_IN_RECORD_NOT_FOUND_FOR_DATE);
         }
         if (record.getCheckOutAt() != null) {
-            throw new ApiException("Already checked out for this date.");
+            throw new ApiException(ALREADY_CHECKED_OUT_FOR_DATE);
         }
 
         LocalDateTime checkOutAt = LocalDateTime.now();
@@ -115,7 +126,7 @@ public class AttendanceService {
 
     public List<AttendanceRecord> myRecords(Long userId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
         if (fromDate.isAfter(toDate)) {
-            throw new ApiException("fromDate must be earlier than or equal to toDate.");
+            throw new ApiException(INVALID_DATE_RANGE);
         }
         validateActiveMember(workplaceId, userId);
         return attendanceRecordMapper.findMyRecordsByPeriod(workplaceId, userId, fromDate, toDate);
@@ -124,7 +135,7 @@ public class AttendanceService {
     private WorkplaceMember validateActiveMember(Long workplaceId, Long userId) {
         WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
         if (member == null) {
-            throw new ApiException("Active workplace member not found.");
+            throw new ApiException(ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
         }
         return member;
     }
@@ -132,20 +143,20 @@ public class AttendanceService {
     private void validateGeofence(Long workplaceId, Double latitude, Double longitude) {
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
-            throw new ApiException("Workplace not found.");
+            throw new ApiException(WORKPLACE_NOT_FOUND);
         }
         if (!Boolean.TRUE.equals(workplace.getUseLocationRestriction())) {
             return;
         }
 
         if (latitude == null && longitude == null) {
-            throw new ApiException("latitude and longitude are required.");
+            throw new ApiException(LAT_LON_REQUIRED);
         }
         if (latitude == null || longitude == null) {
-            throw new ApiException("latitude and longitude must be provided together.");
+            throw new ApiException(LAT_LON_MUST_BE_PROVIDED_TOGETHER);
         }
         if (workplace.getLatitude() == null || workplace.getLongitude() == null) {
-            throw new ApiException("Workplace location is not configured.");
+            throw new ApiException(WORKPLACE_LOCATION_NOT_CONFIGURED);
         }
 
         int allowedRadiusMeters = workplace.getAllowedRadiusMeters() == null
@@ -159,7 +170,7 @@ public class AttendanceService {
         );
 
         if (distanceMeters > allowedRadiusMeters) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You are outside the allowed workplace radius.");
+            throw new ApiException(HttpStatus.FORBIDDEN, OUTSIDE_ALLOWED_WORKPLACE_RADIUS);
         }
     }
 

@@ -34,6 +34,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
+import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
+import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED_WHEN_USE_LOCATION_RESTRICTION_TRUE;
+import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_CAN_PROCESS_REQUEST;
+import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE;
+import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED;
+import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
+import static com.api.alba.exception.ExceptionMessages.STATUS_MUST_BE_PENDING_APPROVED_REJECTED;
+import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.WORKPLACE_SETTING_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
@@ -98,7 +112,7 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
-            throw new ApiException("Workplace not found.");
+            throw new ApiException(WORKPLACE_NOT_FOUND);
         }
         return new InviteCodeResponse(workplace.getId(), workplace.getInviteCode());
     }
@@ -121,7 +135,7 @@ public class OwnerService {
     ) {
         ensureOwner(workplaceId, ownerUserId);
         if (fromDate.isAfter(toDate)) {
-            throw new ApiException("fromDate must be earlier than or equal to toDate.");
+            throw new ApiException(INVALID_DATE_RANGE);
         }
         return attendanceRecordMapper.findWorkplaceRecordsByPeriod(workplaceId, userId, fromDate, toDate);
     }
@@ -140,20 +154,20 @@ public class OwnerService {
     public void decideAttendanceRequest(Long ownerUserId, Long requestId, OwnerDecisionRequest request) {
         AttendanceRequest attendanceRequest = attendanceRequestMapper.findById(requestId);
         if (attendanceRequest == null) {
-            throw new ApiException("Attendance request not found.");
+            throw new ApiException(ATTENDANCE_REQUEST_NOT_FOUND);
         }
         if (!"PENDING".equals(attendanceRequest.getStatus())) {
-            throw new ApiException("Only pending requests can be processed.");
+            throw new ApiException(ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED);
         }
 
         AttendanceRecord record = attendanceRecordMapper.findById(attendanceRequest.getAttendanceRecordId());
         if (record == null) {
-            throw new ApiException("Attendance record not found.");
+            throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
         }
 
         WorkplaceMember ownerMember = ensureOwner(record.getWorkplaceId(), ownerUserId);
         if (ownerMember == null) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Only owner can process request.");
+            throw new ApiException(HttpStatus.FORBIDDEN, ONLY_OWNER_CAN_PROCESS_REQUEST);
         }
 
         String status = request.getStatus().toUpperCase();
@@ -171,7 +185,7 @@ public class OwnerService {
     ) {
         ensureOwner(workplaceId, ownerUserId);
         if (fromDate.isAfter(toDate)) {
-            throw new ApiException("fromDate must be earlier than or equal to toDate.");
+            throw new ApiException(INVALID_DATE_RANGE);
         }
         return attendanceRecordMapper.findEmployeeWageSummaryByPeriod(workplaceId, fromDate, toDate);
     }
@@ -185,7 +199,7 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         if (setting == null) {
-            throw new ApiException("Workplace setting not found.");
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
     }
@@ -221,7 +235,7 @@ public class OwnerService {
     private WorkplaceMember ensureOwner(Long workplaceId, Long userId) {
         WorkplaceMember ownerMember = workplaceMemberMapper.findActiveOwnerMember(workplaceId, userId);
         if (ownerMember == null) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Owner access only.");
+            throw new ApiException(HttpStatus.FORBIDDEN, OWNER_ACCESS_ONLY);
         }
         return ownerMember;
     }
@@ -234,10 +248,10 @@ public class OwnerService {
     private void validateOwnerUserType(Long userId) {
         User user = userMapper.findById(userId);
         if (user == null) {
-            throw new ApiException("User not found.");
+            throw new ApiException(USER_NOT_FOUND);
         }
         if (!"OWNER".equalsIgnoreCase(user.getUserType())) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Only OWNER user type can create workplace.");
+            throw new ApiException(HttpStatus.FORBIDDEN, ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE);
         }
     }
 
@@ -245,10 +259,10 @@ public class OwnerService {
         boolean hasLatitude = request.getLatitude() != null;
         boolean hasLongitude = request.getLongitude() != null;
         if (hasLatitude != hasLongitude) {
-            throw new ApiException("latitude and longitude must be provided together.");
+            throw new ApiException(LAT_LON_MUST_BE_PROVIDED_TOGETHER);
         }
         if (Boolean.TRUE.equals(request.getUseLocationRestriction()) && !hasLatitude) {
-            throw new ApiException("latitude and longitude are required when useLocationRestriction is true.");
+            throw new ApiException(LAT_LON_REQUIRED_WHEN_USE_LOCATION_RESTRICTION_TRUE);
         }
     }
 
@@ -281,7 +295,7 @@ public class OwnerService {
         if (!"PENDING".equals(normalized)
                 && !"APPROVED".equals(normalized)
                 && !"REJECTED".equals(normalized)) {
-            throw new ApiException("status must be one of PENDING, APPROVED, REJECTED.");
+            throw new ApiException(STATUS_MUST_BE_PENDING_APPROVED_REJECTED);
         }
         return normalized;
     }

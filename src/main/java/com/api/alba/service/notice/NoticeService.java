@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.api.alba.exception.ExceptionMessages.NOTICE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 public class NoticeService {
@@ -24,7 +26,7 @@ public class NoticeService {
     public Notice getNotice(Long id) {
         Notice notice = noticeMapper.findById(id);
         if (notice == null) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Notice not found.");
+            throw new ApiException(HttpStatus.NOT_FOUND, NOTICE_NOT_FOUND);
         }
         return notice;
     }
@@ -53,7 +55,7 @@ public class NoticeService {
     public void deleteNotice(Long id) {
         int deleted = noticeMapper.delete(id);
         if (deleted == 0) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Notice not found.");
+            throw new ApiException(HttpStatus.NOT_FOUND, NOTICE_NOT_FOUND);
         }
     }
 }
