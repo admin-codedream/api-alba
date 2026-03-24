@@ -9,6 +9,8 @@ import com.api.alba.domain.auth.User;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
+import com.api.alba.dto.owner.AttendancePushSettingResponse;
+import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
@@ -127,6 +129,14 @@ public class OwnerService {
         return new DashboardTodayResponse(checkedIn, working, pendingAttendanceRequestCount);
     }
 
+    public AttendancePushSettingResponse getAttendancePushSetting(Long ownerUserId, Long workplaceId) {
+        WorkplaceMember ownerMember = ensureOwner(workplaceId, ownerUserId);
+        return new AttendancePushSettingResponse(
+                workplaceId,
+                Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush())
+        );
+    }
+
     public List<AttendanceRecord> getWorkplaceAttendanceRecords(
             Long ownerUserId,
             Long workplaceId,
@@ -203,6 +213,16 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
+    }
+
+    @Transactional
+    public void updateAttendancePushSetting(
+            Long ownerUserId,
+            Long workplaceId,
+            UpdateAttendancePushSettingRequest request
+    ) {
+        WorkplaceMember ownerMember = ensureOwner(workplaceId, ownerUserId);
+        workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), request.getEnabled());
     }
 
     private void applyApprovedRequest(AttendanceRecord record, AttendanceRequest request) {

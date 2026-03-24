@@ -75,4 +75,10 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="updateReceiveAttendancePush">
+        UPDATE WORKPLACE_MEMBERS
+        SET RECEIVE_ATTENDANCE_PUSH = #{receiveAttendancePush}
+        WHERE ID = #{id}
+    </update>
+
 </mapper>

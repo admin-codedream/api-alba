@@ -31,4 +31,6 @@ public interface WorkplaceMemberMapper {
     List<UserWorkplaceInfo> findActiveWorkplacesByUserId(@Param("userId") Long userId);
 
     int updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    int updateReceiveAttendancePush(@Param("id") Long id, @Param("receiveAttendancePush") Boolean receiveAttendancePush);
 }
