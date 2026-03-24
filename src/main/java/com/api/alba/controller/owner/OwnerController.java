@@ -65,7 +65,7 @@ public class OwnerController {
         return ownerService.getTodayDashboard(requiredPrincipal(principal), workplaceId);
     }
 
-    @GetMapping("/workplaces/{workplaceId}/settings/attendance-push")
+    @GetMapping("/workplaces/{workplaceId}/settings")
     public AttendancePushSettingResponse getAttendancePushSetting(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId
@@ -123,7 +123,7 @@ public class OwnerController {
         ownerService.updateWorkplaceHourlyWage(requiredPrincipal(principal), workplaceId, request);
     }
 
-    @PatchMapping("/workplaces/{workplaceId}/settings/attendance-push")
+    @PatchMapping("/workplaces/{workplaceId}/settings")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateAttendancePushSetting(
             @AuthenticationPrincipal UserPrincipal principal,

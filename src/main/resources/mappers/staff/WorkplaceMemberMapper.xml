@@ -17,6 +17,7 @@
     <resultMap id="userWorkplaceInfoMap" type="com.api.alba.dto.staff.UserWorkplaceInfo">
         <result property="workplaceId" column="WORKPLACE_ID"/>
         <result property="workplaceName" column="WORKPLACE_NAME"/>
+        <result property="isPersonal" column="IS_PERSONAL"/>
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
     </resultMap>
 
@@ -61,6 +62,7 @@
     <select id="findActiveWorkplacesByUserId" resultMap="userWorkplaceInfoMap">
         SELECT WM.WORKPLACE_ID,
                W.NAME AS WORKPLACE_NAME,
+               W.IS_PERSONAL,
                WM.RECEIVE_ATTENDANCE_PUSH
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID

@@ -24,6 +24,6 @@ public class SignUpRequest {
     private String name;
 
     @NotBlank(message = "userType is required.")
-    @Pattern(regexp = "^(?i)(OWNER|STAFF)$", message = "userType must be OWNER or STAFF.")
+    @Pattern(regexp = "^(?i)(OWNER|STAFF|PERSONAL)$", message = "userType must be OWNER, STAFF, or PERSONAL.")
     private String userType;
 }

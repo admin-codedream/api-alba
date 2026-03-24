@@ -2,6 +2,9 @@ package com.api.alba.service.auth;
 
 import com.api.alba.domain.auth.User;
 import com.api.alba.domain.auth.UserSocialAccount;
+import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.settings.WorkplaceSetting;
+import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
 import com.api.alba.dto.staff.MeResponse;
@@ -11,6 +14,8 @@ import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.auth.UserSocialAccountMapper;
+import com.api.alba.mapper.owner.WorkplaceMapper;
+import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
@@ -32,6 +39,9 @@ import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND_FOR_SOCIAL
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
+    private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
+    private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
     private static final String[] PROFILE_COLORS = {
             "#EF4444", "#F97316", "#F59E0B", "#EAB308", "#84CC16",
             "#22C55E", "#10B981", "#14B8A6", "#06B6D4", "#0EA5E9",
@@ -41,6 +51,8 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final UserSocialAccountMapper userSocialAccountMapper;
+    private final WorkplaceMapper workplaceMapper;
+    private final WorkplaceSettingMapper workplaceSettingMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -60,6 +72,10 @@ public class AuthService {
         user.setUserType(request.getUserType().toUpperCase());
         user.setStatus("ACTIVE");
         userMapper.insert(user);
+
+        if ("PERSONAL".equals(user.getUserType())) {
+            createPersonalWorkspace(user);
+        }
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
         return new AuthResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds());
@@ -203,5 +219,48 @@ public class AuthService {
         String seed = (loginId == null ? "" : loginId) + "|" + (name == null ? "" : name);
         int idx = Math.floorMod(seed.hashCode(), PROFILE_COLORS.length);
         return PROFILE_COLORS[idx];
+    }
+
+    private void createPersonalWorkspace(User user) {
+        Workplace workplace = new Workplace();
+        workplace.setOwnerId(user.getId());
+        workplace.setName(resolvePersonalWorkplaceName(user.getName()));
+        workplace.setAddress(null);
+        workplace.setInviteCode(generateInviteCode());
+        workplace.setLatitude(null);
+        workplace.setLongitude(null);
+        workplace.setAllowedRadiusMeters(DEFAULT_ALLOWED_RADIUS_METERS);
+        workplace.setUseLocationRestriction(DEFAULT_USE_LOCATION_RESTRICTION);
+        workplace.setIsPersonal(true);
+        workplaceMapper.insert(workplace);
+
+        WorkplaceMember member = new WorkplaceMember();
+        member.setWorkplaceId(workplace.getId());
+        member.setUserId(user.getId());
+        member.setRole("OWNER");
+        member.setHourlyWage(null);
+        member.setReceiveAttendancePush(false);
+        member.setStatus("ACTIVE");
+        workplaceMemberMapper.insert(member);
+
+        WorkplaceSetting workplaceSetting = new WorkplaceSetting();
+        workplaceSetting.setWorkplaceId(workplace.getId());
+        workplaceSetting.setLateGraceMinutes(0);
+        workplaceSetting.setSalaryCalcUnit("MINUTE");
+        workplaceSetting.setRoundingPolicy("NONE");
+        workplaceSetting.setDefaultHourlyWage(DEFAULT_WORKPLACE_HOURLY_WAGE);
+        workplaceSettingMapper.insert(workplaceSetting);
+    }
+
+    private String resolvePersonalWorkplaceName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "내 근무기록";
+        }
+        return name.trim() + "의 근무기록";
+    }
+
+    private String generateInviteCode() {
+        String token = UUID.randomUUID().toString().replace("-", "").toUpperCase();
+        return token.substring(0, 10);
     }
 }
