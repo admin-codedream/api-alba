@@ -22,6 +22,7 @@ public final class ExceptionMessages {
     public static final String ACCOUNT_NOT_ACTIVE = "비활성화된 계정이에요.";
     public static final String USER_NOT_FOUND = "사용자 정보를 찾을 수 없어요.";
     public static final String USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT = "연결된 사용자 정보를 찾을 수 없어요.";
+    public static final String SOCIAL_SIGNUP_REQUIRED = "가입되지 않은 소셜 계정이에요. 회원가입을 진행해 주세요.";
     public static final String SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER =
             "이미 다른 계정에 연결된 소셜 계정이에요.";
     public static final String PROVIDER_ALREADY_CONNECTED = "이미 연결된 소셜 계정이에요.";

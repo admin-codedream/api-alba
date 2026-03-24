@@ -3,6 +3,7 @@ package com.api.alba.dto.auth;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -10,12 +11,9 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class SignUpRequest {
-    @NotBlank(message = "loginId is required.")
-    @Size(min = 4, max = 50, message = "loginId must be between 4 and 50 characters.")
-    @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "loginId can contain letters, numbers, dot, underscore, and hyphen only.")
+    @Size(min = 4, max = 191, message = "loginId must be between 4 and 191 characters.")
     private String loginId;
 
-    @NotBlank(message = "password is required.")
     @Size(min = 8, max = 100, message = "password must be between 8 and 100 characters.")
     private String password;
 
@@ -26,4 +24,45 @@ public class SignUpRequest {
     @NotBlank(message = "userType is required.")
     @Pattern(regexp = "^(?i)(OWNER|STAFF|PERSONAL)$", message = "userType must be OWNER, STAFF, or PERSONAL.")
     private String userType;
+
+    @Pattern(regexp = "^(?i)(KAKAO|GOOGLE|APPLE)$", message = "provider must be one of KAKAO, GOOGLE, APPLE.")
+    private String provider;
+
+    @Size(max = 191, message = "providerUserId must be 191 characters or fewer.")
+    private String providerUserId;
+
+    @Size(max = 255, message = "providerEmail must be 255 characters or fewer.")
+    private String providerEmail;
+
+    @Size(max = 100, message = "providerName must be 100 characters or fewer.")
+    private String providerName;
+
+    public boolean hasSocialAccount() {
+        return hasText(provider) || hasText(providerUserId);
+    }
+
+    @AssertTrue(message = "provider and providerUserId must be provided together.")
+    public boolean isSocialAccountValid() {
+        return hasText(provider) == hasText(providerUserId);
+    }
+
+    @AssertTrue(message = "password is required for non-social signup.")
+    public boolean isPasswordValid() {
+        if (hasSocialAccount()) {
+            return !hasText(password) || password.length() >= 8;
+        }
+        return hasText(password) && password.length() >= 8;
+    }
+
+    @AssertTrue(message = "loginId is required for non-social signup.")
+    public boolean isLoginIdValid() {
+        if (hasSocialAccount()) {
+            return hasText(providerUserId);
+        }
+        return hasText(loginId);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
 }

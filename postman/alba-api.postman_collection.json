@@ -101,10 +101,10 @@
                                                                  ],
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\",\n  \"name\": \"Hong\",\n  \"userType\": \"OWNER\"\n}"
+                                                                   "raw":  "{\n  \"loginId\": \"owner01\",\n  \"password\": \"password1234\",\n  \"name\": \"Hong\",\n  \"userType\": \"OWNER\",\n  \"provider\": \"KAKAO\",\n  \"providerUserId\": \"kakao-uid-001\",\n  \"providerEmail\": \"user@example.com\",\n  \"providerName\": \"Kakao User\"\n}"
                                                                },
                                                       "url":  "{{baseUrl}}/api/auth/signup",
-                                                      "description":  "호출 시점: 최초 계정 생성 시. 시나리오 순서: Auth 1단계. 성공 시 accessToken이 collection 변수(accessToken)에 저장됩니다."
+                                                      "description":  "호출 시점: 최초 계정 생성 시. 시나리오 순서: Auth 1단계. 소셜 회원가입이면 provider/providerUserId를 함께 전달합니다. 성공 시 accessToken이 collection 변수(accessToken)에 저장됩니다."
                                                   }
                                   },
                                   {

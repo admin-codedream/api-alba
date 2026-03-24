@@ -19,6 +19,7 @@ import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
 import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
 import static com.api.alba.exception.ExceptionMessages.PROVIDER_ALREADY_CONNECTED;
+import static com.api.alba.exception.ExceptionMessages.SOCIAL_SIGNUP_REQUIRED;
 import static com.api.alba.exception.ExceptionMessages.SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT;
@@ -59,19 +61,42 @@ public class AuthService {
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request) {
-        if (userMapper.findByLoginId(request.getLoginId()) != null) {
+        String resolvedLoginId = resolveLoginId(request);
+
+        if (userMapper.findByLoginId(resolvedLoginId) != null) {
             throw new ApiException(LOGIN_ID_ALREADY_IN_USE);
         }
 
+        if (request.hasSocialAccount()) {
+            String provider = request.getProvider().toUpperCase();
+            UserSocialAccount existingSocialAccount =
+                    userSocialAccountMapper.findByProviderAndProviderUserId(provider, request.getProviderUserId());
+            if (existingSocialAccount != null) {
+                throw new ApiException(SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER);
+            }
+        }
+
         User user = new User();
-        user.setLoginId(request.getLoginId());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setLoginId(resolvedLoginId);
+        user.setPasswordHash(request.getPassword() == null || request.getPassword().trim().isEmpty()
+                ? null
+                : passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setProfileInitial(resolveProfileInitial(request.getName()));
-        user.setProfileColor(resolveProfileColor(request.getLoginId(), request.getName()));
+        user.setProfileColor(resolveProfileColor(resolvedLoginId, request.getName()));
         user.setUserType(request.getUserType().toUpperCase());
         user.setStatus("ACTIVE");
         userMapper.insert(user);
+
+        if (request.hasSocialAccount()) {
+            UserSocialAccount account = new UserSocialAccount();
+            account.setUserId(user.getId());
+            account.setProvider(request.getProvider().toUpperCase());
+            account.setProviderUserId(request.getProviderUserId());
+            account.setProviderEmail(request.getProviderEmail());
+            account.setProviderName(request.getProviderName());
+            userSocialAccountMapper.insert(account);
+        }
 
         if ("PERSONAL".equals(user.getUserType())) {
             createPersonalWorkspace(user);
@@ -79,6 +104,13 @@ public class AuthService {
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
         return new AuthResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds());
+    }
+
+    private String resolveLoginId(SignUpRequest request) {
+        if (request.hasSocialAccount()) {
+            return request.getProviderUserId().trim();
+        }
+        return request.getLoginId().trim();
     }
 
     @Transactional
@@ -131,28 +163,13 @@ public class AuthService {
         UserSocialAccount account =
                 userSocialAccountMapper.findByProviderAndProviderUserId(provider, request.getProviderUserId());
 
-        User user;
         if (account == null) {
-            user = new User();
-            user.setName(resolveUserName(request));
-            user.setProfileInitial(resolveProfileInitial(user.getName()));
-            user.setProfileColor(resolveProfileColor(user.getLoginId(), user.getName()));
-            user.setUserType("STAFF");
-            user.setStatus("ACTIVE");
-            userMapper.insert(user);
+            throw new ApiException(HttpStatus.NOT_FOUND, SOCIAL_SIGNUP_REQUIRED);
+        }
 
-            account = new UserSocialAccount();
-            account.setUserId(user.getId());
-            account.setProvider(provider);
-            account.setProviderUserId(request.getProviderUserId());
-            account.setProviderEmail(request.getProviderEmail());
-            account.setProviderName(request.getProviderName());
-            userSocialAccountMapper.insert(account);
-        } else {
-            user = userMapper.findById(account.getUserId());
-            if (user == null) {
-                throw new ApiException(USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT);
-            }
+        User user = userMapper.findById(account.getUserId());
+        if (user == null) {
+            throw new ApiException(USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT);
         }
 
         if (!"ACTIVE".equals(user.getStatus())) {
@@ -196,16 +213,6 @@ public class AuthService {
             account.setProviderName(request.getProviderName());
             userSocialAccountMapper.insert(account);
         }
-    }
-
-    private String resolveUserName(SocialLoginRequest request) {
-        if (request.getProviderName() != null && !request.getProviderName().isBlank()) {
-            return request.getProviderName();
-        }
-        String provider = request.getProvider().toUpperCase();
-        String externalId = request.getProviderUserId();
-        int suffixLength = Math.min(8, externalId.length());
-        return provider + "_" + externalId.substring(externalId.length() - suffixLength);
     }
 
     private String resolveProfileInitial(String name) {

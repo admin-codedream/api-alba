@@ -23,7 +23,7 @@ It focuses on secure authentication first, then extends to workplace and attenda
   - My profile (`/api/auth/me`)
 - Social auth
   - Social login by `provider + providerUserId`
-  - Auto-create user on first social login
+  - Social sign up can attach `provider + providerUserId` on `/api/auth/signup`
   - Manual social account linking endpoint
   - No automatic email-based account linking
 - Global API key guard
@@ -57,6 +57,20 @@ It focuses on secure authentication first, then extends to workplace and attenda
   "password": "password1234",
   "name": "Hong",
   "userType": "OWNER"
+}
+```
+
+- Social sign up example:
+```json
+{
+  "loginId": "owner01",
+  "password": "password1234",
+  "name": "Hong",
+  "userType": "OWNER",
+  "provider": "KAKAO",
+  "providerUserId": "kakao-uid-001",
+  "providerEmail": "user@example.com",
+  "providerName": "Kakao User"
 }
 ```
 
