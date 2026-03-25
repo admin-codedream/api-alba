@@ -20,6 +20,8 @@ It focuses on secure authentication first, then extends to workplace and attenda
 - Basic auth
   - Sign up (`loginId`, `password`, `name`, `userType`, optional `hourlyWage`)
   - Login (JWT issue)
+  - Request password reset code (`POST /api/auth/password/reset/request`)
+  - Confirm password reset (`POST /api/auth/password/reset/confirm`)
   - My profile (`/api/auth/me`)
   - Withdraw my account (`POST /api/auth/withdraw`)
 - Social auth

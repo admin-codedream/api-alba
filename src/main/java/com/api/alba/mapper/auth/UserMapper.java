@@ -17,4 +17,6 @@ public interface UserMapper {
     int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 
     int updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    int updatePasswordHash(@Param("id") Long id, @Param("passwordHash") String passwordHash);
 }

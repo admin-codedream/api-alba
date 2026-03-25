@@ -2,6 +2,8 @@ package com.api.alba.controller.auth;
 
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
+import com.api.alba.dto.auth.PasswordResetConfirmRequest;
+import com.api.alba.dto.auth.PasswordResetRequest;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
 import com.api.alba.dto.staff.MeResponse;
@@ -42,6 +44,18 @@ public class AuthController {
     @PostMapping("/social/login")
     public AuthResponse socialLogin(@Valid @RequestBody SocialLoginRequest request) {
         return authService.socialLogin(request);
+    }
+
+    @PostMapping("/password/reset/request")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        authService.requestPasswordReset(request);
+    }
+
+    @PostMapping("/password/reset/confirm")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        authService.confirmPasswordReset(request);
     }
 
     @GetMapping("/me")

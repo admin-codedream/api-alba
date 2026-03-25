@@ -45,6 +45,8 @@ public class SecurityConfig {
                         "/api/auth/signup",
                         "/api/auth/login",
                         "/api/auth/social/login",
+                        "/api/auth/password/reset/request",
+                        "/api/auth/password/reset/confirm",
                         "/api/naver/geocode",
                         "/api/notices",
                         "/api/notices/**"
