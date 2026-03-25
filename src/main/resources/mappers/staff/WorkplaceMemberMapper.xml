@@ -10,6 +10,7 @@
         <result property="userId" column="USER_ID"/>
         <result property="role" column="ROLE"/>
         <result property="hourlyWage" column="HOURLY_WAGE"/>
+        <result property="memo" column="MEMO"/>
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
         <result property="status" column="STATUS"/>
     </resultMap>
@@ -22,19 +23,19 @@
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS)
-        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{receiveAttendancePush}, #{status})
+        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS)
+        VALUES (#{workplaceId}, #{userId}, #{role}, #{hourlyWage}, #{memo}, #{receiveAttendancePush}, #{status})
     </insert>
 
     <select id="findMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
     </select>
 
     <select id="findActiveMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -42,7 +43,7 @@
     </select>
 
     <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -51,12 +52,18 @@
     </select>
 
     <select id="findFirstActiveByUserId" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, RECEIVE_ATTENDANCE_PUSH, STATUS
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
         FROM WORKPLACE_MEMBERS
         WHERE USER_ID = #{userId}
           AND STATUS = 'ACTIVE'
         ORDER BY ID ASC
         LIMIT 1
+    </select>
+
+    <select id="findById" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE ID = #{id}
     </select>
 
     <select id="findActiveWorkplacesByUserId" resultMap="userWorkplaceInfoMap">
@@ -71,6 +78,23 @@
         ORDER BY WM.ID ASC
     </select>
 
+    <select id="findActiveStaffMembersByWorkplaceId" resultType="com.api.alba.dto.owner.OwnerWorkplaceMemberResponse">
+        SELECT WM.ID AS memberId,
+               WM.USER_ID AS userId,
+               U.NAME AS name,
+               U.PROFILE_COLOR AS profileColor,
+               WM.ROLE AS role,
+               WM.HOURLY_WAGE AS hourlyWage,
+               WM.STATUS AS status,
+               WM.MEMO AS memo
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN USERS U ON U.ID = WM.USER_ID
+        WHERE WM.WORKPLACE_ID = #{workplaceId}
+          AND WM.STATUS = 'ACTIVE'
+          AND WM.ROLE <> 'OWNER'
+        ORDER BY U.NAME ASC, WM.ID ASC
+    </select>
+
     <update id="updateStatus">
         UPDATE WORKPLACE_MEMBERS
         SET STATUS = #{status}
@@ -80,6 +104,12 @@
     <update id="updateReceiveAttendancePush">
         UPDATE WORKPLACE_MEMBERS
         SET RECEIVE_ATTENDANCE_PUSH = #{receiveAttendancePush}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateMemo">
+        UPDATE WORKPLACE_MEMBERS
+        SET MEMO = #{memo}
         WHERE ID = #{id}
     </update>
 

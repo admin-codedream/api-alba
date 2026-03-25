@@ -7,7 +7,9 @@ import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
+import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
+import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -70,6 +72,25 @@ public class OwnerController {
             @PathVariable Long workplaceId
     ) {
         return ownerService.getAttendancePushSetting(requiredPrincipal(principal), workplaceId);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/members")
+    public List<OwnerWorkplaceMemberResponse> members(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId
+    ) {
+        return ownerService.getWorkplaceMembers(requiredPrincipal(principal), workplaceId);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/memo")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMemberMemo(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody UpdateWorkplaceMemberMemoRequest request
+    ) {
+        ownerService.updateWorkplaceMemberMemo(requiredPrincipal(principal), workplaceId, memberId, request);
     }
 
     @GetMapping("/workplaces/{workplaceId}/attendance-records")

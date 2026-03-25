@@ -1,6 +1,7 @@
 package com.api.alba.mapper.staff;
 
 import com.api.alba.domain.staff.WorkplaceMember;
+import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.staff.UserWorkplaceInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,9 +29,15 @@ public interface WorkplaceMemberMapper {
 
     WorkplaceMember findFirstActiveByUserId(@Param("userId") Long userId);
 
+    WorkplaceMember findById(@Param("id") Long id);
+
     List<UserWorkplaceInfo> findActiveWorkplacesByUserId(@Param("userId") Long userId);
+
+    List<OwnerWorkplaceMemberResponse> findActiveStaffMembersByWorkplaceId(@Param("workplaceId") Long workplaceId);
 
     int updateStatus(@Param("id") Long id, @Param("status") String status);
 
     int updateReceiveAttendancePush(@Param("id") Long id, @Param("receiveAttendancePush") Boolean receiveAttendancePush);
+
+    int updateMemo(@Param("id") Long id, @Param("memo") String memo);
 }

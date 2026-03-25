@@ -45,6 +45,8 @@ It focuses on secure authentication first, then extends to workplace and attenda
   - Create workplace (`POST /api/owner/workplaces`)
   - Get invite code (`GET /api/owner/workplaces/{workplaceId}/invite-code`)
   - Today dashboard (`GET /api/owner/workplaces/{workplaceId}/dashboard/today`)
+  - Workplace members (`GET /api/owner/workplaces/{workplaceId}/members`)
+  - Update staff memo (`PATCH /api/owner/workplaces/{workplaceId}/members/{memberId}/memo`)
   - Staff attendance records (`GET /api/owner/workplaces/{workplaceId}/attendance-records`)
   - Approve/reject attendance request (`PATCH /api/owner/attendance-requests/{requestId}`)
   - Expected wage summary by employee (`GET /api/owner/workplaces/{workplaceId}/wages/expected`)

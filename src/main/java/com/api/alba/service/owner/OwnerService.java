@@ -11,7 +11,9 @@ import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
+import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
+import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -95,6 +97,7 @@ public class OwnerService {
         member.setRole("OWNER");
         member.setStatus("ACTIVE");
         member.setHourlyWage(null);
+        member.setMemo(null);
         member.setReceiveAttendancePush(true);
         workplaceMemberMapper.insert(member);
 
@@ -140,6 +143,26 @@ public class OwnerService {
                 Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush()),
                 setting.getDefaultHourlyWage()
         );
+    }
+
+    public List<OwnerWorkplaceMemberResponse> getWorkplaceMembers(Long ownerUserId, Long workplaceId) {
+        ensureOwner(workplaceId, ownerUserId);
+        return workplaceMemberMapper.findActiveStaffMembersByWorkplaceId(workplaceId);
+    }
+
+    @Transactional
+    public void updateWorkplaceMemberMemo(
+            Long ownerUserId,
+            Long workplaceId,
+            Long memberId,
+            UpdateWorkplaceMemberMemoRequest request
+    ) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(WORKPLACE_NOT_FOUND);
+        }
+        workplaceMemberMapper.updateMemo(memberId, normalizeMemo(request.getMemo()));
     }
 
     public List<AttendanceRecord> getWorkplaceAttendanceRecords(
@@ -315,5 +338,13 @@ public class OwnerService {
             throw new ApiException(STATUS_MUST_BE_PENDING_APPROVED_REJECTED);
         }
         return normalized;
+    }
+
+    private String normalizeMemo(String memo) {
+        if (memo == null) {
+            return null;
+        }
+        String trimmed = memo.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
