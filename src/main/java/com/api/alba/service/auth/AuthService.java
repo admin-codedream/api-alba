@@ -260,8 +260,8 @@ public class AuthService {
 
     private void sendPasswordResetEmail(User user, String code) {
         String content = EmailForm.getAuthContent()
-                .replace("#{\uC774\uB984}", user.getName() == null ? "" : user.getName())
-                .replace("#{\uC778\uC99D\uCF54\uB4DC}", code);
+                .replace("#{이름}", user.getName() == null ? "" : user.getName())
+                .replace("#{인증코드}", code);
 
         EmailDto emailDto = EmailDto.builder()
                 .recipient(user.getLoginId())
