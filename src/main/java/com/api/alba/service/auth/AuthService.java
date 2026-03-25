@@ -265,7 +265,7 @@ public class AuthService {
 
         EmailDto emailDto = EmailDto.builder()
                 .recipient(user.getLoginId())
-                .emailTitle("Alba 비밀번호 재설정 인증코드")
+                .emailTitle("알밤 비밀번호 재설정 인증코드")
                 .emailContent(content)
                 .build();
         emailService.sendEmail(emailDto);

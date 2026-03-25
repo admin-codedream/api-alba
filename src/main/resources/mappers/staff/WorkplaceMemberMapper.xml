@@ -79,6 +79,7 @@
     </select>
 
     <select id="findActiveStaffMembersByWorkplaceId" resultType="com.api.alba.dto.owner.OwnerWorkplaceMemberResponse">
+        <![CDATA[
         SELECT WM.ID AS memberId,
                WM.USER_ID AS userId,
                U.NAME AS name,
@@ -93,6 +94,7 @@
           AND WM.STATUS = 'ACTIVE'
           AND WM.ROLE <> 'OWNER'
         ORDER BY U.NAME ASC, WM.ID ASC
+        ]]>
     </select>
 
     <update id="updateStatus">

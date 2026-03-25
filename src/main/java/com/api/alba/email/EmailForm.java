@@ -70,7 +70,7 @@ public class EmailForm {
             + "\n"
             + "      <p class=\"sign\">\n"
             + "        <img\n"
-            + "          src=\"https://tistory1.daumcdn.net/tistory/2906470/skin/images/splash.png\"\n"
+            + "          src=\"https://tistory1.daumcdn.net/tistory/6785314/skin/images/logo.png\"\n"
             + "          width=\"205px\"\n"
             + "          height=\"50px\"\n"
             + "          loading=\"lazy\"\n"
