@@ -1,7 +1,6 @@
 package com.api.alba.service.push;
 
 import com.api.alba.domain.push.PushToken;
-import com.api.alba.dto.push.PushTokenDeactivateRequest;
 import com.api.alba.dto.push.PushTokenUpsertRequest;
 import com.api.alba.mapper.push.PushTokenMapper;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +33,5 @@ public class PushTokenService {
         }
 
         pushTokenMapper.updateRegistration(existing.getId(), userId, normalizedPlatform, now);
-    }
-
-    @Transactional
-    public void deactivate(Long userId, PushTokenDeactivateRequest request) {
-        String token = request.getToken().trim();
-        pushTokenMapper.deactivateByUserIdAndToken(userId, token);
     }
 }

@@ -2,26 +2,25 @@ package com.api.alba.service.owner;
 
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
-import com.api.alba.domain.owner.Workplace;
-import com.api.alba.domain.staff.WorkplaceMember;
-import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.auth.User;
+import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.settings.WorkplaceSetting;
+import com.api.alba.domain.staff.WorkplaceMember;
+import com.api.alba.dto.owner.AttendancePushSettingResponse;
+import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
-import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
-import com.api.alba.dto.owner.AttendancePushSettingResponse;
+import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
-import com.api.alba.dto.owner.OwnerDecisionRequest;
-import com.api.alba.dto.owner.UpdateWorkplaceHourlyWageRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
-import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -205,20 +204,6 @@ public class OwnerService {
             throw new ApiException(INVALID_DATE_RANGE);
         }
         return attendanceRecordMapper.findEmployeeWageSummaryByPeriod(workplaceId, fromDate, toDate);
-    }
-
-    @Transactional
-    public void updateWorkplaceHourlyWage(
-            Long ownerUserId,
-            Long workplaceId,
-            UpdateWorkplaceHourlyWageRequest request
-    ) {
-        ensureOwner(workplaceId, ownerUserId);
-        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
-        if (setting == null) {
-            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
-        }
-        workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
     }
 
     @Transactional

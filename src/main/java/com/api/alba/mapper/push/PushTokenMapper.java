@@ -21,8 +21,6 @@ public interface PushTokenMapper {
             @Param("lastSeenAt") LocalDateTime lastSeenAt
     );
 
-    int deactivateByUserIdAndToken(@Param("userId") Long userId, @Param("token") String token);
-
     List<OwnerPushTokenTarget> findOwnerPushTokensByWorkplaceAndUserId(
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId

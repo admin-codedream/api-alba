@@ -42,14 +42,6 @@
         WHERE ID = #{id}
     </update>
 
-    <update id="deactivateByUserIdAndToken">
-        UPDATE PUSH_TOKENS
-        SET IS_ACTIVE = 0
-        WHERE USER_ID = #{userId}
-          AND TOKEN = #{token}
-          AND IS_ACTIVE = 1
-    </update>
-
     <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
         SELECT DISTINCT SU.NAME AS STAFF_NAME,
                         PT.ID AS PUSH_TOKEN_ID,

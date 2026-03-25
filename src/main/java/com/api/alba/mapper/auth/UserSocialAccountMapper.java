@@ -13,11 +13,6 @@ public interface UserSocialAccountMapper {
             @Param("providerUserId") String providerUserId
     );
 
-    UserSocialAccount findByUserIdAndProvider(
-            @Param("userId") Long userId,
-            @Param("provider") String provider
-    );
-
     int insert(UserSocialAccount account);
 
     int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);

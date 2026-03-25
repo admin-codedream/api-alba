@@ -13,11 +13,6 @@
         <result property="updatedAt" column="UPDATED_AT"/>
     </resultMap>
 
-    <insert id="insert" parameterType="com.api.alba.domain.notice.Notice" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO NOTICES (TITLE, CONTENT, IS_PINNED)
-        VALUES (#{title}, #{content}, #{pinned})
-    </insert>
-
     <select id="findById" resultMap="noticeMap">
         SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
         FROM NOTICES2
@@ -29,18 +24,5 @@
         FROM NOTICES2
         ORDER BY IS_PINNED DESC, CREATED_AT DESC
     </select>
-
-    <update id="update" parameterType="com.api.alba.domain.notice.Notice">
-        UPDATE NOTICES
-        SET TITLE = #{title},
-            CONTENT = #{content},
-            IS_PINNED = #{pinned}
-        WHERE ID = #{id}
-    </update>
-
-    <delete id="delete">
-        DELETE FROM NOTICES
-        WHERE ID = #{id}
-    </delete>
 
 </mapper>

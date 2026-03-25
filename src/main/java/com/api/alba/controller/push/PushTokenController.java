@@ -1,6 +1,5 @@
 package com.api.alba.controller.push;
 
-import com.api.alba.dto.push.PushTokenDeactivateRequest;
 import com.api.alba.dto.push.PushTokenUpsertRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
@@ -24,7 +23,6 @@ import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
 public class PushTokenController {
     private final PushTokenService pushTokenService;
 
-    // 로그인/앱 실행 시 푸시 토큰을 등록 또는 갱신합니다.
     @PostMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void upsert(
@@ -32,16 +30,6 @@ public class PushTokenController {
             @Valid @RequestBody PushTokenUpsertRequest request
     ) {
         pushTokenService.upsert(requiredPrincipal(principal), request);
-    }
-
-    // 로그아웃/수신 해제 시 푸시 토큰을 비활성화합니다.
-    @PostMapping("/deactivate")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivate(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @Valid @RequestBody PushTokenDeactivateRequest request
-    ) {
-        pushTokenService.deactivate(requiredPrincipal(principal), request);
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

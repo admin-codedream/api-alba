@@ -8,7 +8,6 @@ import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
-import com.api.alba.dto.owner.UpdateWorkplaceHourlyWageRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -111,16 +110,6 @@ public class OwnerController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ownerService.getExpectedWageSummary(requiredPrincipal(principal), workplaceId, fromDate, toDate);
-    }
-
-    @PatchMapping("/workplaces/{workplaceId}/settings/hourly-wage")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateWorkplaceHourlyWage(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable Long workplaceId,
-            @Valid @RequestBody UpdateWorkplaceHourlyWageRequest request
-    ) {
-        ownerService.updateWorkplaceHourlyWage(requiredPrincipal(principal), workplaceId, request);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings")

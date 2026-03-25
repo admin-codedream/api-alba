@@ -56,3 +56,4 @@ logs/
 
 ### Local API tools ###
 postman/*.postman_environment.json
+src/main/resources/fcm/albam-firebase-adminsdk.json

@@ -7,9 +7,9 @@ import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
-import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
+import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.auth.UserMapper;
@@ -32,9 +32,8 @@ import java.util.UUID;
 import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
 import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
-import static com.api.alba.exception.ExceptionMessages.PROVIDER_ALREADY_CONNECTED;
-import static com.api.alba.exception.ExceptionMessages.SOCIAL_SIGNUP_REQUIRED;
 import static com.api.alba.exception.ExceptionMessages.SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER;
+import static com.api.alba.exception.ExceptionMessages.SOCIAL_SIGNUP_REQUIRED;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT;
 
@@ -183,38 +182,6 @@ public class AuthService {
         return new AuthResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds());
     }
 
-    @Transactional
-    public void connectSocial(Long userId, SocialLoginRequest request) {
-        User user = userMapper.findById(userId);
-        if (user == null) {
-            throw new ApiException(USER_NOT_FOUND);
-        }
-
-        String provider = request.getProvider().toUpperCase();
-
-        UserSocialAccount existingByProviderId =
-                userSocialAccountMapper.findByProviderAndProviderUserId(provider, request.getProviderUserId());
-        if (existingByProviderId != null && !existingByProviderId.getUserId().equals(userId)) {
-            throw new ApiException(SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER);
-        }
-
-        UserSocialAccount existingByUserProvider =
-                userSocialAccountMapper.findByUserIdAndProvider(userId, provider);
-        if (existingByUserProvider != null) {
-            throw new ApiException(PROVIDER_ALREADY_CONNECTED);
-        }
-
-        if (existingByProviderId == null) {
-            UserSocialAccount account = new UserSocialAccount();
-            account.setUserId(userId);
-            account.setProvider(provider);
-            account.setProviderUserId(request.getProviderUserId());
-            account.setProviderEmail(request.getProviderEmail());
-            account.setProviderName(request.getProviderName());
-            userSocialAccountMapper.insert(account);
-        }
-    }
-
     private String resolveProfileInitial(String name) {
         if (name == null || name.trim().isEmpty()) {
             return "?";
@@ -263,9 +230,9 @@ public class AuthService {
 
     private String resolvePersonalWorkplaceName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            return "내 근무기록";
+            return "??洹쇰Т湲곕줉";
         }
-        return name.trim() + "의 근무기록";
+        return name.trim() + "??洹쇰Т湲곕줉";
     }
 
     private String generateInviteCode() {

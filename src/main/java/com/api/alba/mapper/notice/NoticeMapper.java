@@ -8,13 +8,7 @@ import java.util.List;
 
 @Mapper
 public interface NoticeMapper {
-    int insert(Notice notice);
-
     Notice findById(@Param("id") Long id);
 
     List<Notice> findAll();
-
-    int update(Notice notice);
-
-    int delete(@Param("id") Long id);
 }
