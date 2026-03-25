@@ -18,7 +18,7 @@ It focuses on secure authentication first, then extends to workplace and attenda
 
 ## Core Features
 - Basic auth
-  - Sign up (`loginId`, `password`, `name`, `userType`)
+  - Sign up (`loginId`, `password`, `name`, `userType`, optional `hourlyWage`)
   - Login (JWT issue)
   - My profile (`/api/auth/me`)
 - Social auth
@@ -50,6 +50,7 @@ It focuses on secure authentication first, then extends to workplace and attenda
 - Sign up now requires user type selection:
   - `OWNER`
   - `STAFF`
+  - `PERSONAL`
 - Example request:
 ```json
 {
@@ -57,6 +58,17 @@ It focuses on secure authentication first, then extends to workplace and attenda
   "password": "password1234",
   "name": "Hong",
   "userType": "OWNER"
+}
+```
+
+- Personal sign up example:
+```json
+{
+  "loginId": "personal01",
+  "password": "password1234",
+  "name": "Hong",
+  "userType": "PERSONAL",
+  "hourlyWage": 10030
 }
 ```
 

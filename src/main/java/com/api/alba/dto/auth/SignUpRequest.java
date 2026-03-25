@@ -3,7 +3,11 @@ package com.api.alba.dto.auth;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -24,6 +28,10 @@ public class SignUpRequest {
     @NotBlank(message = "userType is required.")
     @Pattern(regexp = "^(?i)(OWNER|STAFF|PERSONAL)$", message = "userType must be OWNER, STAFF, or PERSONAL.")
     private String userType;
+
+    @DecimalMin(value = "0.00", inclusive = true, message = "hourlyWage must be 0 or greater.")
+    @Digits(integer = 8, fraction = 2, message = "hourlyWage must have up to 8 integer digits and 2 decimal places.")
+    private BigDecimal hourlyWage;
 
     @Pattern(regexp = "^(?i)(KAKAO|GOOGLE|APPLE)$", message = "provider must be one of KAKAO, GOOGLE, APPLE.")
     private String provider;
@@ -60,6 +68,17 @@ public class SignUpRequest {
             return hasText(providerUserId);
         }
         return hasText(loginId);
+    }
+
+    @AssertTrue(message = "hourlyWage is required for PERSONAL signup.")
+    public boolean isHourlyWageValid() {
+        if (!hasText(userType)) {
+            return true;
+        }
+        if ("PERSONAL".equalsIgnoreCase(userType.trim())) {
+            return hourlyWage != null;
+        }
+        return true;
     }
 
     private boolean hasText(String value) {

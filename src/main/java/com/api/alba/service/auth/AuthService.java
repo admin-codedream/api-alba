@@ -99,7 +99,7 @@ public class AuthService {
         }
 
         if ("PERSONAL".equals(user.getUserType())) {
-            createPersonalWorkspace(user);
+            createPersonalWorkspace(user, request.getHourlyWage());
         }
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
@@ -228,7 +228,9 @@ public class AuthService {
         return PROFILE_COLORS[idx];
     }
 
-    private void createPersonalWorkspace(User user) {
+    private void createPersonalWorkspace(User user, BigDecimal hourlyWage) {
+        BigDecimal resolvedHourlyWage = hourlyWage == null ? DEFAULT_WORKPLACE_HOURLY_WAGE : hourlyWage;
+
         Workplace workplace = new Workplace();
         workplace.setOwnerId(user.getId());
         workplace.setName(resolvePersonalWorkplaceName(user.getName()));
@@ -245,7 +247,7 @@ public class AuthService {
         member.setWorkplaceId(workplace.getId());
         member.setUserId(user.getId());
         member.setRole("OWNER");
-        member.setHourlyWage(null);
+        member.setHourlyWage(resolvedHourlyWage);
         member.setReceiveAttendancePush(false);
         member.setStatus("ACTIVE");
         workplaceMemberMapper.insert(member);
@@ -255,7 +257,7 @@ public class AuthService {
         workplaceSetting.setLateGraceMinutes(0);
         workplaceSetting.setSalaryCalcUnit("MINUTE");
         workplaceSetting.setRoundingPolicy("NONE");
-        workplaceSetting.setDefaultHourlyWage(DEFAULT_WORKPLACE_HOURLY_WAGE);
+        workplaceSetting.setDefaultHourlyWage(resolvedHourlyWage);
         workplaceSettingMapper.insert(workplaceSetting);
     }
 
