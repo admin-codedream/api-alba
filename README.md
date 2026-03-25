@@ -21,6 +21,7 @@ It focuses on secure authentication first, then extends to workplace and attenda
   - Sign up (`loginId`, `password`, `name`, `userType`, optional `hourlyWage`)
   - Login (JWT issue)
   - My profile (`/api/auth/me`)
+  - Withdraw my account (`POST /api/auth/withdraw`)
 - Social auth
   - Social login by `provider + providerUserId`
   - Social sign up can attach `provider + providerUserId` on `/api/auth/signup`

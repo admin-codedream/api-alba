@@ -15,4 +15,6 @@ public interface UserMapper {
     User findById(@Param("id") Long id);
 
     int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+
+    int updateStatus(@Param("id") Long id, @Param("status") String status);
 }

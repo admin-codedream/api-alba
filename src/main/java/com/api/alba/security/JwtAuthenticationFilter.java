@@ -1,5 +1,7 @@
 package com.api.alba.security;
 
+import com.api.alba.domain.auth.User;
+import com.api.alba.mapper.auth.UserMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,9 +17,11 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserMapper userMapper;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserMapper userMapper) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -31,9 +35,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = bearer.substring(7);
             if (jwtTokenProvider.validateToken(token)) {
                 Long userId = jwtTokenProvider.getUserId(token);
-                String loginId = jwtTokenProvider.getLoginId(token);
-                UserPrincipal principal = new UserPrincipal(userId, loginId);
-                SecurityContextHolder.getContext().setAuthentication(principal.toAuthentication());
+                User user = userMapper.findById(userId);
+                if (user != null && "ACTIVE".equals(user.getStatus())) {
+                    String loginId = jwtTokenProvider.getLoginId(token);
+                    UserPrincipal principal = new UserPrincipal(userId, loginId);
+                    SecurityContextHolder.getContext().setAuthentication(principal.toAuthentication());
+                }
             }
         }
         filterChain.doFilter(request, response);

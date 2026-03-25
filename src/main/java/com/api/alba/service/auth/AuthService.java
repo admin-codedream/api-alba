@@ -155,6 +155,15 @@ public class AuthService {
     }
 
     @Transactional
+    public void withdraw(Long userId) {
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new ApiException(USER_NOT_FOUND);
+        }
+        userMapper.updateStatus(userId, "INACTIVE");
+    }
+
+    @Transactional
     public AuthResponse socialLogin(SocialLoginRequest request) {
         String provider = request.getProvider().toUpperCase();
         LocalDateTime now = LocalDateTime.now();

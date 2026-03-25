@@ -51,4 +51,13 @@ public class AuthController {
         }
         return authService.me(principal.getUserId());
     }
+
+    @PostMapping("/withdraw")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void withdrawByPost(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
+        }
+        authService.withdraw(principal.getUserId());
+    }
 }
