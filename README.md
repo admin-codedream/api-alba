@@ -38,6 +38,8 @@ It focuses on secure authentication first, then extends to workplace and attenda
   - Join workplace by invite code (`POST /api/staff/workplaces/join`)
   - Home today (current work time/expected wage) (`GET /api/staff/workplaces/{workplaceId}/home/today`)
   - Today + cumulative summary (`GET /api/staff/workplaces/{workplaceId}/summary/today`)
+  - Monthly work calendar (`GET /api/staff/workplaces/{workplaceId}/calendar/monthly?yearMonth=YYYY-MM`)
+  - Daily work detail (`GET /api/staff/workplaces/{workplaceId}/calendar/daily?workDate=YYYY-MM-DD`)
   - Submit attendance correction request (`POST /api/staff/attendance-records/{attendanceRecordId}/requests`)
 - Owner APIs (3.2)
   - Create workplace (`POST /api/owner/workplaces`)

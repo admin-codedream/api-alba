@@ -3,21 +3,23 @@ package com.api.alba.service.staff;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.owner.Workplace;
-import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.domain.settings.WorkplaceSetting;
+import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.MyAggregateSummary;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
+import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
+import com.api.alba.dto.staff.StaffWorkDetailResponse;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
-import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Locale;
 
 import static com.api.alba.exception.ExceptionMessages.*;
@@ -145,6 +150,45 @@ public class StaffService {
         );
     }
 
+    public List<StaffMonthlyCalendarItemResponse> getMonthlyCalendar(Long userId, Long workplaceId, String yearMonth) {
+        ensureActiveMember(workplaceId, userId);
+        YearMonth targetMonth = parseYearMonth(yearMonth);
+        return attendanceRecordMapper.findMonthlyCalendarByPeriod(
+                workplaceId,
+                userId,
+                targetMonth.atDay(1),
+                targetMonth.atEndOfMonth()
+        );
+    }
+
+    public StaffWorkDetailResponse getWorkDetail(Long userId, Long workplaceId, LocalDate workDate) {
+        ensureActiveMember(workplaceId, userId);
+        AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
+        if (record == null) {
+            return new StaffWorkDetailResponse(
+                    workplaceId,
+                    workDate,
+                    false,
+                    null,
+                    null,
+                    null,
+                    0,
+                    BigDecimal.ZERO
+            );
+        }
+
+        return new StaffWorkDetailResponse(
+                workplaceId,
+                workDate,
+                true,
+                record.getStatus(),
+                record.getCheckInAt(),
+                record.getCheckOutAt(),
+                safeMinutes(record.getWorkedMinutes()),
+                safeWage(record.getFinalWage())
+        );
+    }
+
     @Transactional
     public AttendanceRequestCreatedResponse submitCorrectionRequest(
             Long userId,
@@ -221,6 +265,14 @@ public class StaffService {
 
     private BigDecimal safeWage(BigDecimal wage) {
         return wage == null ? BigDecimal.ZERO : wage;
+    }
+
+    private YearMonth parseYearMonth(String yearMonth) {
+        try {
+            return YearMonth.parse(yearMonth);
+        } catch (DateTimeParseException e) {
+            throw new ApiException(INVALID_REQUEST);
+        }
     }
 
     private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {

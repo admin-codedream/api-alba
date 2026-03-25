@@ -3,6 +3,7 @@ package com.api.alba.mapper.attendance;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.MyAggregateSummary;
+import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -52,6 +53,13 @@ public interface AttendanceRecordMapper {
 
     List<EmployeeWageSummary> findEmployeeWageSummaryByPeriod(
             @Param("workplaceId") Long workplaceId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
+    List<StaffMonthlyCalendarItemResponse> findMonthlyCalendarByPeriod(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
     );

@@ -110,6 +110,17 @@
         ORDER BY totalExpectedWage DESC
     </select>
 
+    <select id="findMonthlyCalendarByPeriod" resultType="com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse">
+        SELECT ar.WORK_DATE AS workDate,
+               FLOOR(COALESCE(ar.WORKED_MINUTES, 0) / 60) AS workedHours,
+               COALESCE(ar.FINAL_WAGE, 0) AS finalWage
+        FROM ATTENDANCE_RECORDS ar
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.USER_ID = #{userId}
+          AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        ORDER BY ar.WORK_DATE ASC
+    </select>
+
     <select id="findMyAggregateSummary" resultType="com.api.alba.dto.staff.MyAggregateSummary">
         SELECT COALESCE(SUM(WORKED_MINUTES), 0) AS totalWorkedMinutes,
                COALESCE(SUM(FINAL_WAGE), 0) AS totalExpectedWage
