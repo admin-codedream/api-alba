@@ -6,6 +6,8 @@ import com.api.alba.domain.auth.UserSocialAccount;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
+import com.api.alba.domain.terms.Terms;
+import com.api.alba.domain.terms.UserTermsAgreement;
 import com.api.alba.dto.auth.AuthResponse;
 import com.api.alba.dto.auth.LoginRequest;
 import com.api.alba.dto.auth.PasswordResetConfirmRequest;
@@ -24,6 +26,8 @@ import com.api.alba.mapper.auth.UserSocialAccountMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
+import com.api.alba.mapper.terms.TermsMapper;
+import com.api.alba.mapper.terms.UserTermsAgreementMapper;
 import com.api.alba.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,14 +39,18 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
 import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
 import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
+import static com.api.alba.exception.ExceptionMessages.REQUIRED_TERMS_NOT_ALL_AGREED;
 import static com.api.alba.exception.ExceptionMessages.SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER;
 import static com.api.alba.exception.ExceptionMessages.SOCIAL_SIGNUP_REQUIRED;
+import static com.api.alba.exception.ExceptionMessages.TERMS_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND_FOR_SOCIAL_ACCOUNT;
 
@@ -67,6 +75,8 @@ public class AuthService {
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
+    private final TermsMapper termsMapper;
+    private final UserTermsAgreementMapper userTermsAgreementMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
@@ -113,6 +123,8 @@ public class AuthService {
         if ("PERSONAL".equals(user.getUserType())) {
             createPersonalWorkspace(user, request.getHourlyWage());
         }
+
+        agreeToTerms(user.getId(), request.getTermsIds());
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
         return new AuthResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds());
@@ -238,6 +250,31 @@ public class AuthService {
             throw new ApiException(USER_NOT_FOUND);
         }
         userMapper.updateStatus(userId, "INACTIVE");
+    }
+
+    private void agreeToTerms(Long userId, List<Long> termsIds) {
+        List<Terms> activeTerms = termsMapper.findActiveAll();
+
+        Set<Long> requiredTermsIds = activeTerms.stream()
+                .filter(t -> Boolean.TRUE.equals(t.getIsRequired()))
+                .map(Terms::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> requestedIds = termsIds.stream().collect(Collectors.toSet());
+        if (!requestedIds.containsAll(requiredTermsIds)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, REQUIRED_TERMS_NOT_ALL_AGREED);
+        }
+
+        for (Long termsId : termsIds) {
+            Terms terms = termsMapper.findById(termsId);
+            if (terms == null) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, TERMS_NOT_FOUND);
+            }
+            UserTermsAgreement agreement = new UserTermsAgreement();
+            agreement.setUserId(userId);
+            agreement.setTermsId(termsId);
+            userTermsAgreementMapper.insert(agreement);
+        }
     }
 
     private String resolveLoginId(SignUpRequest request) {

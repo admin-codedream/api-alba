@@ -9,8 +9,10 @@ import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 @Getter
 @Setter
@@ -32,6 +34,9 @@ public class SignUpRequest {
     @DecimalMin(value = "0.00", inclusive = true, message = "hourlyWage must be 0 or greater.")
     @Digits(integer = 8, fraction = 2, message = "hourlyWage must have up to 8 integer digits and 2 decimal places.")
     private BigDecimal hourlyWage;
+
+    @NotEmpty(message = "termsIds is required.")
+    private List<Long> termsIds;
 
     @Pattern(regexp = "^(?i)(KAKAO|GOOGLE|APPLE)$", message = "provider must be one of KAKAO, GOOGLE, APPLE.")
     private String provider;

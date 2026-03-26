@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.terms.UserTermsAgreementMapper">
+
+    <resultMap id="userTermsAgreementMap" type="com.api.alba.domain.terms.UserTermsAgreement">
+        <id property="id" column="ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="termsId" column="TERMS_ID"/>
+        <result property="agreedAt" column="AGREED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.terms.UserTermsAgreement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USER_TERMS_AGREEMENTS (USER_ID, TERMS_ID)
+        VALUES (#{userId}, #{termsId})
+    </insert>
+
+    <select id="findByUserId" resultMap="userTermsAgreementMap">
+        SELECT ID, USER_ID, TERMS_ID, AGREED_AT
+        FROM USER_TERMS_AGREEMENTS
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="existsByUserIdAndTermsId" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM USER_TERMS_AGREEMENTS
+        WHERE USER_ID = #{userId}
+          AND TERMS_ID = #{termsId}
+    </select>
+
+</mapper>

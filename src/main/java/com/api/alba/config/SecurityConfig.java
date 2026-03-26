@@ -49,7 +49,9 @@ public class SecurityConfig {
                         "/api/auth/password/reset/confirm",
                         "/api/naver/geocode",
                         "/api/notices",
-                        "/api/notices/**"
+                        "/api/notices/**",
+                        "/api/terms",
+                        "/api/terms/**"
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()

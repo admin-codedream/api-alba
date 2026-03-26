@@ -51,5 +51,8 @@ public final class ExceptionMessages {
     public static final String REQUESTED_CHECK_OUT_MUST_BE_LATER_THAN_CHECK_IN =
             "퇴근 시간은 출근 시간보다 늦어야 해요.";
     public static final String PENDING_CORRECTION_REQUEST_EXISTS = "현재 처리 중인 정정 요청이 있습니다.";
+    public static final String TERMS_NOT_FOUND = "약관 정보를 찾을 수 없어요.";
+    public static final String ALREADY_AGREED_TO_TERMS = "이미 동의한 약관이에요.";
+    public static final String REQUIRED_TERMS_NOT_ALL_AGREED = "필수 약관에 모두 동의해 주세요.";
 
 }
