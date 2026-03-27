@@ -14,6 +14,7 @@ import com.api.alba.dto.auth.PasswordResetConfirmRequest;
 import com.api.alba.dto.auth.PasswordResetRequest;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
+import com.api.alba.dto.auth.WebLoginResponse;
 import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.email.EmailDto;
@@ -146,6 +147,31 @@ public class AuthService {
         userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
         return new AuthResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds());
+    }
+
+    @Transactional
+    public WebLoginResponse webLogin(LoginRequest request) {
+        User user = userMapper.findByLoginId(request.getLoginId());
+        if (user == null || user.getPasswordHash() == null) {
+            throw new ApiException(INVALID_LOGIN_ID_OR_PASSWORD);
+        }
+        if (!"ACTIVE".equals(user.getStatus())) {
+            throw new ApiException(ACCOUNT_NOT_ACTIVE);
+        }
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new ApiException(INVALID_LOGIN_ID_OR_PASSWORD);
+        }
+
+        userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
+        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
+
+        List<WebLoginResponse.WorkplaceItem> workplaces = workplaceMemberMapper
+                .findActiveWorkplacesByUserId(user.getId())
+                .stream()
+                .map(w -> new WebLoginResponse.WorkplaceItem(w.getWorkplaceId(), w.getWorkplaceName(), w.getIsPersonal()))
+                .collect(Collectors.toList());
+
+        return new WebLoginResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds(), user.getUserType(), workplaces);
     }
 
     @Transactional

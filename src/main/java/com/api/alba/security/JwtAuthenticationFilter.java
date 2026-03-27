@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 User user = userMapper.findById(userId);
                 if (user != null && "ACTIVE".equals(user.getStatus())) {
                     String loginId = jwtTokenProvider.getLoginId(token);
-                    UserPrincipal principal = new UserPrincipal(userId, loginId);
+                    UserPrincipal principal = new UserPrincipal(userId, loginId, user.getUserType());
                     SecurityContextHolder.getContext().setAuthentication(principal.toAuthentication());
                 }
             }

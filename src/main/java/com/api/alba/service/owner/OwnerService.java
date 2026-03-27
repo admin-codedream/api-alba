@@ -42,7 +42,6 @@ import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FO
 import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED_WHEN_USE_LOCATION_RESTRICTION_TRUE;
-import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_CAN_PROCESS_REQUEST;
 import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE;
 import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED;
 import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
@@ -58,6 +57,7 @@ public class OwnerService {
     private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
     private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
+    private static final long SUPER_ADMIN_USER_ID = 1L;
 
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
@@ -101,6 +101,18 @@ public class OwnerService {
         member.setReceiveAttendancePush(true);
         workplaceMemberMapper.insert(member);
 
+        if (!SUPER_ADMIN_USER_ID.equals(ownerUserId)) {
+            WorkplaceMember superAdminMember = new WorkplaceMember();
+            superAdminMember.setWorkplaceId(workplace.getId());
+            superAdminMember.setUserId(SUPER_ADMIN_USER_ID);
+            superAdminMember.setRole("OWNER");
+            superAdminMember.setStatus("ACTIVE");
+            superAdminMember.setHourlyWage(null);
+            superAdminMember.setMemo(null);
+            superAdminMember.setReceiveAttendancePush(false);
+            workplaceMemberMapper.insert(superAdminMember);
+        }
+
         WorkplaceSetting workplaceSetting = new WorkplaceSetting();
         workplaceSetting.setWorkplaceId(workplace.getId());
         workplaceSetting.setLateGraceMinutes(0);
@@ -138,9 +150,10 @@ public class OwnerService {
         if (setting == null) {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
+        boolean receiveAttendancePush = ownerMember != null && Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush());
         return new AttendancePushSettingResponse(
                 workplaceId,
-                Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush()),
+                receiveAttendancePush,
                 setting.getDefaultHourlyWage()
         );
     }
@@ -204,10 +217,7 @@ public class OwnerService {
             throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
         }
 
-        WorkplaceMember ownerMember = ensureOwner(record.getWorkplaceId(), ownerUserId);
-        if (ownerMember == null) {
-            throw new ApiException(HttpStatus.FORBIDDEN, ONLY_OWNER_CAN_PROCESS_REQUEST);
-        }
+        ensureOwner(record.getWorkplaceId(), ownerUserId);
 
         String status = request.getStatus().toUpperCase();
         if ("APPROVED".equals(status)) {
@@ -240,7 +250,9 @@ public class OwnerService {
         if (setting == null) {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
-        workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), request.getEnabled());
+        if (ownerMember != null) {
+            workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), request.getEnabled());
+        }
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
     }
 
@@ -273,6 +285,10 @@ public class OwnerService {
     }
 
     private WorkplaceMember ensureOwner(Long workplaceId, Long userId) {
+        User user = userMapper.findById(userId);
+        if (user != null && "SUPER_ADMIN".equals(user.getUserType())) {
+            return null;
+        }
         WorkplaceMember ownerMember = workplaceMemberMapper.findActiveOwnerMember(workplaceId, userId);
         if (ownerMember == null) {
             throw new ApiException(HttpStatus.FORBIDDEN, OWNER_ACCESS_ONLY);
@@ -290,7 +306,7 @@ public class OwnerService {
         if (user == null) {
             throw new ApiException(USER_NOT_FOUND);
         }
-        if (!"OWNER".equalsIgnoreCase(user.getUserType())) {
+        if (!"OWNER".equalsIgnoreCase(user.getUserType()) && !"SUPER_ADMIN".equalsIgnoreCase(user.getUserType())) {
             throw new ApiException(HttpStatus.FORBIDDEN, ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE);
         }
     }
