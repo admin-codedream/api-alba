@@ -7,6 +7,7 @@ plugins {
 group = 'com.api'
 version = '0.0.1-SNAPSHOT'
 description = 'alba'
+apply plugin: 'war'
 
 java {
     toolchain {
@@ -23,6 +24,9 @@ configurations {
 repositories {
     mavenCentral()
 }
+
+bootWar.enabled = false;
+war.enabled = true
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -49,4 +53,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+war {
+    archiveFileName = 'ROOT.war'
 }

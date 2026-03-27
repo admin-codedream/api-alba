@@ -6,7 +6,7 @@
     <property name="FILE_LOG_PATTERN" value="%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %5level %logger - %msg%n" />
 
     <!-- 로그 파일명 -->
-    <springProperty name="FILENAME" source="logging.filename" defaultValue="alba" />
+    <springProperty name="FILENAME" source="logging.filename" defaultValue="albam" />
     <!-- 로그 파일 저장 위치 -->
     <springProperty name="LOG_PATH" source="logs.path" defaultValue="./logs"/>
 
