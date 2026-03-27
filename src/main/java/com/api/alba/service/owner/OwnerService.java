@@ -57,7 +57,7 @@ public class OwnerService {
     private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
     private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
-    private static final long SUPER_ADMIN_USER_ID = 1L;
+    private static final Long SUPER_ADMIN_USER_ID = 1L;
 
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;

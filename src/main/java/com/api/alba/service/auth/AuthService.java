@@ -9,12 +9,15 @@ import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.domain.terms.Terms;
 import com.api.alba.domain.terms.UserTermsAgreement;
 import com.api.alba.dto.auth.AuthResponse;
+import com.api.alba.dto.auth.LoginMethodResponse;
 import com.api.alba.dto.auth.LoginRequest;
 import com.api.alba.dto.auth.PasswordResetConfirmRequest;
 import com.api.alba.dto.auth.PasswordResetRequest;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
+import com.api.alba.dto.auth.WebLoginMethodRequest;
 import com.api.alba.dto.auth.WebLoginResponse;
+import com.api.alba.dto.auth.WebOtpConfirmRequest;
 import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.email.EmailDto;
@@ -46,7 +49,10 @@ import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
+import static com.api.alba.exception.ExceptionMessages.INVALID_OTP;
 import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
+import static com.api.alba.exception.ExceptionMessages.NO_REGISTERED_WORKPLACE;
+import static com.api.alba.exception.ExceptionMessages.WEB_ACCESS_OWNER_ONLY;
 import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
 import static com.api.alba.exception.ExceptionMessages.REQUIRED_TERMS_NOT_ALL_AGREED;
 import static com.api.alba.exception.ExceptionMessages.SOCIAL_ACCOUNT_ALREADY_CONNECTED_TO_ANOTHER_USER;
@@ -161,15 +167,88 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ApiException(INVALID_LOGIN_ID_OR_PASSWORD);
         }
-
-        userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
-        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
+        if (!isWebAccessibleUserType(user.getUserType())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, WEB_ACCESS_OWNER_ONLY);
+        }
 
         List<WebLoginResponse.WorkplaceItem> workplaces = workplaceMemberMapper
                 .findActiveWorkplacesByUserId(user.getId())
                 .stream()
                 .map(w -> new WebLoginResponse.WorkplaceItem(w.getWorkplaceId(), w.getWorkplaceName(), w.getIsPersonal()))
                 .collect(Collectors.toList());
+
+        if ("OWNER".equalsIgnoreCase(user.getUserType()) && workplaces.isEmpty()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, NO_REGISTERED_WORKPLACE);
+        }
+
+        userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
+        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
+
+        return new WebLoginResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds(), user.getUserType(), workplaces);
+    }
+
+    @Transactional
+    public LoginMethodResponse getWebLoginMethod(WebLoginMethodRequest request) {
+        String email = request.getEmail().trim();
+
+        User userByLoginId = userMapper.findByLoginId(email);
+        if (userByLoginId != null && userByLoginId.getPasswordHash() != null) {
+            return new LoginMethodResponse("PASSWORD");
+        }
+
+        UserSocialAccount socialAccount = userSocialAccountMapper.findByProviderEmail(email);
+        if (socialAccount != null) {
+            User socialUser = userMapper.findById(socialAccount.getUserId());
+            if (socialUser != null && "ACTIVE".equals(socialUser.getStatus())) {
+                sendWebOtp(socialUser, email);
+            }
+            return new LoginMethodResponse("OTP");
+        }
+
+        return new LoginMethodResponse("PASSWORD");
+    }
+
+    @Transactional
+    public WebLoginResponse confirmWebOtp(WebOtpConfirmRequest request) {
+        String email = request.getEmail().trim();
+
+        UserSocialAccount socialAccount = userSocialAccountMapper.findByProviderEmail(email);
+        if (socialAccount == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, INVALID_OTP);
+        }
+
+        User user = userMapper.findById(socialAccount.getUserId());
+        if (user == null || !"ACTIVE".equals(user.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, INVALID_OTP);
+        }
+
+        PasswordResetCode otpCode = passwordResetCodeMapper.findValidCode(
+                user.getId(),
+                request.getCode().trim(),
+                LocalDateTime.now()
+        );
+        if (otpCode == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, INVALID_OTP);
+        }
+
+        if (!isWebAccessibleUserType(user.getUserType())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, WEB_ACCESS_OWNER_ONLY);
+        }
+
+        List<WebLoginResponse.WorkplaceItem> workplaces = workplaceMemberMapper
+                .findActiveWorkplacesByUserId(user.getId())
+                .stream()
+                .map(w -> new WebLoginResponse.WorkplaceItem(w.getWorkplaceId(), w.getWorkplaceName(), w.getIsPersonal()))
+                .collect(Collectors.toList());
+
+        if ("OWNER".equalsIgnoreCase(user.getUserType()) && workplaces.isEmpty()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, NO_REGISTERED_WORKPLACE);
+        }
+
+        passwordResetCodeMapper.markUsed(otpCode.getId(), LocalDateTime.now());
+        userMapper.updateLastLoginAt(user.getId(), LocalDateTime.now());
+
+        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId());
 
         return new WebLoginResponse(token, "Bearer", jwtTokenProvider.getExpirationSeconds(), user.getUserType(), workplaces);
     }
@@ -317,8 +396,38 @@ public class AuthService {
                 && looksLikeEmail(user.getLoginId());
     }
 
+    private boolean isWebAccessibleUserType(String userType) {
+        return "OWNER".equalsIgnoreCase(userType) || "SUPER_ADMIN".equalsIgnoreCase(userType);
+    }
+
     private boolean looksLikeEmail(String loginId) {
         return loginId != null && loginId.contains("@");
+    }
+
+    private void sendWebOtp(User user, String email) {
+        String code = generateSixDigitCode();
+        LocalDateTime now = LocalDateTime.now();
+
+        passwordResetCodeMapper.deleteByUserId(user.getId());
+
+        PasswordResetCode otpCode = new PasswordResetCode();
+        otpCode.setUserId(user.getId());
+        otpCode.setEmail(email);
+        otpCode.setCode(code);
+        otpCode.setExpiresAt(now.plusMinutes(PASSWORD_RESET_EXPIRE_MINUTES));
+        otpCode.setUsedAt(null);
+        passwordResetCodeMapper.insert(otpCode);
+
+        String content = EmailForm.getAuthContent()
+                .replace("#{이름}", user.getName() == null ? "" : user.getName())
+                .replace("#{인증코드}", code);
+
+        EmailDto emailDto = EmailDto.builder()
+                .recipient(email)
+                .emailTitle("알밤 웹 로그인 인증번호")
+                .emailContent(content)
+                .build();
+        emailService.sendEmail(emailDto);
     }
 
     private void sendPasswordResetEmail(User user, String code) {

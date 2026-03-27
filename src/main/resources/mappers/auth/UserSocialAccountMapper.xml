@@ -26,6 +26,15 @@
           AND PROVIDER_USER_ID = #{providerUserId}
     </select>
 
+    <select id="findByProviderEmail" resultMap="userSocialAccountMap">
+        SELECT ID, USER_ID, PROVIDER, PROVIDER_USER_ID, PROVIDER_EMAIL, PROVIDER_NAME,
+               ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_EXPIRES_AT, CONNECTED_AT, LAST_LOGIN_AT
+        FROM USER_SOCIAL_ACCOUNTS
+        WHERE PROVIDER_EMAIL = #{email}
+        ORDER BY ID ASC
+        LIMIT 1
+    </select>
+
     <insert id="insert" parameterType="com.api.alba.domain.auth.UserSocialAccount" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO USER_SOCIAL_ACCOUNTS (
             USER_ID, PROVIDER, PROVIDER_USER_ID, PROVIDER_EMAIL, PROVIDER_NAME,

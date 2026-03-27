@@ -54,5 +54,8 @@ public final class ExceptionMessages {
     public static final String TERMS_NOT_FOUND = "약관 정보를 찾을 수 없어요.";
     public static final String ALREADY_AGREED_TO_TERMS = "이미 동의한 약관이에요.";
     public static final String REQUIRED_TERMS_NOT_ALL_AGREED = "필수 약관에 모두 동의해 주세요.";
+    public static final String INVALID_OTP = "인증번호가 올바르지 않아요.";
+    public static final String WEB_ACCESS_OWNER_ONLY = "웹은 사장님 계정만 이용할 수 있어요.";
+    public static final String NO_REGISTERED_WORKPLACE = "등록된 매장이 없어요.";
 
 }

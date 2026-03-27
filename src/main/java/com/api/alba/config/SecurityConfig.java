@@ -48,6 +48,8 @@ public class SecurityConfig {
                         "/api/auth/password/reset/request",
                         "/api/auth/password/reset/confirm",
                         "/api/web/auth/login",
+                        "/api/web/auth/login-method",
+                        "/api/web/auth/otp/confirm",
                         "/api/naver/geocode",
                         "/api/notices",
                         "/api/notices/**",

@@ -15,5 +15,7 @@ public interface UserSocialAccountMapper {
 
     int insert(UserSocialAccount account);
 
+    UserSocialAccount findByProviderEmail(@Param("email") String email);
+
     int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 }
