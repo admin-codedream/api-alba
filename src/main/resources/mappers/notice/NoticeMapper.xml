@@ -15,13 +15,13 @@
 
     <select id="findById" resultMap="noticeMap">
         SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
-        FROM NOTICES2
+        FROM NOTICES
         WHERE ID = #{id}
     </select>
 
     <select id="findAll" resultMap="noticeMap">
         SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
-        FROM NOTICES2
+        FROM NOTICES
         ORDER BY IS_PINNED DESC, CREATED_AT DESC
     </select>
 
