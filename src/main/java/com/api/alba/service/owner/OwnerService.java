@@ -14,8 +14,11 @@ import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
+import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
+import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
+import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
@@ -33,11 +36,14 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
@@ -226,6 +232,31 @@ public class OwnerService {
         attendanceRequestMapper.updateStatus(requestId, status);
     }
 
+    public List<OwnerDailyAttendanceItemResponse> getDailyAttendance(
+            Long ownerUserId,
+            Long workplaceId,
+            LocalDate workDate
+    ) {
+        ensureOwner(workplaceId, ownerUserId);
+        return attendanceRecordMapper.findDailyAttendanceByWorkDate(workplaceId, workDate);
+    }
+
+    public List<OwnerMonthlyCalendarItemResponse> getStaffMonthlyCalendar(
+            Long ownerUserId,
+            Long workplaceId,
+            Long staffUserId,
+            String yearMonth
+    ) {
+        ensureOwner(workplaceId, ownerUserId);
+        YearMonth targetMonth = parseYearMonth(yearMonth);
+        return attendanceRecordMapper.findOwnerMonthlyCalendarByPeriod(
+                workplaceId,
+                staffUserId,
+                targetMonth.atDay(1),
+                targetMonth.atEndOfMonth()
+        );
+    }
+
     public List<EmployeeWageSummary> getExpectedWageSummary(
             Long ownerUserId,
             Long workplaceId,
@@ -354,6 +385,14 @@ public class OwnerService {
             throw new ApiException(STATUS_MUST_BE_PENDING_APPROVED_REJECTED);
         }
         return normalized;
+    }
+
+    private YearMonth parseYearMonth(String yearMonth) {
+        try {
+            return YearMonth.parse(yearMonth);
+        } catch (DateTimeParseException e) {
+            throw new ApiException(INVALID_REQUEST);
+        }
     }
 
     private String normalizeMemo(String memo) {

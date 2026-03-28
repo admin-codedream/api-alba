@@ -10,6 +10,8 @@ import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
+import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
+import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -121,6 +123,25 @@ public class OwnerController {
             @Valid @RequestBody OwnerDecisionRequest request
     ) {
         ownerService.decideAttendanceRequest(requiredPrincipal(principal), requestId, request);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/calendar/daily")
+    public List<OwnerDailyAttendanceItemResponse> dailyAttendance(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate
+    ) {
+        return ownerService.getDailyAttendance(requiredPrincipal(principal), workplaceId, workDate);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/calendar/monthly")
+    public List<OwnerMonthlyCalendarItemResponse> staffMonthlyCalendar(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestParam String yearMonth,
+            @RequestParam(required = false) Long userId
+    ) {
+        return ownerService.getStaffMonthlyCalendar(requiredPrincipal(principal), workplaceId, userId, yearMonth);
     }
 
     @GetMapping("/workplaces/{workplaceId}/wages/expected")

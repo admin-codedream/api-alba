@@ -1,6 +1,8 @@
 package com.api.alba.mapper.attendance;
 
 import com.api.alba.domain.attendance.AttendanceRecord;
+import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
+import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.MyAggregateSummary;
 import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
@@ -58,6 +60,18 @@ public interface AttendanceRecordMapper {
     );
 
     List<StaffMonthlyCalendarItemResponse> findMonthlyCalendarByPeriod(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
+    List<OwnerDailyAttendanceItemResponse> findDailyAttendanceByWorkDate(
+            @Param("workplaceId") Long workplaceId,
+            @Param("workDate") LocalDate workDate
+    );
+
+    List<OwnerMonthlyCalendarItemResponse> findOwnerMonthlyCalendarByPeriod(
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId,
             @Param("fromDate") LocalDate fromDate,
