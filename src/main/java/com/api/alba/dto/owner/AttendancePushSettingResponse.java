@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class AttendancePushSettingResponse {
     private Long workplaceId;
+    private String workplaceName;
+    private Boolean useLocationRestriction;
     private Boolean enabled;
     private BigDecimal hourlyWage;
 }

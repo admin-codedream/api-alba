@@ -5,12 +5,19 @@ import lombok.Setter;
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Getter
 @Setter
 public class UpdateAttendancePushSettingRequest {
+    @NotBlank(message = "workplaceName is required.")
+    private String workplaceName;
+
+    @NotNull(message = "useLocationRestriction is required.")
+    private Boolean useLocationRestriction;
+
     @NotNull(message = "enabled is required.")
     private Boolean enabled;
 

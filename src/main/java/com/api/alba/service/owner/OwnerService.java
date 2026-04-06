@@ -152,6 +152,7 @@ public class OwnerService {
 
     public AttendancePushSettingResponse getAttendancePushSetting(Long ownerUserId, Long workplaceId) {
         WorkplaceMember ownerMember = ensureOwner(workplaceId, ownerUserId);
+        Workplace workplace = workplaceMapper.findById(workplaceId);
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         if (setting == null) {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
@@ -159,6 +160,8 @@ public class OwnerService {
         boolean receiveAttendancePush = ownerMember != null && Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush());
         return new AttendancePushSettingResponse(
                 workplaceId,
+                workplace.getName(),
+                workplace.getUseLocationRestriction(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage()
         );
@@ -284,6 +287,7 @@ public class OwnerService {
         if (ownerMember != null) {
             workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), request.getEnabled());
         }
+        workplaceMapper.updateNameAndLocationRestriction(workplaceId, request.getWorkplaceName(), request.getUseLocationRestriction());
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
     }
 

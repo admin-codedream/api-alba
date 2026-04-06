@@ -29,6 +29,12 @@
         WHERE ID = #{id}
     </select>
 
+    <update id="updateNameAndLocationRestriction">
+        UPDATE WORKPLACES
+        SET NAME = #{name}, USE_LOCATION_RESTRICTION = #{useLocationRestriction}
+        WHERE ID = #{id}
+    </update>
+
     <select id="findByInviteCode" resultMap="workplaceMap">
         SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, IS_PERSONAL, CREATED_AT
         FROM WORKPLACES

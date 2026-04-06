@@ -10,5 +10,11 @@ public interface WorkplaceMapper {
 
     Workplace findById(@Param("id") Long id);
 
+    int updateNameAndLocationRestriction(
+            @Param("id") Long id,
+            @Param("name") String name,
+            @Param("useLocationRestriction") Boolean useLocationRestriction
+    );
+
     Workplace findByInviteCode(@Param("inviteCode") String inviteCode);
 }
