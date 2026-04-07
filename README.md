@@ -116,14 +116,3 @@ It focuses on secure authentication first, then extends to workplace and attenda
 ## Notes
 - Execute `src/main/resources/schema.sql` in DB manually (`spring.sql.init.mode=never`).
 - Do not commit real secrets in profile property files.
-- For existing DB, run migration:
-```sql
-ALTER TABLE USERS
-ADD COLUMN USER_TYPE VARCHAR(30) NOT NULL DEFAULT 'STAFF' AFTER NAME,
-ADD KEY IDX_USERS_USER_TYPE (USER_TYPE);
-```
-```sql
-ALTER TABLE WORKPLACES
-ADD COLUMN INVITE_CODE VARCHAR(20) NOT NULL,
-ADD UNIQUE KEY UK_WORKPLACES_INVITE_CODE (INVITE_CODE);
-```

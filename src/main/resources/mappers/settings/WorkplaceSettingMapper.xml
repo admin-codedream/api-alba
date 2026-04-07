@@ -11,6 +11,7 @@
         <result property="salaryCalcUnit" column="SALARY_CALC_UNIT"/>
         <result property="roundingPolicy" column="ROUNDING_POLICY"/>
         <result property="defaultHourlyWage" column="DEFAULT_HOURLY_WAGE"/>
+        <result property="useBreakPolicy" column="USE_BREAK_POLICY"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.settings.WorkplaceSetting" useGeneratedKeys="true" keyProperty="id">
@@ -19,7 +20,7 @@
     </insert>
 
     <select id="findByWorkplaceId" resultMap="workplaceSettingMap">
-        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE
+        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE, USE_BREAK_POLICY
         FROM WORKPLACE_SETTINGS
         WHERE WORKPLACE_ID = #{workplaceId}
     </select>
@@ -27,6 +28,12 @@
     <update id="updateDefaultHourlyWage">
         UPDATE WORKPLACE_SETTINGS
         SET DEFAULT_HOURLY_WAGE = #{defaultHourlyWage}
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </update>
+
+    <update id="updateUseBreakPolicy">
+        UPDATE WORKPLACE_SETTINGS
+        SET USE_BREAK_POLICY = #{useBreakPolicy}
         WHERE WORKPLACE_ID = #{workplaceId}
     </update>
 

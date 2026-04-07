@@ -4,14 +4,17 @@ import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.auth.User;
 import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.owner.AttendancePushSettingResponse;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
+import com.api.alba.dto.owner.BreakPoliciesResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
+import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -24,6 +27,7 @@ import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
+import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -68,6 +73,7 @@ public class OwnerService {
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
+    private final WorkplaceBreakPolicyMapper workplaceBreakPolicyMapper;
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final UserMapper userMapper;
@@ -414,6 +420,48 @@ public class OwnerService {
             return YearMonth.parse(yearMonth);
         } catch (DateTimeParseException e) {
             throw new ApiException(INVALID_REQUEST);
+        }
+    }
+
+    public BreakPoliciesResponse getBreakPolicies(Long ownerUserId, Long workplaceId) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        List<WorkplaceBreakPolicy> policies = workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
+        List<BreakPoliciesResponse.PolicyItem> items = new ArrayList<>();
+        for (WorkplaceBreakPolicy p : policies) {
+            items.add(new BreakPoliciesResponse.PolicyItem(
+                    p.getId(), p.getName(), p.getBreakType(),
+                    p.getMinWorkMinutes(), p.getBreakMinutes(),
+                    p.getIsPaid(), p.getIsActive()
+            ));
+        }
+        return new BreakPoliciesResponse(Boolean.TRUE.equals(setting.getUseBreakPolicy()), items);
+    }
+
+    @Transactional
+    public void saveBreakPolicies(Long ownerUserId, Long workplaceId, SaveBreakPoliciesRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        workplaceSettingMapper.updateUseBreakPolicy(workplaceId, request.getUseBreakPolicy());
+        workplaceBreakPolicyMapper.deleteByWorkplaceId(workplaceId);
+        if (request.getPolicies() != null) {
+            for (SaveBreakPoliciesRequest.PolicyItem item : request.getPolicies()) {
+                WorkplaceBreakPolicy policy = new WorkplaceBreakPolicy();
+                policy.setWorkplaceId(workplaceId);
+                policy.setName(item.getName());
+                policy.setBreakType(item.getBreakType());
+                policy.setMinWorkMinutes(item.getMinWorkMinutes());
+                policy.setBreakMinutes(item.getBreakMinutes());
+                policy.setIsPaid(item.getIsPaid());
+                policy.setIsActive(true);
+                workplaceBreakPolicyMapper.insert(policy);
+            }
         }
     }
 

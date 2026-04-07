@@ -14,4 +14,5 @@ public class WorkplaceSetting {
     private String salaryCalcUnit;
     private String roundingPolicy;
     private BigDecimal defaultHourlyWage;
+    private Boolean useBreakPolicy;
 }

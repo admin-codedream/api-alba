@@ -16,4 +16,9 @@ public interface WorkplaceSettingMapper {
             @Param("workplaceId") Long workplaceId,
             @Param("defaultHourlyWage") BigDecimal defaultHourlyWage
     );
+
+    int updateUseBreakPolicy(
+            @Param("workplaceId") Long workplaceId,
+            @Param("useBreakPolicy") Boolean useBreakPolicy
+    );
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper">
+
+    <resultMap id="workplaceBreakPolicyMap" type="com.api.alba.domain.settings.WorkplaceBreakPolicy">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="name" column="NAME"/>
+        <result property="breakType" column="BREAK_TYPE"/>
+        <result property="minWorkMinutes" column="MIN_WORK_MINUTES"/>
+        <result property="breakMinutes" column="BREAK_MINUTES"/>
+        <result property="isPaid" column="IS_PAID"/>
+        <result property="isActive" column="IS_ACTIVE"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <select id="findAllByWorkplaceId" resultMap="workplaceBreakPolicyMap">
+        SELECT ID, WORKPLACE_ID, NAME, BREAK_TYPE, MIN_WORK_MINUTES, BREAK_MINUTES, IS_PAID, IS_ACTIVE, CREATED_AT, UPDATED_AT
+        FROM WORKPLACE_BREAK_POLICIES
+        WHERE WORKPLACE_ID = #{workplaceId}
+        ORDER BY MIN_WORK_MINUTES ASC, ID ASC
+    </select>
+
+    <insert id="insert" parameterType="com.api.alba.domain.settings.WorkplaceBreakPolicy" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACE_BREAK_POLICIES (WORKPLACE_ID, NAME, BREAK_TYPE, MIN_WORK_MINUTES, BREAK_MINUTES, IS_PAID, IS_ACTIVE)
+        VALUES (#{workplaceId}, #{name}, #{breakType}, #{minWorkMinutes}, #{breakMinutes}, #{isPaid}, #{isActive})
+    </insert>
+
+    <delete id="deleteByWorkplaceId">
+        DELETE FROM WORKPLACE_BREAK_POLICIES
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </delete>
+
+</mapper>

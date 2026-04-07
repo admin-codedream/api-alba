@@ -4,11 +4,13 @@ import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.dto.owner.AttendancePushSettingResponse;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
+import com.api.alba.dto.owner.BreakPoliciesResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.RecalculateWagesResponse;
+import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -25,6 +27,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -164,6 +167,24 @@ public class OwnerController {
     ) {
         int updatedCount = ownerService.recalculateWages(requiredPrincipal(principal), workplaceId, YearMonth.parse(month));
         return new RecalculateWagesResponse(updatedCount);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/break-policies")
+    public BreakPoliciesResponse getBreakPolicies(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId
+    ) {
+        return ownerService.getBreakPolicies(requiredPrincipal(principal), workplaceId);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/break-policies")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveBreakPolicies(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody SaveBreakPoliciesRequest request
+    ) {
+        ownerService.saveBreakPolicies(requiredPrincipal(principal), workplaceId, request);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings")
