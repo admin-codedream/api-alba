@@ -11,7 +11,10 @@ import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.RecalculateWagesResponse;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
-import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
+import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
+import com.api.alba.dto.owner.UpdateHourlyWageRequest;
+import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
+import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
@@ -187,14 +190,44 @@ public class OwnerController {
         ownerService.saveBreakPolicies(requiredPrincipal(principal), workplaceId, request);
     }
 
-    @PatchMapping("/workplaces/{workplaceId}/settings")
+    @PatchMapping("/workplaces/{workplaceId}/settings/name")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateAttendancePushSetting(
+    public void updateWorkplaceName(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
-            @Valid @RequestBody UpdateAttendancePushSettingRequest request
+            @Valid @RequestBody UpdateWorkplaceNameRequest request
     ) {
-        ownerService.updateAttendancePushSetting(requiredPrincipal(principal), workplaceId, request);
+        ownerService.updateWorkplaceName(requiredPrincipal(principal), workplaceId, request.getWorkplaceName());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/location-restriction")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateLocationRestriction(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateLocationRestrictionRequest request
+    ) {
+        ownerService.updateLocationRestriction(requiredPrincipal(principal), workplaceId, request.getUseLocationRestriction());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/attendance-push")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateAttendancePushEnabled(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateAttendancePushEnabledRequest request
+    ) {
+        ownerService.updateAttendancePushEnabled(requiredPrincipal(principal), workplaceId, request.getEnabled());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/hourly-wage")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateHourlyWage(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateHourlyWageRequest request
+    ) {
+        ownerService.updateHourlyWage(requiredPrincipal(principal), workplaceId, request.getHourlyWage());
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

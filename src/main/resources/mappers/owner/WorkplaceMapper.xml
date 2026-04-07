@@ -29,9 +29,15 @@
         WHERE ID = #{id}
     </select>
 
-    <update id="updateNameAndLocationRestriction">
+    <update id="updateName">
         UPDATE WORKPLACES
-        SET NAME = #{name}, USE_LOCATION_RESTRICTION = #{useLocationRestriction}
+        SET NAME = #{name}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateLocationRestriction">
+        UPDATE WORKPLACES
+        SET USE_LOCATION_RESTRICTION = #{useLocationRestriction}
         WHERE ID = #{id}
     </update>
 

@@ -17,7 +17,6 @@ import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
-import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
@@ -281,21 +280,33 @@ public class OwnerService {
     }
 
     @Transactional
-    public void updateAttendancePushSetting(
-            Long ownerUserId,
-            Long workplaceId,
-            UpdateAttendancePushSettingRequest request
-    ) {
+    public void updateWorkplaceName(Long ownerUserId, Long workplaceId, String workplaceName) {
+        ensureOwner(workplaceId, ownerUserId);
+        workplaceMapper.updateName(workplaceId, workplaceName);
+    }
+
+    @Transactional
+    public void updateLocationRestriction(Long ownerUserId, Long workplaceId, Boolean useLocationRestriction) {
+        ensureOwner(workplaceId, ownerUserId);
+        workplaceMapper.updateLocationRestriction(workplaceId, useLocationRestriction);
+    }
+
+    @Transactional
+    public void updateAttendancePushEnabled(Long ownerUserId, Long workplaceId, Boolean enabled) {
         WorkplaceMember ownerMember = ensureOwner(workplaceId, ownerUserId);
+        if (ownerMember != null) {
+            workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), enabled);
+        }
+    }
+
+    @Transactional
+    public void updateHourlyWage(Long ownerUserId, Long workplaceId, BigDecimal hourlyWage) {
+        ensureOwner(workplaceId, ownerUserId);
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         if (setting == null) {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
-        if (ownerMember != null) {
-            workplaceMemberMapper.updateReceiveAttendancePush(ownerMember.getId(), request.getEnabled());
-        }
-        workplaceMapper.updateNameAndLocationRestriction(workplaceId, request.getWorkplaceName(), request.getUseLocationRestriction());
-        workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
+        workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, hourlyWage);
     }
 
     @Transactional
