@@ -291,6 +291,24 @@ public class OwnerService {
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, request.getHourlyWage());
     }
 
+    @Transactional
+    public int recalculateWages(Long ownerUserId, Long workplaceId, YearMonth month) {
+        ensureOwner(workplaceId, ownerUserId);
+        LocalDate fromDate = month.atDay(1);
+        LocalDate toDate = month.atEndOfMonth();
+        List<AttendanceRecord> records = attendanceRecordMapper.findCompletedRecordsByWorkplace(workplaceId, fromDate, toDate);
+        for (AttendanceRecord record : records) {
+            WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
+            BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
+            BigDecimal wage = hourlyWage
+                    .multiply(BigDecimal.valueOf(record.getWorkedMinutes()))
+                    .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+            wage = truncateToTenWonUnit(wage);
+            attendanceRecordMapper.updateWage(record.getId(), wage, wage);
+        }
+        return records.size();
+    }
+
     private void applyApprovedRequest(AttendanceRecord record, AttendanceRequest request) {
         LocalDateTime newCheckIn = request.getRequestedCheckInAt() != null ? request.getRequestedCheckInAt() : record.getCheckInAt();
         LocalDateTime newCheckOut = request.getRequestedCheckOutAt() != null ? request.getRequestedCheckOutAt() : record.getCheckOutAt();

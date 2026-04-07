@@ -8,6 +8,7 @@ import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
+import com.api.alba.dto.owner.RecalculateWagesResponse;
 import com.api.alba.dto.owner.UpdateAttendancePushSettingRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import static com.api.alba.exception.ExceptionMessages.AUTHENTICATION_REQUIRED;
@@ -152,6 +154,16 @@ public class OwnerController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ownerService.getExpectedWageSummary(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+    }
+
+    @PostMapping("/workplaces/{workplaceId}/attendance-records/recalculate-wages")
+    public RecalculateWagesResponse recalculateWages(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestParam String month
+    ) {
+        int updatedCount = ownerService.recalculateWages(requiredPrincipal(principal), workplaceId, YearMonth.parse(month));
+        return new RecalculateWagesResponse(updatedCount);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings")

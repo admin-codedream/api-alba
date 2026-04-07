@@ -92,4 +92,16 @@ public interface AttendanceRecordMapper {
             @Param("finalWage") BigDecimal finalWage,
             @Param("status") String status
     );
+
+    List<AttendanceRecord> findCompletedRecordsByWorkplace(
+            @Param("workplaceId") Long workplaceId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
+    int updateWage(
+            @Param("id") Long id,
+            @Param("baseWage") BigDecimal baseWage,
+            @Param("finalWage") BigDecimal finalWage
+    );
 }
