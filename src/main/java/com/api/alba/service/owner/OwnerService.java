@@ -1,5 +1,7 @@
 package com.api.alba.service.owner;
 
+import com.api.alba.component.WageCalculationHelper;
+import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.auth.User;
@@ -36,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -67,7 +68,6 @@ public class OwnerService {
     private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
     private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
-    private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
     private static final Long SUPER_ADMIN_USER_ID = 1L;
 
     private final WorkplaceMapper workplaceMapper;
@@ -77,6 +77,7 @@ public class OwnerService {
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final UserMapper userMapper;
+    private final WageCalculationHelper wageCalculationHelper;
 
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
@@ -302,15 +303,28 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         LocalDate fromDate = month.atDay(1);
         LocalDate toDate = month.atEndOfMonth();
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
         List<AttendanceRecord> records = attendanceRecordMapper.findCompletedRecordsByWorkplace(workplaceId, fromDate, toDate);
         for (AttendanceRecord record : records) {
             WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
-            BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
-            BigDecimal wage = hourlyWage
-                    .multiply(BigDecimal.valueOf(record.getWorkedMinutes()))
-                    .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-            wage = truncateToTenWonUnit(wage);
-            attendanceRecordMapper.updateWage(record.getId(), wage, wage);
+            BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+            int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                    hourlyWage,
+                    grossWorkedMinutes,
+                    setting,
+                    breakPolicies
+            );
+            attendanceRecordMapper.updateByOwnerDecision(
+                    record.getId(),
+                    record.getCheckInAt(),
+                    record.getCheckOutAt(),
+                    wageCalculation.workedMinutes(),
+                    wageCalculation.baseWage(),
+                    wageCalculation.finalWage(),
+                    record.getStatus()
+            );
         }
         return records.size();
     }
@@ -319,26 +333,26 @@ public class OwnerService {
         LocalDateTime newCheckIn = request.getRequestedCheckInAt() != null ? request.getRequestedCheckInAt() : record.getCheckInAt();
         LocalDateTime newCheckOut = request.getRequestedCheckOutAt() != null ? request.getRequestedCheckOutAt() : record.getCheckOutAt();
 
-        int workedMinutes = 0;
-        if (newCheckIn != null && newCheckOut != null) {
-            workedMinutes = (int) Math.max(Duration.between(newCheckIn, newCheckOut).toMinutes(), 0);
-        }
-
+        int grossWorkedMinutes = calculateWorkedMinutes(newCheckIn, newCheckOut);
         WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(record.getWorkplaceId(), record.getUserId());
-        BigDecimal hourlyWage = resolveHourlyWage(record.getWorkplaceId(), staffMember);
-        BigDecimal wage = hourlyWage
-                .multiply(BigDecimal.valueOf(workedMinutes))
-                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-        wage = truncateToTenWonUnit(wage);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(record.getWorkplaceId());
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(record.getWorkplaceId(), setting);
+        BigDecimal hourlyWage = resolveHourlyWage(staffMember, setting);
+        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                hourlyWage,
+                grossWorkedMinutes,
+                setting,
+                breakPolicies
+        );
 
         String attendanceStatus = newCheckOut == null ? "WORKING" : "COMPLETED";
         attendanceRecordMapper.updateByOwnerDecision(
                 record.getId(),
                 newCheckIn,
                 newCheckOut,
-                workedMinutes,
-                wage,
-                wage,
+                wageCalculation.workedMinutes(),
+                wageCalculation.baseWage(),
+                wageCalculation.finalWage(),
                 attendanceStatus
         );
     }
@@ -381,8 +395,7 @@ public class OwnerService {
         }
     }
 
-    private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {
-        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+    private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
         if (setting != null && setting.getDefaultHourlyWage() != null) {
             return setting.getDefaultHourlyWage();
         }
@@ -392,14 +405,18 @@ public class OwnerService {
         return BigDecimal.ZERO;
     }
 
-    private BigDecimal truncateToTenWonUnit(BigDecimal wage) {
-        if (wage == null) {
-            return BigDecimal.ZERO;
+    private int calculateWorkedMinutes(LocalDateTime checkInAt, LocalDateTime checkOutAt) {
+        if (checkInAt == null || checkOutAt == null) {
+            return 0;
         }
-        return wage
-                .divide(TEN_WON_UNIT, 0, RoundingMode.DOWN)
-                .multiply(TEN_WON_UNIT)
-                .setScale(2, RoundingMode.DOWN);
+        return (int) Math.max(Duration.between(checkInAt, checkOutAt).toMinutes(), 0);
+    }
+
+    private List<WorkplaceBreakPolicy> resolveBreakPolicies(Long workplaceId, WorkplaceSetting setting) {
+        if (setting == null || !Boolean.TRUE.equals(setting.getUseBreakPolicy())) {
+            return List.of();
+        }
+        return workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
     }
 
     private String normalizeRequestStatus(String status) {

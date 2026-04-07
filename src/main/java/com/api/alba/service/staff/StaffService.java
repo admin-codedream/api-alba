@@ -1,8 +1,10 @@
 package com.api.alba.service.staff;
 
+import com.api.alba.component.WageCalculationHelper;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
@@ -18,6 +20,7 @@ import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
+import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,8 +45,10 @@ public class StaffService {
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
+    private final WorkplaceBreakPolicyMapper workplaceBreakPolicyMapper;
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
+    private final WageCalculationHelper wageCalculationHelper;
 
     @Transactional
     public JoinWorkplaceResponse joinWorkplaceByInviteCode(Long userId, JoinWorkplaceRequest request) {
@@ -85,7 +89,9 @@ public class StaffService {
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
 
-        BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+        BigDecimal hourlyWage = resolveHourlyWage(member, setting);
         if (record == null) {
             return new StaffHomeTodayResponse(
                     workplaceId,
@@ -102,8 +108,9 @@ public class StaffService {
         int workedMinutes = safeMinutes(record.getWorkedMinutes());
         BigDecimal expectedWage = safeWage(record.getFinalWage());
         if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
-            workedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
-            expectedWage = calculateWage(hourlyWage, workedMinutes);
+            int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
+            workedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies);
+            expectedWage = wageCalculationHelper.calculateWage(hourlyWage, workedMinutes);
         }
 
         return new StaffHomeTodayResponse(
@@ -123,7 +130,9 @@ public class StaffService {
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
 
-        BigDecimal hourlyWage = resolveHourlyWage(workplaceId, member);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+        BigDecimal hourlyWage = resolveHourlyWage(member, setting);
         int todayWorkedMinutes = 0;
         BigDecimal todayExpectedWage = BigDecimal.ZERO;
         if (record != null) {
@@ -131,8 +140,13 @@ public class StaffService {
             todayExpectedWage = safeWage(record.getFinalWage());
 
             if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
-                todayWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
-                todayExpectedWage = calculateWage(hourlyWage, todayWorkedMinutes);
+                int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
+                todayWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(
+                        grossWorkedMinutes,
+                        setting,
+                        breakPolicies
+                );
+                todayExpectedWage = wageCalculationHelper.calculateWage(hourlyWage, todayWorkedMinutes);
             }
         }
 
@@ -253,12 +267,6 @@ public class StaffService {
         return (int) Math.max(Duration.between(from, to).toMinutes(), 0);
     }
 
-    private BigDecimal calculateWage(BigDecimal hourlyWage, int workedMinutes) {
-        return hourlyWage
-                .multiply(BigDecimal.valueOf(workedMinutes))
-                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-    }
-
     private int safeMinutes(Integer workedMinutes) {
         return workedMinutes == null ? 0 : workedMinutes;
     }
@@ -275,11 +283,17 @@ public class StaffService {
         }
     }
 
-    private BigDecimal resolveHourlyWage(Long workplaceId, WorkplaceMember member) {
-        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+    private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
         if (setting != null && setting.getDefaultHourlyWage() != null) {
             return setting.getDefaultHourlyWage();
         }
         return safeWage(member.getHourlyWage());
+    }
+
+    private List<WorkplaceBreakPolicy> resolveBreakPolicies(Long workplaceId, WorkplaceSetting setting) {
+        if (setting == null || !Boolean.TRUE.equals(setting.getUseBreakPolicy())) {
+            return List.of();
+        }
+        return workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
     }
 }

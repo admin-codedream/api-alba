@@ -1,7 +1,10 @@
 package com.api.alba.service.attendance;
 
+import com.api.alba.component.WageCalculationHelper;
+import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.owner.Workplace;
+import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCheckInRequest;
@@ -14,6 +17,7 @@ import com.api.alba.firebase.ProjectId;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
+import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,14 +52,15 @@ import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
 public class AttendanceService {
     private static final double EARTH_RADIUS_METERS = 6371000.0;
     private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
-    private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
 
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
+    private final WorkplaceBreakPolicyMapper workplaceBreakPolicyMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
+    private final WageCalculationHelper wageCalculationHelper;
 
     @Transactional
     public AttendanceRecord checkIn(Long userId, AttendanceCheckInRequest request) {
@@ -115,20 +119,24 @@ public class AttendanceService {
 
         LocalDateTime checkOutAt = LocalDateTime.now();
         long diff = Duration.between(record.getCheckInAt(), checkOutAt).toMinutes();
-        int workedMinutes = (int) Math.max(diff, 0);
+        int grossWorkedMinutes = (int) Math.max(diff, 0);
 
-        BigDecimal hourlyWage = resolveHourlyWage(member);
-        BigDecimal baseWage = hourlyWage
-                .multiply(BigDecimal.valueOf(workedMinutes))
-                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
-        baseWage = truncateToTenWonUnit(baseWage);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(member.getWorkplaceId());
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(member.getWorkplaceId(), setting);
+        BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                hourlyWage,
+                grossWorkedMinutes,
+                setting,
+                breakPolicies
+        );
 
         attendanceRecordMapper.updateCheckOut(
                 record.getId(),
                 checkOutAt,
-                workedMinutes,
-                baseWage,
-                baseWage,
+                wageCalculation.workedMinutes(),
+                wageCalculation.baseWage(),
+                wageCalculation.finalWage(),
                 "COMPLETED"
         );
 
@@ -200,22 +208,18 @@ public class AttendanceService {
         return EARTH_RADIUS_METERS * c;
     }
 
-    private BigDecimal resolveHourlyWage(WorkplaceMember member) {
-        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(member.getWorkplaceId());
+    private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
         if (setting != null && setting.getDefaultHourlyWage() != null) {
             return setting.getDefaultHourlyWage();
         }
         return member.getHourlyWage() == null ? BigDecimal.ZERO : member.getHourlyWage();
     }
 
-    private BigDecimal truncateToTenWonUnit(BigDecimal wage) {
-        if (wage == null) {
-            return BigDecimal.ZERO;
+    private List<WorkplaceBreakPolicy> resolveBreakPolicies(Long workplaceId, WorkplaceSetting setting) {
+        if (setting == null || !Boolean.TRUE.equals(setting.getUseBreakPolicy())) {
+            return List.of();
         }
-        return wage
-                .divide(TEN_WON_UNIT, 0, RoundingMode.DOWN)
-                .multiply(TEN_WON_UNIT)
-                .setScale(2, RoundingMode.DOWN);
+        return workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
     }
 
     private void sendAttendancePushSafely(Long workplaceId, Long userId, String title, String contentFormat) {
