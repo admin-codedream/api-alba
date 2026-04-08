@@ -13,4 +13,5 @@ public class AttendancePushSettingResponse {
     private Boolean useLocationRestriction;
     private Boolean enabled;
     private BigDecimal hourlyWage;
+    private String salaryCalcUnit;
 }

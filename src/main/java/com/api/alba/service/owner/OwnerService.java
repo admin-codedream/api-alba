@@ -67,6 +67,8 @@ public class OwnerService {
     private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
     private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
+    private static final String DEFAULT_SALARY_CALC_UNIT = "10MIN";
+    private static final String DEFAULT_ROUNDING_POLICY = "NONE";
     private static final Long SUPER_ADMIN_USER_ID = 1L;
 
     private final WorkplaceMapper workplaceMapper;
@@ -128,8 +130,8 @@ public class OwnerService {
         WorkplaceSetting workplaceSetting = new WorkplaceSetting();
         workplaceSetting.setWorkplaceId(workplace.getId());
         workplaceSetting.setLateGraceMinutes(0);
-        workplaceSetting.setSalaryCalcUnit("MINUTE");
-        workplaceSetting.setRoundingPolicy("NONE");
+        workplaceSetting.setSalaryCalcUnit(DEFAULT_SALARY_CALC_UNIT);
+        workplaceSetting.setRoundingPolicy(DEFAULT_ROUNDING_POLICY);
         workplaceSetting.setDefaultHourlyWage(
                 request.getHourlyWage() == null ? DEFAULT_WORKPLACE_HOURLY_WAGE : request.getHourlyWage()
         );
@@ -169,7 +171,8 @@ public class OwnerService {
                 workplace.getName(),
                 workplace.getUseLocationRestriction(),
                 receiveAttendancePush,
-                setting.getDefaultHourlyWage()
+                setting.getDefaultHourlyWage(),
+                setting.getSalaryCalcUnit()
         );
     }
 
@@ -307,6 +310,16 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
         workplaceSettingMapper.updateDefaultHourlyWage(workplaceId, hourlyWage);
+    }
+
+    @Transactional
+    public void updateSalaryCalcUnit(Long ownerUserId, Long workplaceId, String salaryCalcUnit) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        workplaceSettingMapper.updateSalaryCalcUnit(workplaceId, salaryCalcUnit);
     }
 
     @Transactional

@@ -8,10 +8,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 public class WageCalculationHelper {
     private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
+    private static final String SALARY_CALC_UNIT_TEN_MIN = "10MIN";
+    private static final String SALARY_CALC_UNIT_HOUR = "HOUR";
 
     public WageCalculationResult calculate(
             BigDecimal hourlyWage,
@@ -31,7 +34,8 @@ public class WageCalculationHelper {
     ) {
         int normalizedWorkedMinutes = Math.max(grossWorkedMinutes, 0);
         int unpaidBreakMinutes = resolveUnpaidBreakMinutes(normalizedWorkedMinutes, setting, breakPolicies);
-        return Math.max(normalizedWorkedMinutes - unpaidBreakMinutes, 0);
+        int netWorkedMinutes = Math.max(normalizedWorkedMinutes - unpaidBreakMinutes, 0);
+        return applySalaryCalcUnit(netWorkedMinutes, setting);
     }
 
     public BigDecimal calculateWage(BigDecimal hourlyWage, int workedMinutes) {
@@ -70,6 +74,29 @@ public class WageCalculationHelper {
                 .sum();
 
         return autoBreakMinutes + fixedBreakMinutes;
+    }
+
+    private int applySalaryCalcUnit(int workedMinutes, WorkplaceSetting setting) {
+        int normalizedWorkedMinutes = Math.max(workedMinutes, 0);
+        if (setting == null || setting.getSalaryCalcUnit() == null || setting.getSalaryCalcUnit().isBlank()) {
+            return normalizedWorkedMinutes;
+        }
+
+        String salaryCalcUnit = setting.getSalaryCalcUnit().trim().toUpperCase(Locale.ROOT);
+        if (SALARY_CALC_UNIT_TEN_MIN.equals(salaryCalcUnit)) {
+            return floorToUnit(normalizedWorkedMinutes, 10);
+        }
+        if (SALARY_CALC_UNIT_HOUR.equals(salaryCalcUnit)) {
+            return floorToUnit(normalizedWorkedMinutes, 60);
+        }
+        return normalizedWorkedMinutes;
+    }
+
+    private int floorToUnit(int workedMinutes, int unitMinutes) {
+        if (workedMinutes <= 0 || unitMinutes <= 0) {
+            return 0;
+        }
+        return (workedMinutes / unitMinutes) * unitMinutes;
     }
 
     private BigDecimal truncateToTenWonUnit(BigDecimal wage) {

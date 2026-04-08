@@ -14,6 +14,7 @@ import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
 import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
+import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -228,6 +229,16 @@ public class OwnerController {
             @Valid @RequestBody UpdateHourlyWageRequest request
     ) {
         ownerService.updateHourlyWage(requiredPrincipal(principal), workplaceId, request.getHourlyWage());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/salary-calc-unit")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateSalaryCalcUnit(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateSalaryCalcUnitRequest request
+    ) {
+        ownerService.updateSalaryCalcUnit(requiredPrincipal(principal), workplaceId, request.getSalaryCalcUnit());
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

@@ -67,6 +67,40 @@ class WageCalculationHelperTest {
         assertThat(result.finalWage()).isEqualByComparingTo("10830.00");
     }
 
+    @Test
+    void tenMinuteUnitTruncatesWorkedMinutesDown() {
+        WorkplaceSetting setting = new WorkplaceSetting();
+        setting.setUseBreakPolicy(false);
+        setting.setSalaryCalcUnit("10MIN");
+
+        WageCalculationHelper.WageCalculationResult result = wageCalculationHelper.calculate(
+                new BigDecimal("10000"),
+                67,
+                setting,
+                List.of()
+        );
+
+        assertThat(result.workedMinutes()).isEqualTo(60);
+        assertThat(result.finalWage()).isEqualByComparingTo("10000.00");
+    }
+
+    @Test
+    void hourUnitTruncatesWorkedMinutesDown() {
+        WorkplaceSetting setting = new WorkplaceSetting();
+        setting.setUseBreakPolicy(false);
+        setting.setSalaryCalcUnit("HOUR");
+
+        WageCalculationHelper.WageCalculationResult result = wageCalculationHelper.calculate(
+                new BigDecimal("10000"),
+                67,
+                setting,
+                List.of()
+        );
+
+        assertThat(result.workedMinutes()).isEqualTo(60);
+        assertThat(result.finalWage()).isEqualByComparingTo("10000.00");
+    }
+
     private WorkplaceBreakPolicy breakPolicy(
             String breakType,
             Integer minWorkMinutes,

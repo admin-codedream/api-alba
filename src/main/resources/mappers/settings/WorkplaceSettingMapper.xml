@@ -37,4 +37,10 @@
         WHERE WORKPLACE_ID = #{workplaceId}
     </update>
 
+    <update id="updateSalaryCalcUnit">
+        UPDATE WORKPLACE_SETTINGS
+        SET SALARY_CALC_UNIT = #{salaryCalcUnit}
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </update>
+
 </mapper>

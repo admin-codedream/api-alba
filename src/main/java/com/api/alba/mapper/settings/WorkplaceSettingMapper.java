@@ -21,4 +21,9 @@ public interface WorkplaceSettingMapper {
             @Param("workplaceId") Long workplaceId,
             @Param("useBreakPolicy") Boolean useBreakPolicy
     );
+
+    int updateSalaryCalcUnit(
+            @Param("workplaceId") Long workplaceId,
+            @Param("salaryCalcUnit") String salaryCalcUnit
+    );
 }
