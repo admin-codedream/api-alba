@@ -32,9 +32,12 @@ public class WageCalculationHelper {
             WorkplaceSetting setting,
             List<WorkplaceBreakPolicy> breakPolicies
     ) {
+        // 1. 전체 근무 분을 음수 없이 보정합니다.
         int normalizedWorkedMinutes = Math.max(grossWorkedMinutes, 0);
+        // 2. 무급 휴게시간을 차감합니다.
         int unpaidBreakMinutes = resolveUnpaidBreakMinutes(normalizedWorkedMinutes, setting, breakPolicies);
         int netWorkedMinutes = Math.max(normalizedWorkedMinutes - unpaidBreakMinutes, 0);
+        // 3. 급여 계산 단위(MINUTE, 10MIN, HOUR)에 맞춰 절사합니다.
         return applySalaryCalcUnit(netWorkedMinutes, setting);
     }
 
@@ -83,6 +86,7 @@ public class WageCalculationHelper {
         }
 
         String salaryCalcUnit = setting.getSalaryCalcUnit().trim().toUpperCase(Locale.ROOT);
+        // 10분 단위와 1시간 단위는 모두 해당 단위 기준으로 버림 처리합니다.
         if (SALARY_CALC_UNIT_TEN_MIN.equals(salaryCalcUnit)) {
             return floorToUnit(normalizedWorkedMinutes, 10);
         }
