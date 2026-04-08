@@ -104,4 +104,9 @@ public interface AttendanceRecordMapper {
             @Param("baseWage") BigDecimal baseWage,
             @Param("finalWage") BigDecimal finalWage
     );
+
+    int updateFinalWage(
+            @Param("id") Long id,
+            @Param("finalWage") BigDecimal finalWage
+    );
 }

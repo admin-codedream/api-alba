@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class DashboardTodayResponse {
+    private int totalStaffCount;
     private int checkedInCount;
     private int workingCount;
     private int pendingAttendanceRequestCount;

@@ -152,10 +152,11 @@ public class OwnerService {
     public DashboardTodayResponse getTodayDashboard(Long ownerUserId, Long workplaceId) {
         ensureOwner(workplaceId, ownerUserId);
         LocalDate today = LocalDate.now();
+        int totalStaffCount = workplaceMemberMapper.countActiveStaffByWorkplaceId(workplaceId);
         int checkedIn = attendanceRecordMapper.countTodayCheckedIn(workplaceId, today);
         int working = attendanceRecordMapper.countTodayWorking(workplaceId, today);
         int pendingAttendanceRequestCount = attendanceRequestMapper.countPendingByWorkplaceId(workplaceId);
-        return new DashboardTodayResponse(checkedIn, working, pendingAttendanceRequestCount);
+        return new DashboardTodayResponse(totalStaffCount, checkedIn, working, pendingAttendanceRequestCount);
     }
 
     public AttendancePushSettingResponse getAttendancePushSetting(Long ownerUserId, Long workplaceId) {
@@ -340,14 +341,9 @@ public class OwnerService {
                     setting,
                     breakPolicies
             );
-            attendanceRecordMapper.updateByOwnerDecision(
+            attendanceRecordMapper.updateFinalWage(
                     record.getId(),
-                    record.getCheckInAt(),
-                    record.getCheckOutAt(),
-                    wageCalculation.workedMinutes(),
-                    wageCalculation.baseWage(),
-                    wageCalculation.finalWage(),
-                    record.getStatus()
+                    wageCalculation.finalWage()
             );
         }
         return records.size();

@@ -180,6 +180,12 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="updateFinalWage">
+        UPDATE ATTENDANCE_RECORDS
+        SET FINAL_WAGE = #{finalWage}
+        WHERE ID = #{id}
+    </update>
+
     <update id="updateByOwnerDecision">
         UPDATE ATTENDANCE_RECORDS
         SET CHECK_IN_AT = #{checkInAt},

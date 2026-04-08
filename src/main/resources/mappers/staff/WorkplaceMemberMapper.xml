@@ -97,6 +97,16 @@
         ]]>
     </select>
 
+    <select id="countActiveStaffByWorkplaceId" resultType="int">
+        <![CDATA[
+        SELECT COUNT(*)
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND STATUS = 'ACTIVE'
+          AND ROLE <> 'OWNER'
+        ]]>
+    </select>
+
     <update id="updateStatus">
         UPDATE WORKPLACE_MEMBERS
         SET STATUS = #{status}
