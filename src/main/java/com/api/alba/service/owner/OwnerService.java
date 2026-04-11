@@ -50,9 +50,11 @@ import java.util.UUID;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.CANNOT_DELETE_OWNER_MEMBER;
 import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED_WHEN_USE_LOCATION_RESTRICTION_TRUE;
+import static com.api.alba.exception.ExceptionMessages.MEMBER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE;
 import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED;
 import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
@@ -195,6 +197,19 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_NOT_FOUND);
         }
         workplaceMemberMapper.updateMemo(memberId, normalizeMemo(request.getMemo()));
+    }
+
+    @Transactional
+    public void deleteWorkplaceMember(Long ownerUserId, Long workplaceId, Long memberId) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId()) || !"ACTIVE".equals(member.getStatus())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        if ("OWNER".equals(member.getRole())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, CANNOT_DELETE_OWNER_MEMBER);
+        }
+        workplaceMemberMapper.updateStatus(memberId, "INACTIVE");
     }
 
     public List<AttendanceRecord> getWorkplaceAttendanceRecords(

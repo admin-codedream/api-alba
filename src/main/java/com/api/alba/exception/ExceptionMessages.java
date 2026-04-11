@@ -57,5 +57,8 @@ public final class ExceptionMessages {
     public static final String INVALID_OTP = "인증번호가 올바르지 않아요.";
     public static final String WEB_ACCESS_OWNER_ONLY = "웹은 사장님 계정만 이용할 수 있어요.";
     public static final String NO_REGISTERED_WORKPLACE = "등록된 매장이 없어요.";
+    public static final String CANNOT_DELETE_OWNER_MEMBER = "사장님 계정은 삭제할 수 없어요.";
+    public static final String MEMBER_NOT_FOUND = "직원 정보를 찾을 수 없어요.";
+    public static final String INVALID_WITHDRAWAL_REASON_TYPE = "탈퇴 사유가 올바르지 않아요.";
 
 }

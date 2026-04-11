@@ -6,6 +6,7 @@ import com.api.alba.dto.auth.PasswordResetConfirmRequest;
 import com.api.alba.dto.auth.PasswordResetRequest;
 import com.api.alba.dto.auth.SignUpRequest;
 import com.api.alba.dto.auth.SocialLoginRequest;
+import com.api.alba.dto.auth.WithdrawRequest;
 import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
@@ -68,10 +69,13 @@ public class AuthController {
 
     @PostMapping("/withdraw")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void withdrawByPost(@AuthenticationPrincipal UserPrincipal principal) {
+    public void withdrawByPost(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody WithdrawRequest request
+    ) {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
-        authService.withdraw(principal.getUserId());
+        authService.withdraw(principal.getUserId(), request);
     }
 }

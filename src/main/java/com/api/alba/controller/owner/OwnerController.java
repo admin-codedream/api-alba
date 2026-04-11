@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -91,6 +92,16 @@ public class OwnerController {
             @PathVariable Long workplaceId
     ) {
         return ownerService.getWorkplaceMembers(requiredPrincipal(principal), workplaceId);
+    }
+
+    @DeleteMapping("/workplaces/{workplaceId}/members/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteWorkplaceMember(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId
+    ) {
+        ownerService.deleteWorkplaceMember(requiredPrincipal(principal), workplaceId, memberId);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/memo")

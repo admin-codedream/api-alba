@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.auth.UserWithdrawalReasonMapper">
+
+    <resultMap id="userWithdrawalReasonMap" type="com.api.alba.domain.auth.UserWithdrawalReason">
+        <id property="id" column="ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="reasonType" column="REASON_TYPE"/>
+        <result property="customReason" column="CUSTOM_REASON"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.auth.UserWithdrawalReason" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USER_WITHDRAWAL_REASONS (USER_ID, REASON_TYPE, CUSTOM_REASON)
+        VALUES (#{userId}, #{reasonType}, #{customReason})
+    </insert>
+
+    <select id="findAllByUserId" resultMap="userWithdrawalReasonMap">
+        SELECT ID, USER_ID, REASON_TYPE, CUSTOM_REASON
+        FROM USER_WITHDRAWAL_REASONS
+        WHERE USER_ID = #{userId}
+        ORDER BY ID DESC
+    </select>
+
+</mapper>

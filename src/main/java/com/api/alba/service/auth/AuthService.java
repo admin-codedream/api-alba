@@ -3,6 +3,7 @@ package com.api.alba.service.auth;
 import com.api.alba.domain.auth.PasswordResetCode;
 import com.api.alba.domain.auth.User;
 import com.api.alba.domain.auth.UserSocialAccount;
+import com.api.alba.domain.auth.UserWithdrawalReason;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
@@ -18,6 +19,7 @@ import com.api.alba.dto.auth.SocialLoginRequest;
 import com.api.alba.dto.auth.WebLoginMethodRequest;
 import com.api.alba.dto.auth.WebLoginResponse;
 import com.api.alba.dto.auth.WebOtpConfirmRequest;
+import com.api.alba.dto.auth.WithdrawRequest;
 import com.api.alba.dto.staff.MeResponse;
 import com.api.alba.dto.staff.UserWorkplaceInfo;
 import com.api.alba.email.EmailDto;
@@ -27,6 +29,7 @@ import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.auth.PasswordResetCodeMapper;
 import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.auth.UserSocialAccountMapper;
+import com.api.alba.mapper.auth.UserWithdrawalReasonMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
@@ -51,6 +54,7 @@ import static com.api.alba.exception.ExceptionMessages.ACCOUNT_NOT_ACTIVE;
 import static com.api.alba.exception.ExceptionMessages.INVALID_LOGIN_ID_OR_PASSWORD;
 import static com.api.alba.exception.ExceptionMessages.INVALID_OTP;
 import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
+import static com.api.alba.exception.ExceptionMessages.INVALID_WITHDRAWAL_REASON_TYPE;
 import static com.api.alba.exception.ExceptionMessages.NO_REGISTERED_WORKPLACE;
 import static com.api.alba.exception.ExceptionMessages.WEB_ACCESS_OWNER_ONLY;
 import static com.api.alba.exception.ExceptionMessages.LOGIN_ID_ALREADY_IN_USE;
@@ -81,6 +85,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final UserSocialAccountMapper userSocialAccountMapper;
     private final PasswordResetCodeMapper passwordResetCodeMapper;
+    private final UserWithdrawalReasonMapper userWithdrawalReasonMapper;
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
@@ -351,11 +356,25 @@ public class AuthService {
     }
 
     @Transactional
-    public void withdraw(Long userId) {
+    public void withdraw(Long userId, WithdrawRequest request) {
         User user = userMapper.findById(userId);
         if (user == null) {
             throw new ApiException(USER_NOT_FOUND);
         }
+        if (!request.isValidReasonType()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, INVALID_WITHDRAWAL_REASON_TYPE);
+        }
+
+        UserWithdrawalReason reason = new UserWithdrawalReason();
+        reason.setUserId(userId);
+        reason.setReasonType(request.getReasonType().toUpperCase());
+        reason.setCustomReason(
+                request.getCustomReason() == null || request.getCustomReason().isBlank()
+                        ? null
+                        : request.getCustomReason().trim()
+        );
+        userWithdrawalReasonMapper.insert(reason);
+
         userMapper.updateStatus(userId, "INACTIVE");
     }
 
