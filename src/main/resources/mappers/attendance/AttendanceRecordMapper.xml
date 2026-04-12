@@ -112,7 +112,7 @@
 
     <select id="findMonthlyCalendarByPeriod" resultType="com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse">
         SELECT ar.WORK_DATE AS workDate,
-               FLOOR(COALESCE(ar.WORKED_MINUTES, 0) / 60) AS workedHours,
+               COALESCE(ar.WORKED_MINUTES, 0) AS workedMinutes,
                COALESCE(ar.FINAL_WAGE, 0) AS finalWage
         FROM ATTENDANCE_RECORDS ar
         WHERE ar.WORKPLACE_ID = #{workplaceId}

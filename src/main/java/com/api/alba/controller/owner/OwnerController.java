@@ -6,6 +6,7 @@ import com.api.alba.dto.owner.AttendancePushSettingResponse;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.BreakPoliciesResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
+import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
@@ -172,6 +173,16 @@ public class OwnerController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ownerService.getExpectedWageSummary(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+    }
+
+    @PostMapping("/workplaces/{workplaceId}/attendance-records")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttendanceRecord createAttendanceRecord(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody OwnerCreateAttendanceRecordRequest request
+    ) {
+        return ownerService.createAttendanceRecord(requiredPrincipal(principal), workplaceId, request);
     }
 
     @PostMapping("/workplaces/{workplaceId}/attendance-records/recalculate-wages")

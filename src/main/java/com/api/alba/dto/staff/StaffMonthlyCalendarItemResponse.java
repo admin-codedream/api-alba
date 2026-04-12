@@ -10,6 +10,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class StaffMonthlyCalendarItemResponse {
     private LocalDate workDate;
-    private Integer workedHours;
+    private Integer workedMinutes;
     private BigDecimal finalWage;
 }

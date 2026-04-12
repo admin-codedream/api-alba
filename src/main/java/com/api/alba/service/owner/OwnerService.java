@@ -16,6 +16,7 @@ import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
+import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -47,7 +48,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.api.alba.exception.ExceptionMessages.ACTIVE_WORKPLACE_MEMBER_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_ALREADY_EXISTS;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.CHECK_OUT_MUST_BE_AFTER_CHECK_IN;
 import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.CANNOT_DELETE_OWNER_MEMBER;
@@ -491,6 +495,59 @@ public class OwnerService {
             ));
         }
         return new BreakPoliciesResponse(Boolean.TRUE.equals(setting.getUseBreakPolicy()), items);
+    }
+
+    @Transactional
+    public AttendanceRecord createAttendanceRecord(Long ownerUserId, Long workplaceId, OwnerCreateAttendanceRecordRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+
+        WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(workplaceId, request.getStaffUserId());
+        if (staffMember == null) {
+            throw new ApiException(HttpStatus.NOT_FOUND, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
+        }
+
+        AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
+                workplaceId, request.getStaffUserId(), request.getWorkDate()
+        );
+        if (existing != null) {
+            throw new ApiException(HttpStatus.CONFLICT, ATTENDANCE_RECORD_ALREADY_EXISTS);
+        }
+
+        if (request.getCheckOutAt() != null && !request.getCheckOutAt().isAfter(request.getCheckInAt())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, CHECK_OUT_MUST_BE_AFTER_CHECK_IN);
+        }
+
+        AttendanceRecord record = new AttendanceRecord();
+        record.setWorkplaceId(workplaceId);
+        record.setUserId(request.getStaffUserId());
+        record.setWorkDate(request.getWorkDate());
+        record.setCheckInAt(request.getCheckInAt());
+        record.setNote(request.getNote());
+        record.setWorkedMinutes(0);
+        record.setBaseWage(BigDecimal.ZERO);
+        record.setFinalWage(BigDecimal.ZERO);
+        record.setStatus("WORKING");
+        attendanceRecordMapper.insert(record);
+
+        if (request.getCheckOutAt() != null) {
+            WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+            List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+            BigDecimal hourlyWage = resolveHourlyWage(staffMember, setting);
+            int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                    hourlyWage, grossWorkedMinutes, setting, breakPolicies
+            );
+            attendanceRecordMapper.updateCheckOut(
+                    record.getId(),
+                    request.getCheckOutAt(),
+                    wageCalculation.workedMinutes(),
+                    wageCalculation.baseWage(),
+                    wageCalculation.finalWage(),
+                    "COMPLETED"
+            );
+        }
+
+        return attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, request.getStaffUserId(), request.getWorkDate());
     }
 
     @Transactional
