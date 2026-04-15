@@ -97,6 +97,17 @@
         ]]>
     </select>
 
+    <select id="findAllActiveStaffMembers" resultMap="workplaceMemberMap">
+        <![CDATA[
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, HOURLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND STATUS = 'ACTIVE'
+          AND ROLE <> 'OWNER'
+        ORDER BY ID ASC
+        ]]>
+    </select>
+
     <select id="countActiveStaffByWorkplaceId" resultType="int">
         <![CDATA[
         SELECT COUNT(*)

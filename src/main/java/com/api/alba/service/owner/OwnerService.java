@@ -498,56 +498,86 @@ public class OwnerService {
     }
 
     @Transactional
-    public AttendanceRecord createAttendanceRecord(Long ownerUserId, Long workplaceId, OwnerCreateAttendanceRecordRequest request) {
+    public List<AttendanceRecord> createAttendanceRecord(Long ownerUserId, Long workplaceId, OwnerCreateAttendanceRecordRequest request) {
         ensureOwner(workplaceId, ownerUserId);
-
-        WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(workplaceId, request.getStaffUserId());
-        if (staffMember == null) {
-            throw new ApiException(HttpStatus.NOT_FOUND, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
-        }
-
-        AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
-                workplaceId, request.getStaffUserId(), request.getWorkDate()
-        );
-        if (existing != null) {
-            throw new ApiException(HttpStatus.CONFLICT, ATTENDANCE_RECORD_ALREADY_EXISTS);
-        }
 
         if (request.getCheckOutAt() != null && !request.getCheckOutAt().isAfter(request.getCheckInAt())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, CHECK_OUT_MUST_BE_AFTER_CHECK_IN);
         }
 
-        AttendanceRecord record = new AttendanceRecord();
-        record.setWorkplaceId(workplaceId);
-        record.setUserId(request.getStaffUserId());
-        record.setWorkDate(request.getWorkDate());
-        record.setCheckInAt(request.getCheckInAt());
-        record.setNote(request.getNote());
-        record.setWorkedMinutes(0);
-        record.setBaseWage(BigDecimal.ZERO);
-        record.setFinalWage(BigDecimal.ZERO);
-        record.setStatus("WORKING");
-        attendanceRecordMapper.insert(record);
-
-        if (request.getCheckOutAt() != null) {
-            WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
-            List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
-            BigDecimal hourlyWage = resolveHourlyWage(staffMember, setting);
-            int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
-            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                    hourlyWage, grossWorkedMinutes, setting, breakPolicies
+        List<WorkplaceMember> targets;
+        if (request.getStaffUserId() == 0) {
+            targets = workplaceMemberMapper.findAllActiveStaffMembers(workplaceId);
+            if (targets.isEmpty()) {
+                throw new ApiException(HttpStatus.NOT_FOUND, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
+            }
+            for (WorkplaceMember member : targets) {
+                AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
+                        workplaceId, member.getUserId(), request.getWorkDate()
+                );
+                if (existing != null) {
+                    User user = userMapper.findById(member.getUserId());
+                    String name = user != null ? user.getName() : String.valueOf(member.getUserId());
+                    throw new ApiException(HttpStatus.CONFLICT, name + "님은 " + ATTENDANCE_RECORD_ALREADY_EXISTS);
+                }
+            }
+        } else {
+            WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(workplaceId, request.getStaffUserId());
+            if (staffMember == null) {
+                throw new ApiException(HttpStatus.NOT_FOUND, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
+            }
+            AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
+                    workplaceId, request.getStaffUserId(), request.getWorkDate()
             );
-            attendanceRecordMapper.updateCheckOut(
-                    record.getId(),
-                    request.getCheckOutAt(),
-                    wageCalculation.workedMinutes(),
-                    wageCalculation.baseWage(),
-                    wageCalculation.finalWage(),
-                    "COMPLETED"
-            );
+            if (existing != null) {
+                User user = userMapper.findById(request.getStaffUserId());
+                String name = user != null ? user.getName() : String.valueOf(request.getStaffUserId());
+                throw new ApiException(HttpStatus.CONFLICT, name + "님은 " + ATTENDANCE_RECORD_ALREADY_EXISTS);
+            }
+            targets = List.of(staffMember);
         }
 
-        return attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, request.getStaffUserId(), request.getWorkDate());
+        WorkplaceSetting setting = request.getCheckOutAt() != null
+                ? workplaceSettingMapper.findByWorkplaceId(workplaceId)
+                : null;
+        List<WorkplaceBreakPolicy> breakPolicies = setting != null
+                ? resolveBreakPolicies(workplaceId, setting)
+                : null;
+
+        List<AttendanceRecord> results = new ArrayList<>();
+        for (WorkplaceMember member : targets) {
+            AttendanceRecord record = new AttendanceRecord();
+            record.setWorkplaceId(workplaceId);
+            record.setUserId(member.getUserId());
+            record.setWorkDate(request.getWorkDate());
+            record.setCheckInAt(request.getCheckInAt());
+            record.setNote(request.getNote());
+            record.setWorkedMinutes(0);
+            record.setBaseWage(BigDecimal.ZERO);
+            record.setFinalWage(BigDecimal.ZERO);
+            record.setStatus("WORKING");
+            attendanceRecordMapper.insert(record);
+
+            if (request.getCheckOutAt() != null) {
+                BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+                int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
+                WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                        hourlyWage, grossWorkedMinutes, setting, breakPolicies
+                );
+                attendanceRecordMapper.updateCheckOut(
+                        record.getId(),
+                        request.getCheckOutAt(),
+                        wageCalculation.workedMinutes(),
+                        wageCalculation.baseWage(),
+                        wageCalculation.finalWage(),
+                        "COMPLETED"
+                );
+            }
+
+            results.add(attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, member.getUserId(), request.getWorkDate()));
+        }
+
+        return results;
     }
 
     @Transactional

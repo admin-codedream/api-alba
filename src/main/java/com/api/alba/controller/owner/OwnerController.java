@@ -177,7 +177,7 @@ public class OwnerController {
 
     @PostMapping("/workplaces/{workplaceId}/attendance-records")
     @ResponseStatus(HttpStatus.CREATED)
-    public AttendanceRecord createAttendanceRecord(
+    public List<AttendanceRecord> createAttendanceRecord(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
             @Valid @RequestBody OwnerCreateAttendanceRecordRequest request

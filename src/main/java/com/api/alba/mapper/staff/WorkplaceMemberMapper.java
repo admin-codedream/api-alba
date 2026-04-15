@@ -35,6 +35,8 @@ public interface WorkplaceMemberMapper {
 
     List<OwnerWorkplaceMemberResponse> findActiveStaffMembersByWorkplaceId(@Param("workplaceId") Long workplaceId);
 
+    List<WorkplaceMember> findAllActiveStaffMembers(@Param("workplaceId") Long workplaceId);
+
     int countActiveStaffByWorkplaceId(@Param("workplaceId") Long workplaceId);
 
     int updateStatus(@Param("id") Long id, @Param("status") String status);
