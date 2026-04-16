@@ -220,6 +220,7 @@ public class OwnerService {
             Long ownerUserId,
             Long workplaceId,
             Long userId,
+            String userName,
             LocalDate fromDate,
             LocalDate toDate
     ) {
@@ -227,7 +228,7 @@ public class OwnerService {
         if (fromDate.isAfter(toDate)) {
             throw new ApiException(INVALID_DATE_RANGE);
         }
-        return attendanceRecordMapper.findWorkplaceRecordsByPeriod(workplaceId, userId, fromDate, toDate);
+        return attendanceRecordMapper.findWorkplaceRecordsByPeriod(workplaceId, userId, userName, fromDate, toDate);
     }
 
     public List<AttendanceRequestListItemResponse> getAttendanceRequests(

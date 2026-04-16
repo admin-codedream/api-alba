@@ -94,6 +94,9 @@
         <if test="userId != null">
           AND ar.USER_ID = #{userId}
         </if>
+        <if test="userName != null and userName != ''">
+          AND u.NAME LIKE CONCAT('%', #{userName}, '%')
+        </if>
         ORDER BY ar.WORK_DATE DESC, ar.USER_ID ASC
     </select>
 

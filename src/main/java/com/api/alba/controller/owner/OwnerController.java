@@ -121,10 +121,11 @@ public class OwnerController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
             @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String userName,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
-        return ownerService.getWorkplaceAttendanceRecords(requiredPrincipal(principal), workplaceId, userId, fromDate, toDate);
+        return ownerService.getWorkplaceAttendanceRecords(requiredPrincipal(principal), workplaceId, userId, userName, fromDate, toDate);
     }
 
     @GetMapping("/workplaces/{workplaceId}/attendance-requests")

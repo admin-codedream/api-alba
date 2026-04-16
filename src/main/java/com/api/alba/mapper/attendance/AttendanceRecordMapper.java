@@ -49,6 +49,7 @@ public interface AttendanceRecordMapper {
     List<AttendanceRecord> findWorkplaceRecordsByPeriod(
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId,
+            @Param("userName") String userName,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
     );
