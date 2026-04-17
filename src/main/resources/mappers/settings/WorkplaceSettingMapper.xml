@@ -12,6 +12,8 @@
         <result property="roundingPolicy" column="ROUNDING_POLICY"/>
         <result property="defaultHourlyWage" column="DEFAULT_HOURLY_WAGE"/>
         <result property="useBreakPolicy" column="USE_BREAK_POLICY"/>
+        <result property="defaultCheckInTime" column="DEFAULT_CHECK_IN_TIME"/>
+        <result property="defaultCheckOutTime" column="DEFAULT_CHECK_OUT_TIME"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.settings.WorkplaceSetting" useGeneratedKeys="true" keyProperty="id">
@@ -20,7 +22,7 @@
     </insert>
 
     <select id="findByWorkplaceId" resultMap="workplaceSettingMap">
-        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE, USE_BREAK_POLICY
+        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE, USE_BREAK_POLICY, DEFAULT_CHECK_IN_TIME, DEFAULT_CHECK_OUT_TIME
         FROM WORKPLACE_SETTINGS
         WHERE WORKPLACE_ID = #{workplaceId}
     </select>
@@ -40,6 +42,13 @@
     <update id="updateSalaryCalcUnit">
         UPDATE WORKPLACE_SETTINGS
         SET SALARY_CALC_UNIT = #{salaryCalcUnit}
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </update>
+
+    <update id="updateDefaultWorkTime">
+        UPDATE WORKPLACE_SETTINGS
+        SET DEFAULT_CHECK_IN_TIME = #{defaultCheckInTime},
+            DEFAULT_CHECK_OUT_TIME = #{defaultCheckOutTime}
         WHERE WORKPLACE_ID = #{workplaceId}
     </update>
 

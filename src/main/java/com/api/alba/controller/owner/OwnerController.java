@@ -15,6 +15,7 @@ import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
 import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
+`import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
@@ -262,6 +263,16 @@ public class OwnerController {
             @Valid @RequestBody UpdateSalaryCalcUnitRequest request
     ) {
         ownerService.updateSalaryCalcUnit(requiredPrincipal(principal), workplaceId, request.getSalaryCalcUnit());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/default-work-time")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateDefaultWorkTime(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestBody UpdateDefaultWorkTimeRequest request
+    ) {
+        ownerService.updateDefaultWorkTime(requiredPrincipal(principal), workplaceId, request.getDefaultCheckInTime(), request.getDefaultCheckOutTime());
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

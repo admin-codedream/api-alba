@@ -1,6 +1,6 @@
 # API 엔드포인트 목록
 
-총 **48개** 엔드포인트 / 컨트롤러 **9개**
+총 **49개** 엔드포인트 / 컨트롤러 **9개**
 
 ---
 
@@ -98,6 +98,7 @@
 - `PATCH /api/owner/workplaces/{workplaceId}/settings/attendance-push` `204` — 출퇴근 푸시 알림 활성화/비활성화 🔒
 - `PATCH /api/owner/workplaces/{workplaceId}/settings/hourly-wage` `204` — 기본 시급 변경 🔒
 - `PATCH /api/owner/workplaces/{workplaceId}/settings/salary-calc-unit` `204` — 급여 계산 단위 변경 🔒
+- `PATCH /api/owner/workplaces/{workplaceId}/settings/default-work-time` `204` — 기본 출근/퇴근 시간 변경 (`defaultCheckInTime`, `defaultCheckOutTime` — `HH:mm`) 🔒
 
 ---
 

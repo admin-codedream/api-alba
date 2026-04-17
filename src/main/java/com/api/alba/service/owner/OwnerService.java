@@ -179,7 +179,9 @@ public class OwnerService {
                 workplace.getUseLocationRestriction(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage(),
-                setting.getSalaryCalcUnit()
+                setting.getSalaryCalcUnit(),
+                setting.getDefaultCheckInTime(),
+                setting.getDefaultCheckOutTime()
         );
     }
 
@@ -341,6 +343,16 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
         workplaceSettingMapper.updateSalaryCalcUnit(workplaceId, salaryCalcUnit);
+    }
+
+    @Transactional
+    public void updateDefaultWorkTime(Long ownerUserId, Long workplaceId, java.time.LocalTime defaultCheckInTime, java.time.LocalTime defaultCheckOutTime) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        workplaceSettingMapper.updateDefaultWorkTime(workplaceId, defaultCheckInTime, defaultCheckOutTime);
     }
 
     @Transactional

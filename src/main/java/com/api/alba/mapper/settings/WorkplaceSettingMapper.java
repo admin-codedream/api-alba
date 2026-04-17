@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 @Mapper
 public interface WorkplaceSettingMapper {
@@ -25,5 +26,11 @@ public interface WorkplaceSettingMapper {
     int updateSalaryCalcUnit(
             @Param("workplaceId") Long workplaceId,
             @Param("salaryCalcUnit") String salaryCalcUnit
+    );
+
+    int updateDefaultWorkTime(
+            @Param("workplaceId") Long workplaceId,
+            @Param("defaultCheckInTime") LocalTime defaultCheckInTime,
+            @Param("defaultCheckOutTime") LocalTime defaultCheckOutTime
     );
 }
