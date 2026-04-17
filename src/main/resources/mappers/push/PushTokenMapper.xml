@@ -42,6 +42,55 @@
         WHERE ID = #{id}
     </update>
 
+    <resultMap id="staffReminderTargetMap" type="com.api.alba.dto.push.StaffReminderTarget">
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="workplaceName" column="WORKPLACE_NAME"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="token" column="TOKEN"/>
+    </resultMap>
+
+    <select id="findStaffForCheckInReminder" resultMap="staffReminderTargetMap">
+        SELECT DISTINCT
+            WM.WORKPLACE_ID,
+            W.NAME AS WORKPLACE_NAME,
+            WM.USER_ID,
+            PT.TOKEN
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN WORKPLACE_SETTINGS WS ON WS.WORKPLACE_ID = WM.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+                 LEFT JOIN ATTENDANCE_RECORDS AR ON AR.WORKPLACE_ID = WM.WORKPLACE_ID
+                    AND AR.USER_ID = WM.USER_ID
+                    AND AR.WORK_DATE = CURDATE()
+                    AND AR.CHECK_IN_AT IS NOT NULL
+        WHERE WM.STATUS = 'ACTIVE'
+          AND WM.ROLE IN ('STAFF', 'MANAGER')
+          AND WS.DEFAULT_CHECK_IN_TIME IS NOT NULL
+          AND DATE_FORMAT(WS.DEFAULT_CHECK_IN_TIME, '%H:%i') = #{targetTime}
+          AND AR.ID IS NULL
+    </select>
+
+    <select id="findStaffForCheckOutReminder" resultMap="staffReminderTargetMap">
+        SELECT DISTINCT
+            WM.WORKPLACE_ID,
+            W.NAME AS WORKPLACE_NAME,
+            WM.USER_ID,
+            PT.TOKEN
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN WORKPLACE_SETTINGS WS ON WS.WORKPLACE_ID = WM.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+                 INNER JOIN ATTENDANCE_RECORDS AR ON AR.WORKPLACE_ID = WM.WORKPLACE_ID
+                    AND AR.USER_ID = WM.USER_ID
+                    AND AR.WORK_DATE = CURDATE()
+                    AND AR.CHECK_IN_AT IS NOT NULL
+                    AND AR.CHECK_OUT_AT IS NULL
+        WHERE WM.STATUS = 'ACTIVE'
+          AND WM.ROLE IN ('STAFF', 'MANAGER')
+          AND WS.DEFAULT_CHECK_OUT_TIME IS NOT NULL
+          AND DATE_FORMAT(WS.DEFAULT_CHECK_OUT_TIME, '%H:%i') = #{targetTime}
+    </select>
+
     <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
         SELECT DISTINCT SU.NAME AS STAFF_NAME,
                         PT.ID AS PUSH_TOKEN_ID,
