@@ -15,7 +15,7 @@ import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
 import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
-`import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
+import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
