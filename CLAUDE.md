@@ -43,6 +43,6 @@
 - `AlbaApplicationTests.java`: 기본 스프링 부트 테스트
 
 ## 구조 특징
-- 전형적인 Spring 계층 구조(`controller -> service -> mapper -> DB`)를 따릅니다.
-- 도메인 기준으로 패키지가 정리되어 있어 기능별 탐색이 쉬운 편입니다.
-- 인증/보안, 근태, 점주/직원 기능이 핵심 축입니다.
+- Spring 계층 구조(`controller -> service -> mapper -> DB`)
+- 도메인 기준 패키지 정리
+- xml 작성시 CDATA 활용

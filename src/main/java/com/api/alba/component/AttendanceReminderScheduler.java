@@ -26,6 +26,26 @@ public class AttendanceReminderScheduler {
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
 
+    @Scheduled(cron = "0 0 10 * * *")
+    public void sendNoStaffReminders() {
+        List<StaffReminderTarget> targets = pushTokenMapper.findOwnersWithNoStaff();
+        if (targets.isEmpty()) return;
+
+        List<FcmDto> fcmList = targets.stream()
+                .map(t -> FcmDto.builder()
+                        .pushSeq(0L)
+                        .pushToken(t.getToken())
+                        .title("직원을 초대해보세요!")
+                        .content(t.getWorkplaceName() + "에 아직 등록된 직원이 없어요. 초대 코드로 직원을 초대해보세요.")
+                        .pushLink("")
+                        .project(ProjectId.ALBAM.getMessage())
+                        .build())
+                .collect(Collectors.toList());
+
+        log.info("[직원 미등록 알림] 발송 대상 {}명", fcmList.size());
+        fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
+    }
+
     @Scheduled(cron = "0 * * * * *")
     public void sendAttendanceReminders() {
         // 현재 시각 기준 5분 후의 HH:mm → 해당 시각이 DEFAULT_CHECK_IN/OUT_TIME인 매장 대상

@@ -91,7 +91,27 @@
           AND DATE_FORMAT(WS.DEFAULT_CHECK_OUT_TIME, '%H:%i') = #{targetTime}
     </select>
 
+    <select id="findOwnersWithNoStaff" resultMap="staffReminderTargetMap">
+        SELECT DISTINCT
+            WM.WORKPLACE_ID,
+            W.NAME AS WORKPLACE_NAME,
+            WM.USER_ID,
+            PT.TOKEN
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+        WHERE WM.STATUS = 'ACTIVE'
+          AND WM.ROLE = 'OWNER'
+          AND NOT EXISTS (
+              SELECT 1 FROM WORKPLACE_MEMBERS WM2
+              WHERE WM2.WORKPLACE_ID = WM.WORKPLACE_ID
+                AND WM2.ROLE IN ('STAFF', 'MANAGER')
+                AND WM2.STATUS = 'ACTIVE'
+          )
+    </select>
+
     <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
+        <![CDATA[
         SELECT DISTINCT SU.NAME AS STAFF_NAME,
                         PT.ID AS PUSH_TOKEN_ID,
                         WMM.USER_ID AS OWNER_USER_ID,
@@ -110,6 +130,9 @@
         WHERE WM.WORKPLACE_ID = #{workplaceId}
           AND WM.USER_ID = #{userId}
           AND WM.STATUS = 'ACTIVE'
+          AND WM.USER_ID <> 1
+          AND WM.WORKPLACE_ID > 4
+        ]]>
     </select>
 
 </mapper>

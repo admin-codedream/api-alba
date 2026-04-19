@@ -30,4 +30,6 @@ public interface PushTokenMapper {
     List<StaffReminderTarget> findStaffForCheckInReminder(@Param("targetTime") String targetTime);
 
     List<StaffReminderTarget> findStaffForCheckOutReminder(@Param("targetTime") String targetTime);
+
+    List<StaffReminderTarget> findOwnersWithNoStaff();
 }
