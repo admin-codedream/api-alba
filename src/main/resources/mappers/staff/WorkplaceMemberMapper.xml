@@ -73,9 +73,11 @@
                WM.RECEIVE_ATTENDANCE_PUSH
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN USERS U ON U.ID = W.OWNER_ID
         WHERE WM.USER_ID = #{userId}
           AND WM.STATUS = 'ACTIVE'
-        ORDER BY WM.ID ASC
+          AND U.STATUS = 'ACTIVE'
+        ORDER BY WM.ID DESC
     </select>
 
     <select id="findActiveStaffMembersByWorkplaceId" resultType="com.api.alba.dto.owner.OwnerWorkplaceMemberResponse">
