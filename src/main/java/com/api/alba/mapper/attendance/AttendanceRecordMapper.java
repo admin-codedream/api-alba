@@ -110,4 +110,6 @@ public interface AttendanceRecordMapper {
             @Param("id") Long id,
             @Param("finalWage") BigDecimal finalWage
     );
+
+    int deleteById(@Param("id") Long id);
 }

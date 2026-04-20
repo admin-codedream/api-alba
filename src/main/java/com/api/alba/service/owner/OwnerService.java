@@ -271,6 +271,16 @@ public class OwnerService {
         attendanceRequestMapper.updateStatus(requestId, status);
     }
 
+    @Transactional
+    public void deleteAttendanceRecord(Long ownerUserId, Long workplaceId, Long recordId) {
+        ensureOwner(workplaceId, ownerUserId);
+        AttendanceRecord record = attendanceRecordMapper.findById(recordId);
+        if (record == null) {
+            throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
+        }
+        attendanceRecordMapper.deleteById(recordId);
+    }
+
     public List<OwnerDailyAttendanceItemResponse> getDailyAttendance(
             Long ownerUserId,
             Long workplaceId,

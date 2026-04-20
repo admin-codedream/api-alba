@@ -200,4 +200,10 @@
         WHERE ID = #{id}
     </update>
 
+    <delete id="deleteById">
+        <![CDATA[
+        DELETE FROM ATTENDANCE_RECORDS WHERE ID = #{id}
+        ]]>
+    </delete>
+
 </mapper>

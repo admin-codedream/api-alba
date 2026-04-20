@@ -187,6 +187,16 @@ public class OwnerController {
         return ownerService.createAttendanceRecord(requiredPrincipal(principal), workplaceId, request);
     }
 
+    @PostMapping("/workplaces/{workplaceId}/attendance-records/{recordId}/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAttendanceRecord(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long recordId
+    ) {
+        ownerService.deleteAttendanceRecord(requiredPrincipal(principal), workplaceId, recordId);
+    }
+
     @PostMapping("/workplaces/{workplaceId}/attendance-records/recalculate-wages")
     public RecalculateWagesResponse recalculateWages(
             @AuthenticationPrincipal UserPrincipal principal,
