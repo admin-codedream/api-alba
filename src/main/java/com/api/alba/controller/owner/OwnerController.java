@@ -232,7 +232,7 @@ public class OwnerController {
             @PathVariable Long workplaceId,
             @Valid @RequestBody UpdateLocationRestrictionRequest request
     ) {
-        ownerService.updateLocationRestriction(requiredPrincipal(principal), workplaceId, request.getUseLocationRestriction());
+        ownerService.updateLocationRestriction(requiredPrincipal(principal), workplaceId, request);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings/attendance-push")

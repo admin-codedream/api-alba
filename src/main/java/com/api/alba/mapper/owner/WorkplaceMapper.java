@@ -12,7 +12,7 @@ public interface WorkplaceMapper {
 
     int updateName(@Param("id") Long id, @Param("name") String name);
 
-    int updateLocationRestriction(@Param("id") Long id, @Param("useLocationRestriction") Boolean useLocationRestriction);
+    int updateLocationRestriction(@Param("id") Long id, @Param("useLocationRestriction") Boolean useLocationRestriction, @Param("address") String address, @Param("latitude") Double latitude, @Param("longitude") Double longitude);
 
     Workplace findByInviteCode(@Param("inviteCode") String inviteCode);
 }

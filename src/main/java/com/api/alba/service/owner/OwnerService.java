@@ -18,6 +18,7 @@ import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
+import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
@@ -176,6 +177,9 @@ public class OwnerService {
         return new AttendancePushSettingResponse(
                 workplaceId,
                 workplace.getName(),
+                workplace.getAddress(),
+                workplace.getLatitude(),
+                workplace.getLongitude(),
                 workplace.getUseLocationRestriction(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage(),
@@ -312,9 +316,9 @@ public class OwnerService {
     }
 
     @Transactional
-    public void updateLocationRestriction(Long ownerUserId, Long workplaceId, Boolean useLocationRestriction) {
+    public void updateLocationRestriction(Long ownerUserId, Long workplaceId, UpdateLocationRestrictionRequest request) {
         ensureOwner(workplaceId, ownerUserId);
-        workplaceMapper.updateLocationRestriction(workplaceId, useLocationRestriction);
+        workplaceMapper.updateLocationRestriction(workplaceId, request.getUseLocationRestriction(), request.getAddress(), request.getLatitude(), request.getLongitude());
     }
 
     @Transactional

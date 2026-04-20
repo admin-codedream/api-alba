@@ -30,15 +30,22 @@
     </select>
 
     <update id="updateName">
+        <![CDATA[
         UPDATE WORKPLACES
         SET NAME = #{name}
         WHERE ID = #{id}
+        ]]>
     </update>
 
     <update id="updateLocationRestriction">
+        <![CDATA[
         UPDATE WORKPLACES
-        SET USE_LOCATION_RESTRICTION = #{useLocationRestriction}
+        SET ADDRESS = #{address},
+            LATITUDE = #{latitude},
+            LONGITUDE = #{longitude},
+            USE_LOCATION_RESTRICTION = #{useLocationRestriction}
         WHERE ID = #{id}
+        ]]>
     </update>
 
     <select id="findByInviteCode" resultMap="workplaceMap">

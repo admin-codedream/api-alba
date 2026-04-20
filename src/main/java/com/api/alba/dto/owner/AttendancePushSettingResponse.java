@@ -12,6 +12,9 @@ import java.time.LocalTime;
 public class AttendancePushSettingResponse {
     private Long workplaceId;
     private String workplaceName;
+    private String address;
+    private Double latitude;
+    private Double longitude;
     private Boolean useLocationRestriction;
     private Boolean enabled;
     private BigDecimal hourlyWage;
