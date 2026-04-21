@@ -201,9 +201,16 @@ public class OwnerController {
     public RecalculateWagesResponse recalculateWages(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
-            @RequestParam String month
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        int updatedCount = ownerService.recalculateWages(requiredPrincipal(principal), workplaceId, YearMonth.parse(month));
+        if (startDate != null && endDate != null) {
+            int updatedCount = ownerService.recalculateWages(requiredPrincipal(principal), workplaceId, startDate, endDate);
+            return new RecalculateWagesResponse(updatedCount);
+        }
+        YearMonth yearMonth = YearMonth.parse(month);
+        int updatedCount = ownerService.recalculateWages(requiredPrincipal(principal), workplaceId, yearMonth.atDay(1), yearMonth.atEndOfMonth());
         return new RecalculateWagesResponse(updatedCount);
     }
 

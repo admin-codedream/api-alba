@@ -370,10 +370,8 @@ public class OwnerService {
     }
 
     @Transactional
-    public int recalculateWages(Long ownerUserId, Long workplaceId, YearMonth month) {
+    public int recalculateWages(Long ownerUserId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
         ensureOwner(workplaceId, ownerUserId);
-        LocalDate fromDate = month.atDay(1);
-        LocalDate toDate = month.atEndOfMonth();
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
         List<AttendanceRecord> records = attendanceRecordMapper.findCompletedRecordsByWorkplace(workplaceId, fromDate, toDate);
