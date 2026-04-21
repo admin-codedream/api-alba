@@ -8,7 +8,9 @@ import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
+import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
+import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.MyAggregateSummary;
@@ -234,6 +236,74 @@ public class StaffService {
         attendanceRequestMapper.insert(attendanceRequest);
 
         return new AttendanceRequestCreatedResponse(attendanceRequest.getId(), attendanceRequest.getStatus());
+    }
+
+    public List<StaffAttendanceRequestListItemResponse> getMyAttendanceRequests(Long userId, Long workplaceId) {
+        ensureActiveMember(workplaceId, userId);
+        return attendanceRequestMapper.findByWorkplaceIdAndUserId(workplaceId, userId);
+    }
+
+    @Transactional
+    public AttendanceRequestCreatedResponse submitNewRecordRequest(
+            Long userId,
+            Long workplaceId,
+            AttendanceNewRecordRequestCreateRequest request
+    ) {
+        ensureActiveMember(workplaceId, userId);
+
+        LocalDateTime checkIn = request.getRequestedCheckInAt();
+        LocalDateTime checkOut = request.getRequestedCheckOutAt();
+        if (checkIn == null && checkOut == null) {
+            throw new ApiException(AT_LEAST_ONE_REQUESTED_CHECK_IN_OR_OUT_REQUIRED);
+        }
+        if (checkIn != null && checkOut != null && checkOut.isBefore(checkIn)) {
+            throw new ApiException(REQUESTED_CHECK_OUT_MUST_BE_LATER_THAN_CHECK_IN);
+        }
+
+        AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, request.getWorkDate());
+        boolean isNewRecord = record == null;
+        if (isNewRecord) {
+            record = new AttendanceRecord();
+            record.setWorkplaceId(workplaceId);
+            record.setUserId(userId);
+            record.setWorkDate(request.getWorkDate());
+            record.setStatus("WORKING");
+            record.setWorkedMinutes(0);
+            record.setBaseWage(BigDecimal.ZERO);
+            record.setFinalWage(BigDecimal.ZERO);
+            attendanceRecordMapper.insert(record);
+        }
+
+        if (attendanceRequestMapper.countPendingByRecordAndUser(record.getId(), userId) > 0) {
+            throw new ApiException(PENDING_CORRECTION_REQUEST_EXISTS);
+        }
+
+        String type = resolveNewRequestType(checkIn, checkOut, isNewRecord);
+
+        AttendanceRequest attendanceRequest = new AttendanceRequest();
+        attendanceRequest.setAttendanceRecordId(record.getId());
+        attendanceRequest.setUserId(userId);
+        attendanceRequest.setType(type);
+        attendanceRequest.setRequestedCheckInAt(checkIn);
+        attendanceRequest.setRequestedCheckOutAt(checkOut);
+        attendanceRequest.setReason(request.getReason());
+        attendanceRequest.setStatus("PENDING");
+        attendanceRequestMapper.insert(attendanceRequest);
+
+        return new AttendanceRequestCreatedResponse(attendanceRequest.getId(), attendanceRequest.getStatus());
+    }
+
+    private String resolveNewRequestType(LocalDateTime checkIn, LocalDateTime checkOut, boolean isNewRecord) {
+        if (isNewRecord) {
+            return "NEW_RECORD";
+        }
+        if (checkIn != null && checkOut != null) {
+            return "BOTH_EDIT";
+        }
+        if (checkIn != null) {
+            return "CHECK_IN_EDIT";
+        }
+        return "CHECK_OUT_EDIT";
     }
 
     private WorkplaceMember ensureActiveMember(Long workplaceId, Long userId) {

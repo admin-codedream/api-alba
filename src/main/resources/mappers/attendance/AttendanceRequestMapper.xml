@@ -74,4 +74,21 @@
         ORDER BY ar.CREATED_AT DESC, ar.ID DESC
     </select>
 
+
+    <select id="findByWorkplaceIdAndUserId" resultType="com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse">
+        SELECT ar.ID AS requestId,
+               rec.WORK_DATE AS workDate,
+               ar.TYPE AS type,
+               ar.REQUESTED_CHECK_IN_AT AS requestedCheckInAt,
+               ar.REQUESTED_CHECK_OUT_AT AS requestedCheckOutAt,
+               ar.REASON AS reason,
+               ar.STATUS AS status,
+               ar.CREATED_AT AS requestedAt
+        FROM ATTENDANCE_REQUESTS ar
+        JOIN ATTENDANCE_RECORDS rec ON rec.ID = ar.ATTENDANCE_RECORD_ID
+        WHERE rec.WORKPLACE_ID = #{workplaceId}
+          AND ar.USER_ID = #{userId}
+        ORDER BY ar.CREATED_AT DESC, ar.ID DESC
+    </select>
+
 </mapper>

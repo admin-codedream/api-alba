@@ -1,9 +1,11 @@
 package com.api.alba.controller.staff;
 
 import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
+import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
+import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
 import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
@@ -76,6 +78,24 @@ public class StaffController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate
     ) {
         return staffService.getWorkDetail(requiredPrincipal(principal), workplaceId, workDate);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/attendance-requests")
+    public List<StaffAttendanceRequestListItemResponse> getMyAttendanceRequests(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId
+    ) {
+        return staffService.getMyAttendanceRequests(requiredPrincipal(principal), workplaceId);
+    }
+
+    @PostMapping("/workplaces/{workplaceId}/attendance-requests")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttendanceRequestCreatedResponse submitNewRecordRequest(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody AttendanceNewRecordRequestCreateRequest request
+    ) {
+        return staffService.submitNewRecordRequest(requiredPrincipal(principal), workplaceId, request);
     }
 
     @PostMapping("/attendance-records/{attendanceRecordId}/requests")

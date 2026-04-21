@@ -2,6 +2,7 @@ package com.api.alba.mapper.attendance;
 
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
+import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -25,5 +26,10 @@ public interface AttendanceRequestMapper {
     List<AttendanceRequestListItemResponse> findByWorkplaceId(
             @Param("workplaceId") Long workplaceId,
             @Param("status") String status
+    );
+
+    List<StaffAttendanceRequestListItemResponse> findByWorkplaceIdAndUserId(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId
     );
 }
