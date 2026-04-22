@@ -18,6 +18,7 @@ import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
+import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
 import com.api.alba.dto.owner.IssuePayslipRequest;
@@ -170,6 +171,17 @@ public class OwnerController {
             @PathVariable Long payslipId
     ) {
         return ownerService.cancelPayslip(requiredPrincipal(principal), workplaceId, payslipId);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/hourly-wage")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMemberHourlyWage(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody UpdateMemberHourlyWageRequest request
+    ) {
+        ownerService.updateMemberHourlyWage(requiredPrincipal(principal), workplaceId, memberId, request.getHourlyWage());
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/memo")

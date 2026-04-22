@@ -504,37 +504,6 @@
                     }
                 },
                 {
-                    "name": "04. Submit Correction Request",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "type": "text/javascript",
-                                "exec": [
-                                    "if (pm.response.code < 300) {",
-                                    "  var json = pm.response.json();",
-                                    "  if (json.requestId) pm.collectionVariables.set('requestId', json.requestId);",
-                                    "}"
-                                ]
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            { "key": "Content-Type", "value": "application/json" },
-                            { "key": "X-API-KEY", "value": "{{apiKey}}" },
-                            { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"requestedCheckInAt\": \"2026-03-19T09:00:00\",\n  \"requestedCheckOutAt\": \"2026-03-19T18:00:00\",\n  \"reason\": \"퇴근 누락 정정 요청\"\n}"
-                        },
-                        "url": "{{baseUrl}}/api/staff/attendance-records/{{attendanceRecordId}}/requests",
-                        "description": "호출 시점: STAFF가 근태 정정 요청을 등록할 때. 시나리오 순서: Staff 4단계. 성공 시 requestId가 변수로 저장됩니다."
-                    }
-                },
-                {
                     "name": "05. My Payslips",
                     "request": {
                         "method": "GET",

@@ -19,6 +19,7 @@ import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
+import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
 import com.api.alba.dto.owner.IssuePayslipRequest;
@@ -211,6 +212,16 @@ public class OwnerService {
     public List<OwnerWorkplaceMemberResponse> getWorkplaceMembers(Long ownerUserId, Long workplaceId) {
         ensureOwner(workplaceId, ownerUserId);
         return workplaceMemberMapper.findActiveStaffMembersByWorkplaceId(workplaceId);
+    }
+
+    @Transactional
+    public void updateMemberHourlyWage(Long ownerUserId, Long workplaceId, Long memberId, BigDecimal hourlyWage) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(WORKPLACE_NOT_FOUND);
+        }
+        workplaceMemberMapper.updateHourlyWage(memberId, hourlyWage);
     }
 
     @Transactional

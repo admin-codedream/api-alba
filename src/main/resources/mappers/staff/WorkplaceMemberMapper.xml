@@ -138,4 +138,10 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="updateHourlyWage">
+        UPDATE WORKPLACE_MEMBERS
+        SET HOURLY_WAGE = #{hourlyWage}
+        WHERE ID = #{id}
+    </update>
+
 </mapper>

@@ -6,6 +6,7 @@ import com.api.alba.dto.staff.UserWorkplaceInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
@@ -44,4 +45,6 @@ public interface WorkplaceMemberMapper {
     int updateReceiveAttendancePush(@Param("id") Long id, @Param("receiveAttendancePush") Boolean receiveAttendancePush);
 
     int updateMemo(@Param("id") Long id, @Param("memo") String memo);
+
+    int updateHourlyWage(@Param("id") Long id, @Param("hourlyWage") BigDecimal hourlyWage);
 }
