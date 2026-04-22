@@ -49,6 +49,10 @@
         <result property="token" column="TOKEN"/>
     </resultMap>
 
+    <delete id="deleteByToken">
+        DELETE FROM PUSH_TOKENS WHERE TOKEN = #{token}
+    </delete>
+
     <select id="findStaffForCheckInReminder" resultMap="staffReminderTargetMap">
         SELECT DISTINCT
             WM.WORKPLACE_ID,

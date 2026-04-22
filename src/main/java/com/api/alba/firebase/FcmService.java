@@ -1,6 +1,7 @@
 package com.api.alba.firebase;
 
 import com.api.alba.exception.ApiException;
+import com.api.alba.mapper.push.PushTokenMapper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import static com.api.alba.exception.ExceptionMessages.PUSH_SEND_FAILED;
 @Service
 @RequiredArgsConstructor
 public class FcmService {
+    private final PushTokenMapper pushTokenMapper;
 
     /**
      * 푸쉬 전송 - 단일
@@ -74,22 +76,41 @@ public class FcmService {
             List<FcmDto> fcmList
     ) {
         try {
-            if (!CollectionUtils.isEmpty(fcmList)) {
-                List<Message> messages = fcmList.stream()
-                        .map(alarm -> Message.builder()
-                                .setToken(alarm.getPushToken())
-                                .setNotification(Notification.builder()
-                                        .setTitle(alarm.getTitle())
-                                        .setBody(alarm.getContent())
-                                        .build())
-                                .setApnsConfig(getApnsConfig(alarm))
-                                .setAndroidConfig(getAndroidConfig())
-                                .build()
-                        )
-                        .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(fcmList)) {
+                return;
+            }
 
-                FirebaseApp projectApp = FirebaseApp.getInstance(project);
-                FirebaseMessaging.getInstance(projectApp).sendEach(messages);
+            List<Message> messages = fcmList.stream()
+                    .map(alarm -> Message.builder()
+                            .setToken(alarm.getPushToken())
+                            .setNotification(Notification.builder()
+                                    .setTitle(alarm.getTitle())
+                                    .setBody(alarm.getContent())
+                                    .build())
+                            .setApnsConfig(getApnsConfig(alarm))
+                            .setAndroidConfig(getAndroidConfig())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+
+            FirebaseApp projectApp = FirebaseApp.getInstance(project);
+            BatchResponse batchResponse = FirebaseMessaging.getInstance(projectApp).sendEach(messages);
+
+            List<SendResponse> responses = batchResponse.getResponses();
+            for (int i = 0; i < responses.size(); i++) {
+                SendResponse response = responses.get(i);
+                if (!response.isSuccessful()) {
+                    MessagingErrorCode errorCode = response.getException().getMessagingErrorCode();
+                    if (errorCode == MessagingErrorCode.UNREGISTERED
+                            || errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
+                        String invalidToken = fcmList.get(i).getPushToken();
+                        try {
+                            pushTokenMapper.deleteByToken(invalidToken);
+                        } catch (Exception deleteEx) {
+                            log.warn("Failed to delete invalid push token: {}", invalidToken, deleteEx);
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             log.error("Fcm sendMultiEachMessage error {}", e.getMessage());

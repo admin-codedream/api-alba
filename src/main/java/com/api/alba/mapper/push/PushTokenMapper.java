@@ -27,6 +27,8 @@ public interface PushTokenMapper {
             @Param("userId") Long userId
     );
 
+    void deleteByToken(@Param("token") String token);
+
     List<StaffReminderTarget> findStaffForCheckInReminder(@Param("targetTime") String targetTime);
 
     List<StaffReminderTarget> findStaffForCheckOutReminder(@Param("targetTime") String targetTime);
