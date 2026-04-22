@@ -63,12 +63,7 @@
         JOIN USERS u ON u.ID = p.USER_ID
         WHERE p.WORKPLACE_ID = #{workplaceId}
           AND p.STATUS != 'CANCELLED'
-        <if test="fromDate != null">
-            AND p.FROM_DATE >= #{fromDate}
-        </if>
-        <if test="toDate != null">
-            AND p.TO_DATE &lt;= #{toDate}
-        </if>
+          AND DATE(p.CREATED_AT) BETWEEN #{fromDate} AND #{toDate}
         ORDER BY p.CREATED_AT DESC
     </select>
 
@@ -83,7 +78,7 @@
         JOIN USERS u ON u.ID = p.USER_ID
         JOIN WORKPLACES w ON w.ID = p.WORKPLACE_ID
         WHERE p.USER_ID = #{userId}
-          AND p.STATUS != 'CANCELLED'
+          AND p.STATUS = 'CONFIRMED'
         <if test="workplaceId != null">
             AND p.WORKPLACE_ID = #{workplaceId}
         </if>

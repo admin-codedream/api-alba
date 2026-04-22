@@ -23,4 +23,5 @@ public class PayslipListItemResponse {
     private BigDecimal bonusAmount;
     private BigDecimal deductionAmount;
     private BigDecimal totalWage;
+    private String status;
 }

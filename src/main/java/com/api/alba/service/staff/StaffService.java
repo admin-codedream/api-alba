@@ -373,7 +373,7 @@ public class StaffService {
 
     public StaffPayslipDetailResponse getMyPayslipDetail(Long userId, Long payslipId) {
         Payslip payslip = payslipMapper.findById(payslipId);
-        if (payslip == null || !userId.equals(payslip.getUserId())) {
+        if (payslip == null || !userId.equals(payslip.getUserId()) || !"CONFIRMED".equals(payslip.getStatus())) {
             throw new ApiException(HttpStatus.NOT_FOUND, PAYSLIP_NOT_FOUND);
         }
         List<PayslipRecordItem> records = deserializeSnapshot(payslip.getDailySnapshot());

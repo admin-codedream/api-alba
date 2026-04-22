@@ -21,6 +21,7 @@ import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
+import com.api.alba.dto.owner.ConfirmPayslipResponse;
 import com.api.alba.dto.owner.IssuePayslipRequest;
 import com.api.alba.dto.owner.IssuePayslipResponse;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -139,10 +140,9 @@ public class OwnerController {
     public List<PayslipListItemResponse> getPayslips(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+            @RequestParam String yearMonth
     ) {
-        return ownerService.getPayslips(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+        return ownerService.getPayslips(requiredPrincipal(principal), workplaceId, yearMonth);
     }
 
     @GetMapping("/workplaces/{workplaceId}/payslips/{payslipId}")
@@ -171,6 +171,15 @@ public class OwnerController {
             @PathVariable Long payslipId
     ) {
         return ownerService.cancelPayslip(requiredPrincipal(principal), workplaceId, payslipId);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/payslips/{payslipId}/confirm")
+    public ConfirmPayslipResponse confirmPayslip(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId
+    ) {
+        return ownerService.confirmPayslip(requiredPrincipal(principal), workplaceId, payslipId);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/hourly-wage")

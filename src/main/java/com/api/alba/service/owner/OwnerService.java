@@ -22,6 +22,7 @@ import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
+import com.api.alba.dto.owner.ConfirmPayslipResponse;
 import com.api.alba.dto.owner.IssuePayslipRequest;
 import com.api.alba.dto.owner.IssuePayslipResponse;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
@@ -81,6 +82,7 @@ import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN
 import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
 import static com.api.alba.exception.ExceptionMessages.STATUS_MUST_BE_PENDING_APPROVED_REJECTED;
 import static com.api.alba.exception.ExceptionMessages.PAYSLIP_ALREADY_CANCELLED;
+import static com.api.alba.exception.ExceptionMessages.PAYSLIP_ALREADY_CONFIRMED;
 import static com.api.alba.exception.ExceptionMessages.PAYSLIP_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
@@ -405,14 +407,16 @@ public class OwnerService {
         return new IssuePayslipResponse(issuedCount);
     }
 
-    public List<PayslipListItemResponse> getPayslips(Long ownerUserId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
+    public List<PayslipListItemResponse> getPayslips(Long ownerUserId, Long workplaceId, String yearMonth) {
         ensureOwner(workplaceId, ownerUserId);
-        return payslipMapper.findByWorkplaceId(workplaceId, fromDate, toDate).stream()
+        YearMonth ym = YearMonth.parse(yearMonth);
+        return payslipMapper.findByWorkplaceId(workplaceId, ym.atDay(1), ym.atEndOfMonth()).stream()
                 .map(p -> new PayslipListItemResponse(
                         p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                         p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                         p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
-                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
+                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
+                        p.getStatus()
                 ))
                 .collect(Collectors.toList());
     }
@@ -451,6 +455,20 @@ public class OwnerService {
         }
         payslipMapper.updateStatus(payslipId, "CANCELLED");
         return new CancelPayslipResponse(payslipId);
+    }
+
+    @Transactional
+    public ConfirmPayslipResponse confirmPayslip(Long ownerUserId, Long workplaceId, Long payslipId) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        if ("CANCELLED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
+        }
+        if ("CONFIRMED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CONFIRMED);
+        }
+        payslipMapper.updateStatus(payslipId, "CONFIRMED");
+        return new ConfirmPayslipResponse(payslipId);
     }
 
     private List<PayslipRecordItem> buildRecords(Long workplaceId, WorkplaceMember member, WorkplaceSetting setting,

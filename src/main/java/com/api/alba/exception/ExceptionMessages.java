@@ -64,5 +64,6 @@ public final class ExceptionMessages {
     public static final String CHECK_OUT_MUST_BE_AFTER_CHECK_IN = "퇴근 시간은 출근 시간보다 늦어야 해요.";
     public static final String PAYSLIP_NOT_FOUND = "급여 명세서를 찾을 수 없어요.";
     public static final String PAYSLIP_ALREADY_CANCELLED = "이미 취소된 급여 명세서예요.";
+    public static final String PAYSLIP_ALREADY_CONFIRMED = "이미 확정된 급여 명세서예요.";
 
 }
