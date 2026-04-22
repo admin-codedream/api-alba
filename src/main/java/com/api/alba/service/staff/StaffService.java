@@ -7,7 +7,6 @@ import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
-import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.domain.owner.Payslip;
@@ -216,39 +215,6 @@ public class StaffService {
         );
     }
 
-    @Transactional
-    public AttendanceRequestCreatedResponse submitCorrectionRequest(
-            Long userId,
-            Long attendanceRecordId,
-            AttendanceCorrectionRequestCreateRequest request
-    ) {
-        AttendanceRecord record = attendanceRecordMapper.findById(attendanceRecordId);
-        if (record == null) {
-            throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
-        }
-        if (!record.getUserId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, CORRECTION_ONLY_FOR_OWN_RECORD);
-        }
-        ensureActiveMember(record.getWorkplaceId(), userId);
-
-        String type = resolveRequestType(request);
-        if (attendanceRequestMapper.countPendingByRecordAndUser(attendanceRecordId, userId) > 0) {
-            throw new ApiException(PENDING_CORRECTION_REQUEST_EXISTS);
-        }
-
-        AttendanceRequest attendanceRequest = new AttendanceRequest();
-        attendanceRequest.setAttendanceRecordId(attendanceRecordId);
-        attendanceRequest.setUserId(userId);
-        attendanceRequest.setType(type);
-        attendanceRequest.setRequestedCheckInAt(request.getRequestedCheckInAt());
-        attendanceRequest.setRequestedCheckOutAt(request.getRequestedCheckOutAt());
-        attendanceRequest.setReason(request.getReason());
-        attendanceRequest.setStatus("PENDING");
-        attendanceRequestMapper.insert(attendanceRequest);
-
-        return new AttendanceRequestCreatedResponse(attendanceRequest.getId(), attendanceRequest.getStatus());
-    }
-
     public List<StaffAttendanceRequestListItemResponse> getMyAttendanceRequests(Long userId, Long workplaceId) {
         ensureActiveMember(workplaceId, userId);
         return attendanceRequestMapper.findByWorkplaceIdAndUserId(workplaceId, userId);
@@ -323,25 +289,6 @@ public class StaffService {
             throw new ApiException(HttpStatus.FORBIDDEN, ACTIVE_WORKPLACE_MEMBER_NOT_FOUND);
         }
         return member;
-    }
-
-    private String resolveRequestType(AttendanceCorrectionRequestCreateRequest request) {
-        LocalDateTime checkIn = request.getRequestedCheckInAt();
-        LocalDateTime checkOut = request.getRequestedCheckOutAt();
-
-        if (checkIn == null && checkOut == null) {
-            throw new ApiException(AT_LEAST_ONE_REQUESTED_CHECK_IN_OR_OUT_REQUIRED);
-        }
-        if (checkIn != null && checkOut != null && checkOut.isBefore(checkIn)) {
-            throw new ApiException(REQUESTED_CHECK_OUT_MUST_BE_LATER_THAN_CHECK_IN);
-        }
-        if (checkIn != null && checkOut != null) {
-            return "BOTH_EDIT";
-        }
-        if (checkIn != null) {
-            return "CHECK_IN_EDIT";
-        }
-        return "CHECK_OUT_EDIT";
     }
 
     private int calculateWorkedMinutes(LocalDateTime from, LocalDateTime to) {

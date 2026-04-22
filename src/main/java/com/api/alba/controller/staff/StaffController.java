@@ -1,6 +1,5 @@
 package com.api.alba.controller.staff;
 
-import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
@@ -98,16 +97,6 @@ public class StaffController {
             @Valid @RequestBody AttendanceNewRecordRequestCreateRequest request
     ) {
         return staffService.submitNewRecordRequest(requiredPrincipal(principal), workplaceId, request);
-    }
-
-    @PostMapping("/attendance-records/{attendanceRecordId}/requests")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AttendanceRequestCreatedResponse submitCorrectionRequest(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable Long attendanceRecordId,
-            @Valid @RequestBody AttendanceCorrectionRequestCreateRequest request
-    ) {
-        return staffService.submitCorrectionRequest(requiredPrincipal(principal), attendanceRecordId, request);
     }
 
     @GetMapping("/payslips")
