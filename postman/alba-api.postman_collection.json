@@ -327,6 +327,18 @@
                     }
                 },
                 {
+                    "name": "06-1. Recalculate Wages",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "X-API-KEY", "value": "{{apiKey}}" },
+                            { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+                        ],
+                        "url": "{{baseUrl}}/api/owner/workplaces/{{workplaceId}}/attendance-records/recalculate-wages?month=2026-03",
+                        "description": "호출 시점: 시급 변경 등 이후 해당 기간 근무기록의 급여를 재계산할 때. month 파라미터(예: 2026-03) 또는 startDate/endDate 쌍으로 호출. 예) ?startDate=2026-03-01&endDate=2026-03-31"
+                    }
+                },
+                {
                     "name": "Payslip",
                     "description": "급여명세서 관련 API. 미리보기 -> 발행 -> 목록/상세 조회 -> 수정 -> 취소.",
                     "item": [
