@@ -76,10 +76,42 @@ public class AuthService {
     private static final int PASSWORD_RESET_EXPIRE_MINUTES = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String[] PROFILE_COLORS = {
-            "#EF4444", "#F97316", "#F59E0B", "#EAB308", "#84CC16",
-            "#22C55E", "#10B981", "#14B8A6", "#06B6D4", "#0EA5E9",
-            "#3B82F6", "#6366F1", "#8B5CF6", "#A855F7", "#D946EF",
-            "#EC4899", "#F43F5E", "#64748B", "#334155", "#0F172A"
+            // Red
+            "#EF4444", "#DC2626", "#F87171", "#B91C1C",
+            // Orange
+            "#F97316", "#EA580C", "#FB923C",
+            // Amber
+            "#F59E0B", "#D97706", "#FBBF24",
+            // Yellow
+            "#EAB308", "#CA8A04",
+            // Lime
+            "#84CC16", "#65A30D",
+            // Green
+            "#22C55E", "#16A34A", "#4ADE80", "#15803D",
+            // Emerald
+            "#10B981", "#059669", "#34D399",
+            // Teal
+            "#14B8A6", "#0D9488", "#2DD4BF",
+            // Cyan
+            "#06B6D4", "#0891B2", "#22D3EE",
+            // Sky
+            "#0EA5E9", "#0284C7", "#38BDF8",
+            // Blue
+            "#3B82F6", "#2563EB", "#60A5FA", "#1D4ED8",
+            // Indigo
+            "#6366F1", "#4F46E5", "#818CF8",
+            // Violet
+            "#8B5CF6", "#7C3AED", "#A78BFA",
+            // Purple
+            "#A855F7", "#9333EA", "#C084FC",
+            // Fuchsia
+            "#D946EF", "#C026D3", "#E879F9",
+            // Pink
+            "#EC4899", "#DB2777",
+            // Rose
+            "#F43F5E", "#E11D48",
+            // Slate
+            "#64748B"
     };
 
     private final UserMapper userMapper;
