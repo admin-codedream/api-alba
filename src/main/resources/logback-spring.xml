@@ -44,4 +44,17 @@
         </root>
     </springProfile>
 
+    <!-- 스케줄러 로그 중복 방지 -->
+    <springProfile name="dev">
+        <logger name="com.api.alba.scheduler" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE" />
+        </logger>
+    </springProfile>
+    <springProfile name="!dev">
+        <logger name="com.api.alba.scheduler" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </logger>
+    </springProfile>
+
 </configuration>

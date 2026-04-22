@@ -1,4 +1,4 @@
-package com.api.alba.component;
+package com.api.alba.scheduler;
 
 import com.api.alba.dto.push.StaffReminderTarget;
 import com.api.alba.firebase.FcmDto;
