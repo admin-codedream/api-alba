@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.owner.PayslipMapper">
+
+    <resultMap id="payslipMap" type="com.api.alba.domain.owner.Payslip">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="fromDate" column="FROM_DATE"/>
+        <result property="toDate" column="TO_DATE"/>
+        <result property="hourlyWage" column="HOURLY_WAGE"/>
+        <result property="userName" column="USER_NAME"/>
+        <result property="profileColor" column="PROFILE_COLOR"/>
+        <result property="workedDays" column="WORKED_DAYS"/>
+        <result property="workedMinutes" column="WORKED_MINUTES"/>
+        <result property="baseWage" column="BASE_WAGE"/>
+        <result property="bonusAmount" column="BONUS_AMOUNT"/>
+        <result property="bonusNote" column="BONUS_NOTE"/>
+        <result property="deductionAmount" column="DEDUCTION_AMOUNT"/>
+        <result property="deductionNote" column="DEDUCTION_NOTE"/>
+        <result property="totalWage" column="TOTAL_WAGE"/>
+        <result property="dailySnapshot" column="DAILY_SNAPSHOT"/>
+        <result property="status" column="STATUS"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+        <result property="workplaceName" column="WORKPLACE_NAME"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.owner.Payslip" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO PAYSLIPS (
+            WORKPLACE_ID, USER_ID, FROM_DATE, TO_DATE,
+            HOURLY_WAGE, WORKED_DAYS, WORKED_MINUTES, BASE_WAGE,
+            BONUS_AMOUNT, DEDUCTION_AMOUNT, TOTAL_WAGE,
+            DAILY_SNAPSHOT, STATUS
+        ) VALUES (
+            #{workplaceId}, #{userId}, #{fromDate}, #{toDate},
+            #{hourlyWage}, #{workedDays}, #{workedMinutes}, #{baseWage},
+            #{bonusAmount}, #{deductionAmount}, #{totalWage},
+            #{dailySnapshot}, #{status}
+        )
+    </insert>
+
+    <select id="findById" resultMap="payslipMap">
+        SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
+               p.HOURLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
+               p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
+               u.NAME AS USER_NAME, u.PROFILE_COLOR
+        FROM PAYSLIPS p
+        JOIN USERS u ON u.ID = p.USER_ID
+        WHERE p.ID = #{id}
+    </select>
+
+    <select id="findByWorkplaceId" resultMap="payslipMap">
+        SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
+               p.HOURLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
+               p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
+               u.NAME AS USER_NAME, u.PROFILE_COLOR
+        FROM PAYSLIPS p
+        JOIN USERS u ON u.ID = p.USER_ID
+        WHERE p.WORKPLACE_ID = #{workplaceId}
+          AND p.STATUS != 'CANCELLED'
+        <if test="fromDate != null">
+            AND p.FROM_DATE >= #{fromDate}
+        </if>
+        <if test="toDate != null">
+            AND p.TO_DATE &lt;= #{toDate}
+        </if>
+        ORDER BY p.CREATED_AT DESC
+    </select>
+
+    <select id="findByUserId" resultMap="payslipMap">
+        SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
+               p.HOURLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
+               p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
+               u.NAME AS USER_NAME, u.PROFILE_COLOR,
+               w.NAME AS WORKPLACE_NAME
+        FROM PAYSLIPS p
+        JOIN USERS u ON u.ID = p.USER_ID
+        JOIN WORKPLACES w ON w.ID = p.WORKPLACE_ID
+        WHERE p.USER_ID = #{userId}
+          AND p.STATUS != 'CANCELLED'
+        <if test="workplaceId != null">
+            AND p.WORKPLACE_ID = #{workplaceId}
+        </if>
+        <if test="fromDate != null">
+            AND p.FROM_DATE >= #{fromDate}
+        </if>
+        <if test="toDate != null">
+            AND p.TO_DATE &lt;= #{toDate}
+        </if>
+        ORDER BY p.CREATED_AT DESC
+    </select>
+
+    <update id="updateBonusDeduction">
+        UPDATE PAYSLIPS
+        SET BONUS_AMOUNT     = #{bonusAmount},
+            BONUS_NOTE       = #{bonusNote},
+            DEDUCTION_AMOUNT = #{deductionAmount},
+            DEDUCTION_NOTE   = #{deductionNote},
+            TOTAL_WAGE       = #{totalWage}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE PAYSLIPS
+        SET STATUS = #{status}
+        WHERE ID = #{id}
+    </update>
+
+</mapper>

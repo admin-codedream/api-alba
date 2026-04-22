@@ -19,8 +19,15 @@ import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
+import com.api.alba.dto.owner.CancelPayslipResponse;
+import com.api.alba.dto.owner.IssuePayslipRequest;
+import com.api.alba.dto.owner.IssuePayslipResponse;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
+import com.api.alba.dto.owner.PayslipDetailResponse;
+import com.api.alba.dto.owner.PayslipListItemResponse;
+import com.api.alba.dto.owner.PayslipResponse;
+import com.api.alba.dto.owner.UpdatePayslipRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -104,6 +111,65 @@ public class OwnerController {
             @PathVariable Long memberId
     ) {
         ownerService.deleteWorkplaceMember(requiredPrincipal(principal), workplaceId, memberId);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/members/{memberId}/payslip")
+    public PayslipResponse getPayslip(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ownerService.getPayslip(requiredPrincipal(principal), workplaceId, memberId, startDate, endDate);
+    }
+
+    @PostMapping("/workplaces/{workplaceId}/payslips")
+    @ResponseStatus(HttpStatus.CREATED)
+    public IssuePayslipResponse issuePayslips(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody IssuePayslipRequest request
+    ) {
+        return ownerService.issuePayslips(requiredPrincipal(principal), workplaceId, request);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/payslips")
+    public List<PayslipListItemResponse> getPayslips(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) {
+        return ownerService.getPayslips(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/payslips/{payslipId}")
+    public PayslipDetailResponse getPayslipDetail(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId
+    ) {
+        return ownerService.getPayslipDetail(requiredPrincipal(principal), workplaceId, payslipId);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/payslips/{payslipId}")
+    public PayslipDetailResponse updatePayslip(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId,
+            @Valid @RequestBody UpdatePayslipRequest request
+    ) {
+        return ownerService.updatePayslip(requiredPrincipal(principal), workplaceId, payslipId, request);
+    }
+
+    @DeleteMapping("/workplaces/{workplaceId}/payslips/{payslipId}")
+    public CancelPayslipResponse cancelPayslip(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId
+    ) {
+        return ownerService.cancelPayslip(requiredPrincipal(principal), workplaceId, payslipId);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/memo")

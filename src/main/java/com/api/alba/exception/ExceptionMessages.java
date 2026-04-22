@@ -62,5 +62,7 @@ public final class ExceptionMessages {
     public static final String INVALID_WITHDRAWAL_REASON_TYPE = "탈퇴 사유가 올바르지 않아요.";
     public static final String ATTENDANCE_RECORD_ALREADY_EXISTS = "해당 날짜에 이미 근태 기록이 있어요.";
     public static final String CHECK_OUT_MUST_BE_AFTER_CHECK_IN = "퇴근 시간은 출근 시간보다 늦어야 해요.";
+    public static final String PAYSLIP_NOT_FOUND = "급여 명세서를 찾을 수 없어요.";
+    public static final String PAYSLIP_ALREADY_CANCELLED = "이미 취소된 급여 명세서예요.";
 
 }

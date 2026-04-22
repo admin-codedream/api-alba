@@ -10,14 +10,21 @@ import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCorrectionRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
+import com.api.alba.domain.owner.Payslip;
+import com.api.alba.dto.owner.PayslipRecordItem;
 import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.MyAggregateSummary;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
 import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
+import com.api.alba.dto.staff.StaffPayslipDetailResponse;
+import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
+import com.api.alba.mapper.owner.PayslipMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.api.alba.exception.ApiException;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
@@ -36,8 +43,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.*;
 
@@ -51,6 +60,8 @@ public class StaffService {
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final WageCalculationHelper wageCalculationHelper;
+    private final PayslipMapper payslipMapper;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public JoinWorkplaceResponse joinWorkplaceByInviteCode(Long userId, JoinWorkplaceRequest request) {
@@ -365,5 +376,39 @@ public class StaffService {
             return List.of();
         }
         return workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
+    }
+
+    public List<StaffPayslipListItemResponse> getMyPayslips(Long userId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
+        return payslipMapper.findByUserId(userId, workplaceId, fromDate, toDate).stream()
+                .map(p -> new StaffPayslipListItemResponse(
+                        p.getId(), p.getWorkplaceId(), p.getWorkplaceName(),
+                        p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
+                        p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public StaffPayslipDetailResponse getMyPayslipDetail(Long userId, Long payslipId) {
+        Payslip payslip = payslipMapper.findById(payslipId);
+        if (payslip == null || !userId.equals(payslip.getUserId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, PAYSLIP_NOT_FOUND);
+        }
+        List<PayslipRecordItem> records = deserializeSnapshot(payslip.getDailySnapshot());
+        return new StaffPayslipDetailResponse(
+                payslip.getId(), payslip.getWorkplaceId(), payslip.getWorkplaceName(),
+                payslip.getFromDate(), payslip.getToDate(), payslip.getCreatedAt().toLocalDate(),
+                payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getHourlyWage(),
+                payslip.getBaseWage(), payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
+                payslip.getBonusNote(), payslip.getDeductionNote(), records
+        );
+    }
+
+    private List<PayslipRecordItem> deserializeSnapshot(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<PayslipRecordItem>>() {});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }

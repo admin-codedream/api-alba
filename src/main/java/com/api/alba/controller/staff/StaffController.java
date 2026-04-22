@@ -8,6 +8,8 @@ import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
 import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
+import com.api.alba.dto.staff.StaffPayslipDetailResponse;
+import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
 import com.api.alba.exception.ApiException;
@@ -106,6 +108,24 @@ public class StaffController {
             @Valid @RequestBody AttendanceCorrectionRequestCreateRequest request
     ) {
         return staffService.submitCorrectionRequest(requiredPrincipal(principal), attendanceRecordId, request);
+    }
+
+    @GetMapping("/payslips")
+    public List<StaffPayslipListItemResponse> getMyPayslips(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) Long workplaceId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) {
+        return staffService.getMyPayslips(requiredPrincipal(principal), workplaceId, fromDate, toDate);
+    }
+
+    @GetMapping("/payslips/{payslipId}")
+    public StaffPayslipDetailResponse getMyPayslipDetail(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long payslipId
+    ) {
+        return staffService.getMyPayslipDetail(requiredPrincipal(principal), payslipId);
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

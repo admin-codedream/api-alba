@@ -20,8 +20,21 @@ import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
+import com.api.alba.dto.owner.CancelPayslipResponse;
+import com.api.alba.dto.owner.IssuePayslipRequest;
+import com.api.alba.dto.owner.IssuePayslipResponse;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
+import com.api.alba.dto.owner.PayslipDetailResponse;
+import com.api.alba.dto.owner.PayslipDailyItemResponse;
+import com.api.alba.dto.owner.PayslipListItemResponse;
+import com.api.alba.dto.owner.PayslipRecordItem;
+import com.api.alba.dto.owner.PayslipResponse;
+import com.api.alba.dto.owner.UpdatePayslipRequest;
+import com.api.alba.domain.owner.Payslip;
+import com.api.alba.mapper.owner.PayslipMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
@@ -45,9 +58,11 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.ACTIVE_WORKPLACE_MEMBER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_ALREADY_EXISTS;
@@ -64,6 +79,8 @@ import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_USER_TYPE_CAN_
 import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED;
 import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
 import static com.api.alba.exception.ExceptionMessages.STATUS_MUST_BE_PENDING_APPROVED_REJECTED;
+import static com.api.alba.exception.ExceptionMessages.PAYSLIP_ALREADY_CANCELLED;
+import static com.api.alba.exception.ExceptionMessages.PAYSLIP_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_SETTING_NOT_FOUND;
@@ -86,6 +103,8 @@ public class OwnerService {
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final UserMapper userMapper;
     private final WageCalculationHelper wageCalculationHelper;
+    private final PayslipMapper payslipMapper;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
@@ -304,6 +323,181 @@ public class OwnerService {
                 targetMonth.atDay(1),
                 targetMonth.atEndOfMonth()
         );
+    }
+
+    public PayslipResponse getPayslip(Long ownerUserId, Long workplaceId, Long memberId, LocalDate startDate, LocalDate endDate) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        User staff = userMapper.findById(member.getUserId());
+        String staffName = staff != null ? staff.getName() : "";
+
+        List<AttendanceRecord> records = attendanceRecordMapper.findMyRecordsByPeriod(
+                workplaceId, member.getUserId(), startDate, endDate
+        );
+        Collections.reverse(records);
+
+        List<PayslipDailyItemResponse> dailyList = records.stream()
+                .map(r -> new PayslipDailyItemResponse(
+                        r.getWorkDate(),
+                        r.getCheckInAt(),
+                        r.getCheckOutAt(),
+                        r.getWorkedMinutes() != null ? r.getWorkedMinutes() : 0,
+                        r.getFinalWage() != null ? r.getFinalWage() : BigDecimal.ZERO,
+                        r.getStatus()
+                ))
+                .collect(Collectors.toList());
+
+        int totalWorkedMinutes = dailyList.stream().mapToInt(PayslipDailyItemResponse::getWorkedMinutes).sum();
+        BigDecimal totalWage = dailyList.stream()
+                .map(PayslipDailyItemResponse::getFinalWage)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new PayslipResponse(staffName, startDate, endDate, dailyList, dailyList.size(), totalWorkedMinutes, totalWage);
+    }
+
+    @Transactional
+    public IssuePayslipResponse issuePayslips(Long ownerUserId, Long workplaceId, IssuePayslipRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+
+        int issuedCount = 0;
+        for (Long userId : request.getUserIds()) {
+            WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
+            if (member == null) continue;
+
+            BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+            List<PayslipRecordItem> records = buildRecords(workplaceId, member, setting, breakPolicies, hourlyWage, request.getFromDate(), request.getToDate());
+            BigDecimal baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
+            int totalWorkedMinutes = records.stream().mapToInt(PayslipRecordItem::getWorkedMinutes).sum();
+
+            Payslip payslip = new Payslip();
+            payslip.setWorkplaceId(workplaceId);
+            payslip.setUserId(userId);
+            payslip.setFromDate(request.getFromDate());
+            payslip.setToDate(request.getToDate());
+            payslip.setHourlyWage(hourlyWage);
+            payslip.setWorkedDays(records.size());
+            payslip.setWorkedMinutes(totalWorkedMinutes);
+            payslip.setBaseWage(baseWage);
+            payslip.setBonusAmount(BigDecimal.ZERO);
+            payslip.setDeductionAmount(BigDecimal.ZERO);
+            payslip.setTotalWage(baseWage);
+            payslip.setDailySnapshot(serializeSnapshot(records));
+            payslip.setStatus("ISSUED");
+            payslipMapper.insert(payslip);
+            issuedCount++;
+        }
+        return new IssuePayslipResponse(issuedCount);
+    }
+
+    public List<PayslipListItemResponse> getPayslips(Long ownerUserId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
+        ensureOwner(workplaceId, ownerUserId);
+        return payslipMapper.findByWorkplaceId(workplaceId, fromDate, toDate).stream()
+                .map(p -> new PayslipListItemResponse(
+                        p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
+                        p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
+                        p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public PayslipDetailResponse getPayslipDetail(Long ownerUserId, Long workplaceId, Long payslipId) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        return toOwnerDetailResponse(payslip);
+    }
+
+    @Transactional
+    public PayslipDetailResponse updatePayslip(Long ownerUserId, Long workplaceId, Long payslipId, UpdatePayslipRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        if ("CANCELLED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
+        }
+        BigDecimal totalWage = payslip.getBaseWage()
+                .add(request.getBonusAmount())
+                .subtract(request.getDeductionAmount());
+        payslipMapper.updateBonusDeduction(
+                payslipId,
+                request.getBonusAmount(), request.getBonusNote(),
+                request.getDeductionAmount(), request.getDeductionNote(),
+                totalWage
+        );
+        return toOwnerDetailResponse(payslipMapper.findById(payslipId));
+    }
+
+    @Transactional
+    public CancelPayslipResponse cancelPayslip(Long ownerUserId, Long workplaceId, Long payslipId) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        if ("CANCELLED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
+        }
+        payslipMapper.updateStatus(payslipId, "CANCELLED");
+        return new CancelPayslipResponse(payslipId);
+    }
+
+    private List<PayslipRecordItem> buildRecords(Long workplaceId, WorkplaceMember member, WorkplaceSetting setting,
+                                                  List<WorkplaceBreakPolicy> breakPolicies, BigDecimal hourlyWage,
+                                                  LocalDate fromDate, LocalDate toDate) {
+        List<AttendanceRecord> attendanceRecords = attendanceRecordMapper.findMyRecordsByPeriod(
+                workplaceId, member.getUserId(), fromDate, toDate
+        );
+        Collections.reverse(attendanceRecords);
+
+        List<PayslipRecordItem> result = new ArrayList<>();
+        for (AttendanceRecord record : attendanceRecords) {
+            if (record.getCheckOutAt() == null) continue;
+            int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
+            WageCalculationResult calc = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies);
+            result.add(new PayslipRecordItem(
+                    record.getWorkDate(),
+                    record.getCheckInAt().toLocalTime(),
+                    record.getCheckOutAt().toLocalTime(),
+                    calc.workedMinutes(),
+                    calc.finalWage()
+            ));
+        }
+        return result;
+    }
+
+    private Payslip findPayslipOrThrow(Long workplaceId, Long payslipId) {
+        Payslip payslip = payslipMapper.findById(payslipId);
+        if (payslip == null || !workplaceId.equals(payslip.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, PAYSLIP_NOT_FOUND);
+        }
+        return payslip;
+    }
+
+    private PayslipDetailResponse toOwnerDetailResponse(Payslip p) {
+        return new PayslipDetailResponse(
+                p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
+                p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
+                p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
+                p.getBonusNote(), p.getDeductionNote(), deserializeSnapshot(p.getDailySnapshot())
+        );
+    }
+
+    private String serializeSnapshot(List<PayslipRecordItem> records) {
+        try {
+            return objectMapper.writeValueAsString(records);
+        } catch (Exception e) {
+            throw new ApiException(INVALID_REQUEST);
+        }
+    }
+
+    private List<PayslipRecordItem> deserializeSnapshot(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<PayslipRecordItem>>() {});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     public List<EmployeeWageSummary> getExpectedWageSummary(
