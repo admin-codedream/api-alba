@@ -30,11 +30,18 @@ import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.mapper.push.PushTokenMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
+import com.api.alba.dto.push.OwnerPushTokenTarget;
+import com.api.alba.firebase.FcmDto;
+import com.api.alba.firebase.FcmService;
+import com.api.alba.firebase.ProjectId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -49,6 +56,7 @@ import java.util.stream.Collectors;
 
 import static com.api.alba.exception.ExceptionMessages.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StaffService {
@@ -61,6 +69,8 @@ public class StaffService {
     private final WageCalculationHelper wageCalculationHelper;
     private final PayslipMapper payslipMapper;
     private final ObjectMapper objectMapper;
+    private final PushTokenMapper pushTokenMapper;
+    private final FcmService fcmService;
 
     @Transactional
     public JoinWorkplaceResponse joinWorkplaceByInviteCode(Long userId, JoinWorkplaceRequest request) {
@@ -267,7 +277,32 @@ public class StaffService {
         attendanceRequest.setStatus("PENDING");
         attendanceRequestMapper.insert(attendanceRequest);
 
+        sendCorrectionRequestPushSafely(workplaceId, userId);
+
         return new AttendanceRequestCreatedResponse(attendanceRequest.getId(), attendanceRequest.getStatus());
+    }
+
+    private void sendCorrectionRequestPushSafely(Long workplaceId, Long userId) {
+        try {
+            List<OwnerPushTokenTarget> tokenList =
+                    pushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId(workplaceId, userId);
+            if (CollectionUtils.isEmpty(tokenList)) {
+                return;
+            }
+
+            List<FcmDto> fcmDtos = tokenList.stream()
+                    .map(token -> FcmDto.builder()
+                            .pushToken(token.getToken())
+                            .title("\uD83C\uDF30 근무 정정 요청")
+                            .content(token.getStaffName() + "님이 근무 정정을 요청했습니다.")
+                            .build())
+                    .collect(Collectors.toList());
+
+            fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmDtos);
+        } catch (Exception e) {
+            log.warn("Correction request push send failed. workplaceId={}, userId={}, message={}",
+                    workplaceId, userId, e.getMessage(), e);
+        }
     }
 
     private String resolveNewRequestType(LocalDateTime checkIn, LocalDateTime checkOut, boolean isNewRecord) {
