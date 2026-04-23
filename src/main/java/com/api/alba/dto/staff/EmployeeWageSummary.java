@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 public class EmployeeWageSummary {
     private Long userId;
     private String userName;
+    private String profileColor;
     private Integer totalWorkedMinutes;
     private BigDecimal totalExpectedWage;
 }

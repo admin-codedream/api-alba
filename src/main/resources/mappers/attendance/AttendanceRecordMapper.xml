@@ -103,13 +103,14 @@
     <select id="findEmployeeWageSummaryByPeriod" resultType="com.api.alba.dto.staff.EmployeeWageSummary">
         SELECT ar.USER_ID AS userId,
                u.NAME AS userName,
+               u.PROFILE_COLOR AS profileColor,
                COALESCE(SUM(ar.WORKED_MINUTES), 0) AS totalWorkedMinutes,
                COALESCE(SUM(ar.FINAL_WAGE), 0) AS totalExpectedWage
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
-        GROUP BY ar.USER_ID, u.NAME
+        GROUP BY ar.USER_ID, u.NAME, u.PROFILE_COLOR
         ORDER BY totalExpectedWage DESC
     </select>
 
