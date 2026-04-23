@@ -47,8 +47,14 @@ import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.dto.push.StaffReminderTarget;
+import com.api.alba.firebase.FcmDto;
+import com.api.alba.firebase.FcmService;
+import com.api.alba.firebase.ProjectId;
+import com.api.alba.mapper.push.PushTokenMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +94,7 @@ import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_SETTING_NOT_FOUND;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
@@ -108,6 +115,8 @@ public class OwnerService {
     private final WageCalculationHelper wageCalculationHelper;
     private final PayslipMapper payslipMapper;
     private final ObjectMapper objectMapper;
+    private final PushTokenMapper pushTokenMapper;
+    private final FcmService fcmService;
 
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
@@ -468,7 +477,32 @@ public class OwnerService {
             throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CONFIRMED);
         }
         payslipMapper.updateStatus(payslipId, "CONFIRMED");
+        sendPayslipConfirmedPushSafely(payslip);
         return new ConfirmPayslipResponse(payslipId);
+    }
+
+    private void sendPayslipConfirmedPushSafely(Payslip payslip) {
+        try {
+            List<StaffReminderTarget> tokens = pushTokenMapper.findStaffPushTokensByUserIdAndWorkplaceId(
+                    payslip.getUserId(), payslip.getWorkplaceId()
+            );
+            if (tokens.isEmpty()) return;
+
+            List<FcmDto> fcmList = tokens.stream()
+                    .map(t -> FcmDto.builder()
+                            .pushSeq(0L)
+                            .pushToken(t.getToken())
+                            .title("\uD83C\uDF30 급여명세서 알림")
+                            .content(t.getWorkplaceName() + " 급여명세서가 도착했습니다.")
+                            .pushLink("")
+                            .project(ProjectId.ALBAM.getMessage())
+                            .build())
+                    .collect(Collectors.toList());
+
+            fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
+        } catch (Exception e) {
+            log.warn("Payslip confirmed push send failed. payslipId={}", payslip.getId(), e);
+        }
     }
 
     private List<PayslipRecordItem> buildRecords(Long workplaceId, WorkplaceMember member, WorkplaceSetting setting,
