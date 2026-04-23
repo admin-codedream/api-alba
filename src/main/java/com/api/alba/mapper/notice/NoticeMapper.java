@@ -11,4 +11,6 @@ public interface NoticeMapper {
     Notice findById(@Param("id") Long id);
 
     List<Notice> findAll();
+
+    Notice findLatest();
 }

@@ -21,6 +21,11 @@ public class NoticeController {
         return noticeService.getNotices();
     }
 
+    @GetMapping("/latest")
+    public Notice getLatestNotice() {
+        return noticeService.getLatestNotice();
+    }
+
     @GetMapping("/{noticeId}")
     public Notice getNotice(@PathVariable Long noticeId) {
         return noticeService.getNotice(noticeId);

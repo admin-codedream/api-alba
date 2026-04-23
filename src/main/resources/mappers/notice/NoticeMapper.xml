@@ -19,6 +19,13 @@
         WHERE ID = #{id}
     </select>
 
+    <select id="findLatest" resultMap="noticeMap">
+        SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
+        FROM NOTICES
+        ORDER BY CREATED_AT DESC
+        LIMIT 1
+    </select>
+
     <select id="findAll" resultMap="noticeMap">
         SELECT ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
         FROM NOTICES

@@ -20,6 +20,14 @@ public class NoticeService {
         return noticeMapper.findAll();
     }
 
+    public Notice getLatestNotice() {
+        Notice notice = noticeMapper.findLatest();
+        if (notice == null) {
+            throw new ApiException(HttpStatus.NOT_FOUND, NOTICE_NOT_FOUND);
+        }
+        return notice;
+    }
+
     public Notice getNotice(Long id) {
         Notice notice = noticeMapper.findById(id);
         if (notice == null) {
