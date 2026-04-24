@@ -63,6 +63,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -666,7 +667,7 @@ public class OwnerService {
                 breakPolicies
         );
 
-        String attendanceStatus = newCheckOut == null ? "WORKING" : "COMPLETED";
+        String attendanceStatus = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
         attendanceRecordMapper.updateByOwnerDecision(
                 record.getId(),
                 newCheckIn,
@@ -676,6 +677,17 @@ public class OwnerService {
                 wageCalculation.finalWage(),
                 attendanceStatus
         );
+    }
+
+    private String resolveCheckOutStatus(LocalDateTime checkInAt, WorkplaceSetting setting) {
+        if (setting == null || setting.getDefaultCheckInTime() == null) {
+            return "COMPLETED";
+        }
+        int graceMinutes = setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
+        LocalDateTime deadline = checkInAt.toLocalDate()
+                .atTime(setting.getDefaultCheckInTime())
+                .plusMinutes(graceMinutes);
+        return checkInAt.isAfter(deadline) ? "LATE" : "COMPLETED";
     }
 
     private WorkplaceMember ensureOwner(Long workplaceId, Long userId) {
@@ -852,7 +864,7 @@ public class OwnerService {
                         wageCalculation.workedMinutes(),
                         wageCalculation.baseWage(),
                         wageCalculation.finalWage(),
-                        "COMPLETED"
+                        resolveCheckOutStatus(request.getCheckInAt(), setting)
                 );
             }
 

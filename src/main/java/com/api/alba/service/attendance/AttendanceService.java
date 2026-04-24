@@ -131,13 +131,14 @@ public class AttendanceService {
                 breakPolicies
         );
 
+        String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting);
         attendanceRecordMapper.updateCheckOut(
                 record.getId(),
                 checkOutAt,
                 wageCalculation.workedMinutes(),
                 wageCalculation.baseWage(),
                 wageCalculation.finalWage(),
-                "COMPLETED"
+                finalStatus
         );
 
         sendAttendancePushSafely(member.getWorkplaceId(), userId, "퇴근 완료 알림", "%s님 퇴근이 완료되었습니다.");
@@ -151,6 +152,17 @@ public class AttendanceService {
         }
         validateActiveMember(workplaceId, userId);
         return attendanceRecordMapper.findMyRecordsByPeriod(workplaceId, userId, fromDate, toDate);
+    }
+
+    private String resolveCheckOutStatus(LocalDateTime checkInAt, WorkplaceSetting setting) {
+        if (setting == null || setting.getDefaultCheckInTime() == null) {
+            return "COMPLETED";
+        }
+        int graceMinutes = setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
+        LocalDateTime deadline = checkInAt.toLocalDate()
+                .atTime(setting.getDefaultCheckInTime())
+                .plusMinutes(graceMinutes);
+        return checkInAt.isAfter(deadline) ? "LATE" : "COMPLETED";
     }
 
     private WorkplaceMember validateActiveMember(Long workplaceId, Long userId) {
