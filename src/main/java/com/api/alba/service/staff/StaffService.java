@@ -111,6 +111,13 @@ public class StaffService {
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
 
+        if (record == null) {
+            AttendanceRecord yesterday = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today.minusDays(1));
+            if (yesterday != null && yesterday.getCheckOutAt() == null) {
+                record = yesterday;
+            }
+        }
+
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
         BigDecimal hourlyWage = resolveHourlyWage(member, setting);
@@ -151,6 +158,13 @@ public class StaffService {
         WorkplaceMember member = ensureActiveMember(workplaceId, userId);
         LocalDate today = LocalDate.now();
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today);
+
+        if (record == null) {
+            AttendanceRecord yesterday = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, today.minusDays(1));
+            if (yesterday != null && yesterday.getCheckOutAt() == null) {
+                record = yesterday;
+            }
+        }
 
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
