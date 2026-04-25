@@ -350,8 +350,8 @@ public class OwnerService {
 
     public PayslipResponse getPayslip(Long ownerUserId, Long workplaceId, Long memberId, LocalDate startDate, LocalDate endDate) {
         ensureOwner(workplaceId, ownerUserId);
-        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
-        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+        WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, memberId);
+        if (member == null) {
             throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
         }
         User staff = userMapper.findById(member.getUserId());

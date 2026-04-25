@@ -101,7 +101,7 @@
     </select>
 
     <select id="findEmployeeWageSummaryByPeriod" resultType="com.api.alba.dto.staff.EmployeeWageSummary">
-        SELECT ar.USER_ID AS userId,
+        SELECT ar.USER_ID AS memberId,
                u.NAME AS userName,
                u.PROFILE_COLOR AS profileColor,
                COALESCE(SUM(ar.WORKED_MINUTES), 0) AS totalWorkedMinutes,
