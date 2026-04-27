@@ -8,6 +8,6 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @Setter
 public class UpdateWorkplaceNameRequest {
-    @NotBlank(message = "workplaceName is required.")
+    @NotBlank(message = "근무지 이름을 입력해 주세요.")
     private String workplaceName;
 }

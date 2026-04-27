@@ -15,28 +15,28 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class CreateWorkplaceRequest {
-    @NotBlank(message = "name is required.")
-    @Size(max = 150, message = "name must be 150 characters or fewer.")
+    @NotBlank(message = "근무지 이름을 입력해 주세요.")
+    @Size(max = 150, message = "근무지 이름은 150자 이하여야 해요.")
     private String name;
 
-    @Size(max = 255, message = "address must be 255 characters or fewer.")
+    @Size(max = 255, message = "주소는 255자 이하여야 해요.")
     private String address;
 
-    @DecimalMin(value = "-90.0", message = "latitude must be greater than or equal to -90.")
-    @DecimalMax(value = "90.0", message = "latitude must be less than or equal to 90.")
+    @DecimalMin(value = "-90.0", message = "위도 값이 올바르지 않아요.")
+    @DecimalMax(value = "90.0", message = "위도 값이 올바르지 않아요.")
     private Double latitude;
 
-    @DecimalMin(value = "-180.0", message = "longitude must be greater than or equal to -180.")
-    @DecimalMax(value = "180.0", message = "longitude must be less than or equal to 180.")
+    @DecimalMin(value = "-180.0", message = "경도 값이 올바르지 않아요.")
+    @DecimalMax(value = "180.0", message = "경도 값이 올바르지 않아요.")
     private Double longitude;
 
-    @Min(value = 10, message = "allowedRadiusMeters must be 10 or greater.")
-    @Max(value = 5000, message = "allowedRadiusMeters must be 5000 or fewer.")
+    @Min(value = 10, message = "허용 반경은 10 이상이어야 해요.")
+    @Max(value = 5000, message = "허용 반경은 5000 이하여야 해요.")
     private Integer allowedRadiusMeters;
 
     private Boolean useLocationRestriction;
 
-    @DecimalMin(value = "0.00", inclusive = true, message = "hourlyWage must be 0 or greater.")
-    @Digits(integer = 8, fraction = 2, message = "hourlyWage must have up to 8 integer digits and 2 decimal places.")
+    @DecimalMin(value = "0.00", inclusive = true, message = "시급은 0 이상이어야 해요.")
+    @Digits(integer = 8, fraction = 2, message = "시급 형식이 올바르지 않아요.")
     private BigDecimal hourlyWage;
 }

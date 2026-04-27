@@ -14,6 +14,6 @@ public class AttendanceCorrectionRequestCreateRequest {
     private LocalDateTime requestedCheckOutAt;
 
     @NotBlank(message = "사유는 필수입니다.")
-    @Size(max = 1000, message = "reason must be 1000 characters or fewer.")
+    @Size(max = 1000, message = "사유는 1000자 이하여야 해요.")
     private String reason;
 }

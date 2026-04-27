@@ -11,16 +11,16 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class AttendanceCheckOutRequest {
-    @NotNull(message = "workplaceId is required.")
+    @NotNull(message = "근무지 정보를 입력해 주세요.")
     private Long workplaceId;
 
     private LocalDate workDate;
 
-    @DecimalMin(value = "-90.0", message = "latitude must be greater than or equal to -90.")
-    @DecimalMax(value = "90.0", message = "latitude must be less than or equal to 90.")
+    @DecimalMin(value = "-90.0", message = "위도 값이 올바르지 않아요.")
+    @DecimalMax(value = "90.0", message = "위도 값이 올바르지 않아요.")
     private Double latitude;
 
-    @DecimalMin(value = "-180.0", message = "longitude must be greater than or equal to -180.")
-    @DecimalMax(value = "180.0", message = "longitude must be less than or equal to 180.")
+    @DecimalMin(value = "-180.0", message = "경도 값이 올바르지 않아요.")
+    @DecimalMax(value = "180.0", message = "경도 값이 올바르지 않아요.")
     private Double longitude;
 }

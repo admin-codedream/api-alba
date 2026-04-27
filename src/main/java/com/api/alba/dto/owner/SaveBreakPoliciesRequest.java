@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 public class SaveBreakPoliciesRequest {
-    @NotNull(message = "useBreakPolicy is required.")
+    @NotNull(message = "휴게 정책 사용 여부를 입력해 주세요.")
     private Boolean useBreakPolicy;
 
     @Valid
@@ -23,22 +23,22 @@ public class SaveBreakPoliciesRequest {
     @Getter
     @Setter
     public static class PolicyItem {
-        @NotBlank(message = "name is required.")
-        @Size(max = 100, message = "name must be 100 characters or fewer.")
+        @NotBlank(message = "휴게 정책 이름을 입력해 주세요.")
+        @Size(max = 100, message = "휴게 정책 이름은 100자 이하여야 해요.")
         private String name;
 
-        @NotBlank(message = "breakType is required.")
-        @Pattern(regexp = "AUTO|FIXED", message = "breakType must be AUTO or FIXED.")
+        @NotBlank(message = "휴게 유형을 입력해 주세요.")
+        @Pattern(regexp = "AUTO|FIXED", message = "휴게 유형이 올바르지 않아요.")
         private String breakType;
 
-        @Positive(message = "minWorkMinutes must be positive.")
+        @Positive(message = "최소 근무 시간은 0보다 커야 해요.")
         private Integer minWorkMinutes;
 
-        @NotNull(message = "breakMinutes is required.")
-        @Positive(message = "breakMinutes must be positive.")
+        @NotNull(message = "휴게 시간을 입력해 주세요.")
+        @Positive(message = "휴게 시간은 0보다 커야 해요.")
         private Integer breakMinutes;
 
-        @NotNull(message = "isPaid is required.")
+        @NotNull(message = "유급 여부를 입력해 주세요.")
         private Boolean isPaid;
     }
 }

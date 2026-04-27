@@ -9,7 +9,7 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class JoinWorkplaceRequest {
-    @NotBlank(message = "inviteCode is required.")
-    @Size(max = 20, message = "inviteCode must be 20 characters or fewer.")
+    @NotBlank(message = "초대 코드를 입력해 주세요.")
+    @Size(max = 20, message = "초대 코드는 20자 이하여야 해요.")
     private String inviteCode;
 }

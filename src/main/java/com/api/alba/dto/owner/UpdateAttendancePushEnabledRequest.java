@@ -8,6 +8,6 @@ import javax.validation.constraints.NotNull;
 @Getter
 @Setter
 public class UpdateAttendancePushEnabledRequest {
-    @NotNull(message = "enabled is required.")
+    @NotNull(message = "알림 설정 여부를 입력해 주세요.")
     private Boolean enabled;
 }

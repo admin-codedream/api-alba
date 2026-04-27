@@ -10,11 +10,11 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class PushTokenUpsertRequest {
-    @NotBlank(message = "platform is required.")
-    @Pattern(regexp = "^(?i)(IOS|ANDROID|WEB)$", message = "platform must be IOS, ANDROID, or WEB.")
+    @NotBlank(message = "플랫폼을 입력해 주세요.")
+    @Pattern(regexp = "^(?i)(IOS|ANDROID|WEB)$", message = "플랫폼이 올바르지 않아요.")
     private String platform;
 
-    @NotBlank(message = "token is required.")
-    @Size(max = 512, message = "token must be 512 characters or fewer.")
+    @NotBlank(message = "토큰을 입력해 주세요.")
+    @Size(max = 512, message = "토큰은 512자 이하여야 해요.")
     private String token;
 }

@@ -8,6 +8,6 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class UpdateWorkplaceMemberMemoRequest {
-    @Size(max = 1000, message = "memo must be 1000 characters or fewer.")
+    @Size(max = 1000, message = "메모는 1000자 이하여야 해요.")
     private String memo;
 }

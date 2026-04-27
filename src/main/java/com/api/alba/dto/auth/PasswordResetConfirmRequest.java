@@ -10,15 +10,15 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class PasswordResetConfirmRequest {
-    @NotBlank(message = "loginId is required.")
-    @Size(max = 191, message = "loginId must be 191 characters or fewer.")
+    @NotBlank(message = "아이디를 입력해 주세요.")
+    @Size(max = 191, message = "아이디는 191자 이하여야 해요.")
     private String loginId;
 
-    @NotBlank(message = "code is required.")
-    @Pattern(regexp = "^\\d{6}$", message = "code must be 6 digits.")
+    @NotBlank(message = "인증 코드를 입력해 주세요.")
+    @Pattern(regexp = "^\\d{6}$", message = "인증 코드는 6자리 숫자여야 해요.")
     private String code;
 
-    @NotBlank(message = "newPassword is required.")
-    @Size(min = 8, max = 100, message = "newPassword must be between 8 and 100 characters.")
+    @NotBlank(message = "새 비밀번호를 입력해 주세요.")
+    @Size(min = 8, max = 100, message = "새 비밀번호는 8자 이상 100자 이하여야 해요.")
     private String newPassword;
 }

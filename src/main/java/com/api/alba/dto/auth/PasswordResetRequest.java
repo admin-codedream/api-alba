@@ -9,7 +9,7 @@ import javax.validation.constraints.Size;
 @Getter
 @Setter
 public class PasswordResetRequest {
-    @NotBlank(message = "loginId is required.")
-    @Size(max = 191, message = "loginId must be 191 characters or fewer.")
+    @NotBlank(message = "아이디를 입력해 주세요.")
+    @Size(max = 191, message = "아이디는 191자 이하여야 해요.")
     private String loginId;
 }

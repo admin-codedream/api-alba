@@ -12,8 +12,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class UpdateHourlyWageRequest {
-    @NotNull(message = "hourlyWage is required.")
-    @DecimalMin(value = "0.00", inclusive = true, message = "hourlyWage must be 0 or greater.")
-    @Digits(integer = 8, fraction = 2, message = "hourlyWage must have up to 8 integer digits and 2 decimal places.")
+    @NotNull(message = "시급을 입력해 주세요.")
+    @DecimalMin(value = "0.00", inclusive = true, message = "시급은 0 이상이어야 해요.")
+    @Digits(integer = 8, fraction = 2, message = "시급 형식이 올바르지 않아요.")
     private BigDecimal hourlyWage;
 }
