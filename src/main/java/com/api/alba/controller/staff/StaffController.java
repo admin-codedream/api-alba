@@ -3,6 +3,7 @@ package com.api.alba.controller.staff;
 import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
+import com.api.alba.dto.staff.UpdateMyBreakMinutesRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
@@ -19,6 +20,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -115,6 +117,16 @@ public class StaffController {
             @PathVariable Long payslipId
     ) {
         return staffService.getMyPayslipDetail(requiredPrincipal(principal), payslipId);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/break-minutes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMyBreakMinutes(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateMyBreakMinutesRequest request
+    ) {
+        staffService.updateMyBreakMinutes(requiredPrincipal(principal), workplaceId, request.getBreakMinutes());
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

@@ -138,7 +138,7 @@ public class StaffService {
         BigDecimal expectedWage = safeWage(record.getFinalWage());
         if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
-            workedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies);
+            workedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
             expectedWage = wageCalculationHelper.calculateWage(hourlyWage, workedMinutes);
         }
 
@@ -180,7 +180,8 @@ public class StaffService {
                 todayWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(
                         grossWorkedMinutes,
                         setting,
-                        breakPolicies
+                        breakPolicies,
+                        member.getBreakMinutes()
                 );
                 todayExpectedWage = wageCalculationHelper.calculateWage(hourlyWage, todayWorkedMinutes);
             }
@@ -330,6 +331,12 @@ public class StaffService {
             return "CHECK_IN_EDIT";
         }
         return "CHECK_OUT_EDIT";
+    }
+
+    @Transactional
+    public void updateMyBreakMinutes(Long userId, Long workplaceId, Integer breakMinutes) {
+        WorkplaceMember member = ensureActiveMember(workplaceId, userId);
+        workplaceMemberMapper.updateBreakMinutes(member.getId(), breakMinutes);
     }
 
     private WorkplaceMember ensureActiveMember(Long workplaceId, Long userId) {

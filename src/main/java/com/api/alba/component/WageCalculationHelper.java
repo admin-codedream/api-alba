@@ -20,9 +20,10 @@ public class WageCalculationHelper {
             BigDecimal hourlyWage,
             int grossWorkedMinutes,
             WorkplaceSetting setting,
-            List<WorkplaceBreakPolicy> breakPolicies
+            List<WorkplaceBreakPolicy> breakPolicies,
+            Integer memberBreakMinutes
     ) {
-        int payableWorkedMinutes = calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies);
+        int payableWorkedMinutes = calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, memberBreakMinutes);
         BigDecimal wage = calculateWage(hourlyWage, payableWorkedMinutes);
         return new WageCalculationResult(payableWorkedMinutes, wage, wage);
     }
@@ -30,12 +31,13 @@ public class WageCalculationHelper {
     public int calculatePayableWorkedMinutes(
             int grossWorkedMinutes,
             WorkplaceSetting setting,
-            List<WorkplaceBreakPolicy> breakPolicies
+            List<WorkplaceBreakPolicy> breakPolicies,
+            Integer memberBreakMinutes
     ) {
         // 1. 전체 근무 분을 음수 없이 보정합니다.
         int normalizedWorkedMinutes = Math.max(grossWorkedMinutes, 0);
         // 2. 무급 휴게시간을 차감합니다.
-        int unpaidBreakMinutes = resolveUnpaidBreakMinutes(normalizedWorkedMinutes, setting, breakPolicies);
+        int unpaidBreakMinutes = resolveUnpaidBreakMinutes(normalizedWorkedMinutes, setting, breakPolicies, memberBreakMinutes);
         int netWorkedMinutes = Math.max(normalizedWorkedMinutes - unpaidBreakMinutes, 0);
         // 3. 급여 계산 단위(MINUTE, 10MIN, HOUR)에 맞춰 절사합니다.
         return applySalaryCalcUnit(netWorkedMinutes, setting);
@@ -52,8 +54,13 @@ public class WageCalculationHelper {
     private int resolveUnpaidBreakMinutes(
             int grossWorkedMinutes,
             WorkplaceSetting setting,
-            List<WorkplaceBreakPolicy> breakPolicies
+            List<WorkplaceBreakPolicy> breakPolicies,
+            Integer memberBreakMinutes
     ) {
+        // 직원별 무급 휴게가 설정된 경우 → 매장 정책보다 우선 적용
+        if (memberBreakMinutes != null) {
+            return memberBreakMinutes;
+        }
         if (setting == null || !Boolean.TRUE.equals(setting.getUseBreakPolicy()) || breakPolicies == null || breakPolicies.isEmpty()) {
             return 0;
         }

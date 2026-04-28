@@ -16,4 +16,5 @@ public class WorkplaceMember {
     private String memo;
     private Boolean receiveAttendancePush;
     private String status;
+    private Integer breakMinutes;
 }

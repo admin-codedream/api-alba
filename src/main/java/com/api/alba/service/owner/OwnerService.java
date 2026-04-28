@@ -237,6 +237,16 @@ public class OwnerService {
     }
 
     @Transactional
+    public void updateMemberBreakMinutes(Long ownerUserId, Long workplaceId, Long memberId, Integer breakMinutes) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        workplaceMemberMapper.updateBreakMinutes(memberId, breakMinutes);
+    }
+
+    @Transactional
     public void updateWorkplaceMemberMemo(
             Long ownerUserId,
             Long workplaceId,
@@ -518,7 +528,7 @@ public class OwnerService {
         for (AttendanceRecord record : attendanceRecords) {
             if (record.getCheckOutAt() == null) continue;
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
-            WageCalculationResult calc = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies);
+            WageCalculationResult calc = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
             result.add(new PayslipRecordItem(
                     record.getWorkDate(),
                     record.getCheckInAt().toLocalTime(),
@@ -641,7 +651,8 @@ public class OwnerService {
                     hourlyWage,
                     grossWorkedMinutes,
                     setting,
-                    breakPolicies
+                    breakPolicies,
+                    member.getBreakMinutes()
             );
             attendanceRecordMapper.updateFinalWage(
                     record.getId(),
@@ -664,7 +675,8 @@ public class OwnerService {
                 hourlyWage,
                 grossWorkedMinutes,
                 setting,
-                breakPolicies
+                breakPolicies,
+                staffMember.getBreakMinutes()
         );
 
         String attendanceStatus = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
@@ -856,7 +868,7 @@ public class OwnerService {
                 BigDecimal hourlyWage = resolveHourlyWage(member, setting);
                 int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
                 WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                        hourlyWage, grossWorkedMinutes, setting, breakPolicies
+                        hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes()
                 );
                 attendanceRecordMapper.updateCheckOut(
                         record.getId(),

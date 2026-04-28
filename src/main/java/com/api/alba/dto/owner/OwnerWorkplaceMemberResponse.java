@@ -16,4 +16,5 @@ public class OwnerWorkplaceMemberResponse {
     private BigDecimal hourlyWage;
     private String status;
     private String memo;
+    private Integer breakMinutes;
 }

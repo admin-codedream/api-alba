@@ -47,4 +47,6 @@ public interface WorkplaceMemberMapper {
     int updateMemo(@Param("id") Long id, @Param("memo") String memo);
 
     int updateHourlyWage(@Param("id") Long id, @Param("hourlyWage") BigDecimal hourlyWage);
+
+    int updateBreakMinutes(@Param("id") Long id, @Param("breakMinutes") Integer breakMinutes);
 }

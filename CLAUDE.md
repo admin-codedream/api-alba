@@ -36,6 +36,7 @@
 - `mappers/`: MyBatis XML 쿼리
   - Java `mapper/` 패키지와 도메인별로 대응
 - `fcm/`: Firebase 설정 파일
+- `docs/`: 문서 및 참고 파일
 - `logback-spring.xml`, `log4jdbc.log4j2.properties`: 로그 설정
 - `banner.txt`: 실행 배너
 

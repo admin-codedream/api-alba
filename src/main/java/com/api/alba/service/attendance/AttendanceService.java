@@ -128,7 +128,8 @@ public class AttendanceService {
                 hourlyWage,
                 grossWorkedMinutes,
                 setting,
-                breakPolicies
+                breakPolicies,
+                member.getBreakMinutes()
         );
 
         String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting);
