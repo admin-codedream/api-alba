@@ -52,4 +52,9 @@
         WHERE ID = #{id}
     </update>
 
+    <delete id="deleteByUserId">
+        DELETE FROM USER_SOCIAL_ACCOUNTS
+        WHERE USER_ID = #{userId}
+    </delete>
+
 </mapper>

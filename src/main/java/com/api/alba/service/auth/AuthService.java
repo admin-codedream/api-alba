@@ -407,7 +407,10 @@ public class AuthService {
         );
         userWithdrawalReasonMapper.insert(reason);
 
+        String anonymizedLoginId = "DELETED_" + userId + "_" + System.currentTimeMillis();
+        userMapper.anonymizeUser(userId, anonymizedLoginId);
         userMapper.updateStatus(userId, "INACTIVE");
+        userSocialAccountMapper.deleteByUserId(userId);
     }
 
     private void agreeToTerms(Long userId, List<Long> termsIds) {

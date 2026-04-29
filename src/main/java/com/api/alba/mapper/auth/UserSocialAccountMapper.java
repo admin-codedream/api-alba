@@ -18,4 +18,6 @@ public interface UserSocialAccountMapper {
     UserSocialAccount findByProviderEmail(@Param("email") String email);
 
     int updateLastLoginAt(@Param("id") Long id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+
+    int deleteByUserId(@Param("userId") Long userId);
 }

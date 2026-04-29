@@ -19,4 +19,6 @@ public interface UserMapper {
     int updateStatus(@Param("id") Long id, @Param("status") String status);
 
     int updatePasswordHash(@Param("id") Long id, @Param("passwordHash") String passwordHash);
+
+    int anonymizeUser(@Param("id") Long id, @Param("loginId") String loginId);
 }

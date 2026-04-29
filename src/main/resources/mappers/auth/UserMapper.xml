@@ -53,4 +53,11 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="anonymizeUser">
+        UPDATE USERS
+        SET LOGIN_ID      = #{loginId},
+            PASSWORD_HASH = NULL
+        WHERE ID = #{id}
+    </update>
+
 </mapper>
