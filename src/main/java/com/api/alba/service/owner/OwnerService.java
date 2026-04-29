@@ -13,6 +13,8 @@ import com.api.alba.dto.owner.AttendancePushSettingResponse;
 import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.BreakPoliciesResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
+import com.api.alba.dto.owner.PayslipDeductionItemResponse;
+import com.api.alba.dto.owner.SavePayslipDeductionsRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
@@ -34,6 +36,8 @@ import com.api.alba.dto.owner.PayslipRecordItem;
 import com.api.alba.dto.owner.PayslipResponse;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
 import com.api.alba.domain.owner.Payslip;
+import com.api.alba.domain.owner.PayslipDeduction;
+import com.api.alba.mapper.owner.PayslipDeductionMapper;
 import com.api.alba.mapper.owner.PayslipMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -115,6 +119,7 @@ public class OwnerService {
     private final UserMapper userMapper;
     private final WageCalculationHelper wageCalculationHelper;
     private final PayslipMapper payslipMapper;
+    private final PayslipDeductionMapper payslipDeductionMapper;
     private final ObjectMapper objectMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
@@ -456,13 +461,36 @@ public class OwnerService {
         }
         BigDecimal totalWage = payslip.getBaseWage()
                 .add(request.getBonusAmount())
-                .subtract(request.getDeductionAmount());
-        payslipMapper.updateBonusDeduction(
-                payslipId,
-                request.getBonusAmount(), request.getBonusNote(),
-                request.getDeductionAmount(), request.getDeductionNote(),
-                totalWage
-        );
+                .subtract(payslip.getDeductionAmount());
+        payslipMapper.updateBonus(payslipId, request.getBonusAmount(), request.getBonusNote(), totalWage);
+        return toOwnerDetailResponse(payslipMapper.findById(payslipId));
+    }
+
+    @Transactional
+    public PayslipDetailResponse savePayslipDeductions(Long ownerUserId, Long workplaceId, Long payslipId, SavePayslipDeductionsRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        if ("CANCELLED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
+        }
+        payslipDeductionMapper.deleteByPayslipId(payslipId);
+        for (SavePayslipDeductionsRequest.DeductionItem item : request.getDeductions()) {
+            PayslipDeduction deduction = new PayslipDeduction();
+            deduction.setPayslipId(payslipId);
+            deduction.setDeductionType(item.getDeductionType());
+            deduction.setName(item.getName());
+            deduction.setAmount(item.getAmount());
+            deduction.setNote(item.getNote());
+            deduction.setDisplayOrder(item.getDisplayOrder());
+            payslipDeductionMapper.insert(deduction);
+        }
+        BigDecimal totalDeduction = request.getDeductions().stream()
+                .map(SavePayslipDeductionsRequest.DeductionItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalWage = payslip.getBaseWage()
+                .add(payslip.getBonusAmount())
+                .subtract(totalDeduction);
+        payslipMapper.updateDeductionSnapshot(payslipId, totalDeduction, totalWage);
         return toOwnerDetailResponse(payslipMapper.findById(payslipId));
     }
 
@@ -549,12 +577,15 @@ public class OwnerService {
     }
 
     private PayslipDetailResponse toOwnerDetailResponse(Payslip p) {
+        List<PayslipDeductionItemResponse> deductions = payslipDeductionMapper.findByPayslipId(p.getId()).stream()
+                .map(d -> new PayslipDeductionItemResponse(d.getId(), d.getDeductionType(), d.getName(), d.getAmount(), d.getNote(), d.getDisplayOrder()))
+                .collect(Collectors.toList());
         return new PayslipDetailResponse(
                 p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                 p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                 p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
                 p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
-                p.getBonusNote(), p.getDeductionNote(), deserializeSnapshot(p.getDailySnapshot())
+                p.getBonusNote(), deductions, deserializeSnapshot(p.getDailySnapshot())
         );
     }
 

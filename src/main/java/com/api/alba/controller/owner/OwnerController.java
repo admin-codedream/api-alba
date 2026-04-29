@@ -12,6 +12,7 @@ import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
 import com.api.alba.dto.owner.RecalculateWagesResponse;
 import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
+import com.api.alba.dto.owner.SavePayslipDeductionsRequest;
 import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
 import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
@@ -163,6 +164,16 @@ public class OwnerController {
             @Valid @RequestBody UpdatePayslipRequest request
     ) {
         return ownerService.updatePayslip(requiredPrincipal(principal), workplaceId, payslipId, request);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/payslips/{payslipId}/deductions")
+    public PayslipDetailResponse savePayslipDeductions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId,
+            @Valid @RequestBody SavePayslipDeductionsRequest request
+    ) {
+        return ownerService.savePayslipDeductions(requiredPrincipal(principal), workplaceId, payslipId, request);
     }
 
     @DeleteMapping("/workplaces/{workplaceId}/payslips/{payslipId}")

@@ -10,6 +10,8 @@ import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.domain.owner.Payslip;
+import com.api.alba.domain.owner.PayslipDeduction;
+import com.api.alba.dto.owner.PayslipDeductionItemResponse;
 import com.api.alba.dto.owner.PayslipRecordItem;
 import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
@@ -21,6 +23,7 @@ import com.api.alba.dto.staff.StaffPayslipDetailResponse;
 import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
+import com.api.alba.mapper.owner.PayslipDeductionMapper;
 import com.api.alba.mapper.owner.PayslipMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,6 +71,7 @@ public class StaffService {
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final WageCalculationHelper wageCalculationHelper;
     private final PayslipMapper payslipMapper;
+    private final PayslipDeductionMapper payslipDeductionMapper;
     private final ObjectMapper objectMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
@@ -397,13 +401,16 @@ public class StaffService {
         if (payslip == null || !userId.equals(payslip.getUserId()) || !"CONFIRMED".equals(payslip.getStatus())) {
             throw new ApiException(HttpStatus.NOT_FOUND, PAYSLIP_NOT_FOUND);
         }
+        List<PayslipDeductionItemResponse> deductions = payslipDeductionMapper.findByPayslipId(payslipId).stream()
+                .map(d -> new PayslipDeductionItemResponse(d.getId(), d.getDeductionType(), d.getName(), d.getAmount(), d.getNote(), d.getDisplayOrder()))
+                .collect(Collectors.toList());
         List<PayslipRecordItem> records = deserializeSnapshot(payslip.getDailySnapshot());
         return new StaffPayslipDetailResponse(
                 payslip.getId(), payslip.getWorkplaceId(), payslip.getWorkplaceName(),
                 payslip.getFromDate(), payslip.getToDate(), payslip.getCreatedAt().toLocalDate(),
                 payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getHourlyWage(),
                 payslip.getBaseWage(), payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
-                payslip.getBonusNote(), payslip.getDeductionNote(), records
+                payslip.getBonusNote(), deductions, records
         );
     }
 

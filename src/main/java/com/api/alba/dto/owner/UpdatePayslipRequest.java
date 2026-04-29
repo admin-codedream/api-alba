@@ -11,9 +11,4 @@ public class UpdatePayslipRequest {
     private BigDecimal bonusAmount;
 
     private String bonusNote;
-
-    @NotNull
-    private BigDecimal deductionAmount;
-
-    private String deductionNote;
 }

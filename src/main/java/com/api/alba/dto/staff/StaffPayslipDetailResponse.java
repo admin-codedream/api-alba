@@ -1,5 +1,6 @@
 package com.api.alba.dto.staff;
 
+import com.api.alba.dto.owner.PayslipDeductionItemResponse;
 import com.api.alba.dto.owner.PayslipRecordItem;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +26,6 @@ public class StaffPayslipDetailResponse {
     private BigDecimal deductionAmount;
     private BigDecimal totalWage;
     private String bonusNote;
-    private String deductionNote;
+    private List<PayslipDeductionItemResponse> deductions;
     private List<PayslipRecordItem> records;
 }

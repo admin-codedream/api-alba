@@ -27,12 +27,16 @@ public interface PayslipMapper {
             @Param("toDate") LocalDate toDate
     );
 
-    int updateBonusDeduction(
+    int updateBonus(
             @Param("id") Long id,
             @Param("bonusAmount") BigDecimal bonusAmount,
             @Param("bonusNote") String bonusNote,
+            @Param("totalWage") BigDecimal totalWage
+    );
+
+    int updateDeductionSnapshot(
+            @Param("id") Long id,
             @Param("deductionAmount") BigDecimal deductionAmount,
-            @Param("deductionNote") String deductionNote,
             @Param("totalWage") BigDecimal totalWage
     );
 

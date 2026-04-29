@@ -91,12 +91,17 @@
         ORDER BY p.CREATED_AT DESC
     </select>
 
-    <update id="updateBonusDeduction">
+    <update id="updateBonus">
         UPDATE PAYSLIPS
-        SET BONUS_AMOUNT     = #{bonusAmount},
-            BONUS_NOTE       = #{bonusNote},
-            DEDUCTION_AMOUNT = #{deductionAmount},
-            DEDUCTION_NOTE   = #{deductionNote},
+        SET BONUS_AMOUNT = #{bonusAmount},
+            BONUS_NOTE   = #{bonusNote},
+            TOTAL_WAGE   = #{totalWage}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateDeductionSnapshot">
+        UPDATE PAYSLIPS
+        SET DEDUCTION_AMOUNT = #{deductionAmount},
             TOTAL_WAGE       = #{totalWage}
         WHERE ID = #{id}
     </update>

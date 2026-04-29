@@ -25,6 +25,6 @@ public class PayslipDetailResponse {
     private BigDecimal deductionAmount;
     private BigDecimal totalWage;
     private String bonusNote;
-    private String deductionNote;
+    private List<PayslipDeductionItemResponse> deductions;
     private List<PayslipRecordItem> records;
 }
