@@ -204,13 +204,16 @@ public class OwnerService {
     }
 
     public AttendancePushSettingResponse getAttendancePushSetting(Long ownerUserId, Long workplaceId) {
-        WorkplaceMember ownerMember = ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, ownerUserId);
+        if (member == null) {
+            throw new ApiException(HttpStatus.FORBIDDEN, OWNER_ACCESS_ONLY);
+        }
         Workplace workplace = workplaceMapper.findById(workplaceId);
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         if (setting == null) {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
-        boolean receiveAttendancePush = ownerMember != null && Boolean.TRUE.equals(ownerMember.getReceiveAttendancePush());
+        boolean receiveAttendancePush = Boolean.TRUE.equals(member.getReceiveAttendancePush());
         return new AttendancePushSettingResponse(
                 workplaceId,
                 workplace.getName(),

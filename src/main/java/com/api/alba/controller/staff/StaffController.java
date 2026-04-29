@@ -12,6 +12,7 @@ import com.api.alba.dto.staff.StaffPayslipDetailResponse;
 import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
+import com.api.alba.dto.staff.StaffWorkplaceSettingResponse;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
 import com.api.alba.service.staff.StaffService;
@@ -47,6 +48,14 @@ public class StaffController {
             @Valid @RequestBody JoinWorkplaceRequest request
     ) {
         return staffService.joinWorkplaceByInviteCode(requiredPrincipal(principal), request);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/settings")
+    public StaffWorkplaceSettingResponse getWorkplaceSetting(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId
+    ) {
+        return staffService.getWorkplaceSetting(requiredPrincipal(principal), workplaceId);
     }
 
     @GetMapping("/workplaces/{workplaceId}/home/today")

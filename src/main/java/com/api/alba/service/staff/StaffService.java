@@ -23,6 +23,7 @@ import com.api.alba.dto.staff.StaffPayslipDetailResponse;
 import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
+import com.api.alba.dto.staff.StaffWorkplaceSettingResponse;
 import com.api.alba.mapper.owner.PayslipDeductionMapper;
 import com.api.alba.mapper.owner.PayslipMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -338,6 +339,29 @@ public class StaffService {
     }
 
     @Transactional
+    public StaffWorkplaceSettingResponse getWorkplaceSetting(Long userId, Long workplaceId) {
+        WorkplaceMember member = ensureActiveMember(workplaceId, userId);
+        Workplace workplace = workplaceMapper.findById(workplaceId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        return new StaffWorkplaceSettingResponse(
+                workplaceId,
+                workplace.getName(),
+                workplace.getAddress(),
+                workplace.getLatitude(),
+                workplace.getLongitude(),
+                workplace.getUseLocationRestriction(),
+                Boolean.TRUE.equals(member.getReceiveAttendancePush()),
+                setting.getDefaultHourlyWage(),
+                setting.getSalaryCalcUnit(),
+                setting.getDefaultCheckInTime(),
+                setting.getDefaultCheckOutTime(),
+                member.getBreakMinutes()
+        );
+    }
+
     public void updateMyBreakMinutes(Long userId, Long workplaceId, Integer breakMinutes) {
         WorkplaceMember member = ensureActiveMember(workplaceId, userId);
         workplaceMemberMapper.updateBreakMinutes(member.getId(), breakMinutes);
