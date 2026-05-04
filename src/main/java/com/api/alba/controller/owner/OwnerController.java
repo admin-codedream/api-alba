@@ -18,6 +18,7 @@ import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
+import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateMemberBreakMinutesRequest;
 import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
@@ -400,6 +401,16 @@ public class OwnerController {
             @RequestBody UpdateDefaultWorkTimeRequest request
     ) {
         ownerService.updateDefaultWorkTime(requiredPrincipal(principal), workplaceId, request.getDefaultCheckInTime(), request.getDefaultCheckOutTime());
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/weekly-holiday-pay")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateUseWeeklyHolidayPay(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @RequestBody UpdateWeeklyHolidayPayRequest request
+    ) {
+        ownerService.updateUseWeeklyHolidayPay(requiredPrincipal(principal), workplaceId, request.getUseWeeklyHolidayPay());
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

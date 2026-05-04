@@ -21,6 +21,7 @@ public class PayslipDetailResponse {
     private int workedMinutes;
     private BigDecimal hourlyWage;
     private BigDecimal baseWage;
+    private BigDecimal weeklyHolidayPay;
     private BigDecimal bonusAmount;
     private BigDecimal deductionAmount;
     private BigDecimal totalWage;

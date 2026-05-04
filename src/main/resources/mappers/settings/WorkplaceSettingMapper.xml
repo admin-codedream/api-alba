@@ -14,6 +14,7 @@
         <result property="useBreakPolicy" column="USE_BREAK_POLICY"/>
         <result property="defaultCheckInTime" column="DEFAULT_CHECK_IN_TIME"/>
         <result property="defaultCheckOutTime" column="DEFAULT_CHECK_OUT_TIME"/>
+        <result property="useWeeklyHolidayPay" column="USE_WEEKLY_HOLIDAY_PAY"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.settings.WorkplaceSetting" useGeneratedKeys="true" keyProperty="id">
@@ -22,7 +23,7 @@
     </insert>
 
     <select id="findByWorkplaceId" resultMap="workplaceSettingMap">
-        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE, USE_BREAK_POLICY, DEFAULT_CHECK_IN_TIME, DEFAULT_CHECK_OUT_TIME
+        SELECT ID, WORKPLACE_ID, LATE_GRACE_MINUTES, SALARY_CALC_UNIT, ROUNDING_POLICY, DEFAULT_HOURLY_WAGE, USE_BREAK_POLICY, DEFAULT_CHECK_IN_TIME, DEFAULT_CHECK_OUT_TIME, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_SETTINGS
         WHERE WORKPLACE_ID = #{workplaceId}
     </select>
@@ -49,6 +50,12 @@
         UPDATE WORKPLACE_SETTINGS
         SET DEFAULT_CHECK_IN_TIME = #{defaultCheckInTime},
             DEFAULT_CHECK_OUT_TIME = #{defaultCheckOutTime}
+        WHERE WORKPLACE_ID = #{workplaceId}
+    </update>
+
+    <update id="updateUseWeeklyHolidayPay">
+        UPDATE WORKPLACE_SETTINGS
+        SET USE_WEEKLY_HOLIDAY_PAY = #{useWeeklyHolidayPay}
         WHERE WORKPLACE_ID = #{workplaceId}
     </update>
 

@@ -35,6 +35,7 @@ import com.api.alba.dto.owner.PayslipListItemResponse;
 import com.api.alba.dto.owner.PayslipRecordItem;
 import com.api.alba.dto.owner.PayslipResponse;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
+import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.domain.owner.Payslip;
 import com.api.alba.domain.owner.PayslipDeduction;
 import com.api.alba.mapper.owner.PayslipDeductionMapper;
@@ -64,6 +65,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,8 +75,10 @@ import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -225,7 +230,8 @@ public class OwnerService {
                 setting.getDefaultHourlyWage(),
                 setting.getSalaryCalcUnit(),
                 setting.getDefaultCheckInTime(),
-                setting.getDefaultCheckOutTime()
+                setting.getDefaultCheckOutTime(),
+                Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay())
         );
     }
 
@@ -415,6 +421,11 @@ public class OwnerService {
             BigDecimal baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
             int totalWorkedMinutes = records.stream().mapToInt(PayslipRecordItem::getWorkedMinutes).sum();
 
+            BigDecimal weeklyHolidayPay = BigDecimal.ZERO;
+            if (Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay())) {
+                weeklyHolidayPay = calculateWeeklyHolidayPay(records, hourlyWage);
+            }
+
             Payslip payslip = new Payslip();
             payslip.setWorkplaceId(workplaceId);
             payslip.setUserId(userId);
@@ -424,9 +435,10 @@ public class OwnerService {
             payslip.setWorkedDays(records.size());
             payslip.setWorkedMinutes(totalWorkedMinutes);
             payslip.setBaseWage(baseWage);
+            payslip.setWeeklyHolidayPay(weeklyHolidayPay);
             payslip.setBonusAmount(BigDecimal.ZERO);
             payslip.setDeductionAmount(BigDecimal.ZERO);
-            payslip.setTotalWage(baseWage);
+            payslip.setTotalWage(baseWage.add(weeklyHolidayPay));
             payslip.setDailySnapshot(serializeSnapshot(records));
             payslip.setStatus("ISSUED");
             payslipMapper.insert(payslip);
@@ -439,13 +451,16 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         YearMonth ym = YearMonth.parse(yearMonth);
         return payslipMapper.findByWorkplaceId(workplaceId, ym.atDay(1), ym.atEndOfMonth()).stream()
-                .map(p -> new PayslipListItemResponse(
-                        p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
-                        p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
-                        p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
-                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
-                        p.getStatus()
-                ))
+                .map(p -> {
+                    BigDecimal whp = p.getWeeklyHolidayPay() != null ? p.getWeeklyHolidayPay() : BigDecimal.ZERO;
+                    return new PayslipListItemResponse(
+                            p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
+                            p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
+                            p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                            p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
+                            p.getStatus()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -462,7 +477,9 @@ public class OwnerService {
         if ("CANCELLED".equals(payslip.getStatus())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
         }
+        BigDecimal weeklyHolidayPay = payslip.getWeeklyHolidayPay() != null ? payslip.getWeeklyHolidayPay() : BigDecimal.ZERO;
         BigDecimal totalWage = payslip.getBaseWage()
+                .add(weeklyHolidayPay)
                 .add(request.getBonusAmount())
                 .subtract(payslip.getDeductionAmount());
         payslipMapper.updateBonus(payslipId, request.getBonusAmount(), request.getBonusNote(), totalWage);
@@ -490,7 +507,9 @@ public class OwnerService {
         BigDecimal totalDeduction = request.getDeductions().stream()
                 .map(SavePayslipDeductionsRequest.DeductionItem::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal whp = payslip.getWeeklyHolidayPay() != null ? payslip.getWeeklyHolidayPay() : BigDecimal.ZERO;
         BigDecimal totalWage = payslip.getBaseWage()
+                .add(whp)
                 .add(payslip.getBonusAmount())
                 .subtract(totalDeduction);
         payslipMapper.updateDeductionSnapshot(payslipId, totalDeduction, totalWage);
@@ -583,11 +602,12 @@ public class OwnerService {
         List<PayslipDeductionItemResponse> deductions = payslipDeductionMapper.findByPayslipId(p.getId()).stream()
                 .map(d -> new PayslipDeductionItemResponse(d.getId(), d.getDeductionType(), d.getName(), d.getAmount(), d.getNote(), d.getDisplayOrder()))
                 .collect(Collectors.toList());
+        BigDecimal weeklyHolidayPay = p.getWeeklyHolidayPay() != null ? p.getWeeklyHolidayPay() : BigDecimal.ZERO;
         return new PayslipDetailResponse(
                 p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                 p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                 p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
-                p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
+                p.getBaseWage(), weeklyHolidayPay, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
                 p.getBonusNote(), deductions, deserializeSnapshot(p.getDailySnapshot())
         );
     }
@@ -669,6 +689,37 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
         }
         workplaceSettingMapper.updateDefaultWorkTime(workplaceId, defaultCheckInTime, defaultCheckOutTime);
+    }
+
+    @Transactional
+    public void updateUseWeeklyHolidayPay(Long ownerUserId, Long workplaceId, Boolean useWeeklyHolidayPay) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        if (setting == null) {
+            throw new ApiException(WORKPLACE_SETTING_NOT_FOUND);
+        }
+        workplaceSettingMapper.updateUseWeeklyHolidayPay(workplaceId, useWeeklyHolidayPay);
+    }
+
+    private BigDecimal calculateWeeklyHolidayPay(List<PayslipRecordItem> records, BigDecimal hourlyWage) {
+        Map<LocalDate, Integer> weeklyMinutes = new LinkedHashMap<>();
+        for (PayslipRecordItem record : records) {
+            LocalDate weekStart = record.getWorkDate().with(DayOfWeek.MONDAY);
+            weeklyMinutes.merge(weekStart, record.getWorkedMinutes(), Integer::sum);
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (int workedMinutes : weeklyMinutes.values()) {
+            if (workedMinutes < 900) continue; // 주 15시간(900분) 미만 제외
+            int cappedMinutes = Math.min(workedMinutes, 2400); // 주 40시간(2400분) 상한
+            // 주휴수당 = (주 근무분 / 2400) × 8시간 × 시급 = 주 근무분 × 시급 / 300
+            BigDecimal pay = hourlyWage
+                    .multiply(BigDecimal.valueOf(cappedMinutes))
+                    .divide(BigDecimal.valueOf(300), 2, RoundingMode.HALF_UP);
+            pay = pay.divide(BigDecimal.TEN, 0, RoundingMode.FLOOR).multiply(BigDecimal.TEN);
+            total = total.add(pay);
+        }
+        return total;
     }
 
     @Transactional

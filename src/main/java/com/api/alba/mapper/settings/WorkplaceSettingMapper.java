@@ -33,4 +33,9 @@ public interface WorkplaceSettingMapper {
             @Param("defaultCheckInTime") LocalTime defaultCheckInTime,
             @Param("defaultCheckOutTime") LocalTime defaultCheckOutTime
     );
+
+    int updateUseWeeklyHolidayPay(
+            @Param("workplaceId") Long workplaceId,
+            @Param("useWeeklyHolidayPay") Boolean useWeeklyHolidayPay
+    );
 }

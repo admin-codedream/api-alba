@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -i \"\\\\.java$\")",
+      "Bash(xargs grep:*)",
+      "Bash(node -e \":*)",
+      "Bash(python3 -c \":*)",
+      "Bash(./gradlew -q dependencies)",
+      "mcp__ide__getDiagnostics"
+    ]
+  }
+}

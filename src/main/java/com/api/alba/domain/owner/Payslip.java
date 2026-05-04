@@ -23,6 +23,7 @@ public class Payslip {
     private int workedDays;
     private int workedMinutes;
     private BigDecimal baseWage;
+    private BigDecimal weeklyHolidayPay;
     private BigDecimal bonusAmount;
     private String bonusNote;
     private BigDecimal deductionAmount;

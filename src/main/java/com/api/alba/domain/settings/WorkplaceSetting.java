@@ -18,4 +18,5 @@ public class WorkplaceSetting {
     private Boolean useBreakPolicy;
     private LocalTime defaultCheckInTime;
     private LocalTime defaultCheckOutTime;
+    private Boolean useWeeklyHolidayPay;
 }

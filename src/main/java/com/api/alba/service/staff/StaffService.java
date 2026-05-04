@@ -411,12 +411,15 @@ public class StaffService {
 
     public List<StaffPayslipListItemResponse> getMyPayslips(Long userId, Long workplaceId, LocalDate fromDate, LocalDate toDate) {
         return payslipMapper.findByUserId(userId, workplaceId, fromDate, toDate).stream()
-                .map(p -> new StaffPayslipListItemResponse(
-                        p.getId(), p.getWorkplaceId(), p.getWorkplaceName(),
-                        p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
-                        p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
-                        p.getBaseWage(), p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
-                ))
+                .map(p -> {
+                    BigDecimal whp = p.getWeeklyHolidayPay() != null ? p.getWeeklyHolidayPay() : BigDecimal.ZERO;
+                    return new StaffPayslipListItemResponse(
+                            p.getId(), p.getWorkplaceId(), p.getWorkplaceName(),
+                            p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
+                            p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                            p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -429,11 +432,12 @@ public class StaffService {
                 .map(d -> new PayslipDeductionItemResponse(d.getId(), d.getDeductionType(), d.getName(), d.getAmount(), d.getNote(), d.getDisplayOrder()))
                 .collect(Collectors.toList());
         List<PayslipRecordItem> records = deserializeSnapshot(payslip.getDailySnapshot());
+        BigDecimal whp = payslip.getWeeklyHolidayPay() != null ? payslip.getWeeklyHolidayPay() : BigDecimal.ZERO;
         return new StaffPayslipDetailResponse(
                 payslip.getId(), payslip.getWorkplaceId(), payslip.getWorkplaceName(),
                 payslip.getFromDate(), payslip.getToDate(), payslip.getCreatedAt().toLocalDate(),
                 payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getHourlyWage(),
-                payslip.getBaseWage(), payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
+                payslip.getBaseWage(), whp, payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
                 payslip.getBonusNote(), deductions, records
         );
     }

@@ -23,4 +23,5 @@ public class AttendancePushSettingResponse {
     private LocalTime defaultCheckInTime;
     @JsonFormat(pattern = "HH:mm")
     private LocalTime defaultCheckOutTime;
+    private Boolean useWeeklyHolidayPay;
 }
