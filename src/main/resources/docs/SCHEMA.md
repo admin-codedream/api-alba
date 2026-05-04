@@ -369,7 +369,7 @@ DEDUCTION_AMOUNT decimal(12, 2) default 0.00              not null comment '공�
 DEDUCTION_NOTE   varchar(500)                             null comment '공제 사유',
 TOTAL_WAGE       decimal(12, 2) default 0.00              not null comment '최종 급여(기본 + 추가 - 공제)',
 DAILY_SNAPSHOT   longtext                                 not null comment '일별 근무 내역 스냅샷(JSON)',
-STATUS           varchar(20)    default 'ISSUED'          not null comment '명세서 상태(ISSUED, CANCELLED)',
+STATUS           varchar(20)    default 'ISSUED'          not null comment '명세서 상태(ISSUED, CANCELLED, CONFIRMED)',
 CREATED_AT       timestamp      default CURRENT_TIMESTAMP not null comment '발행일시',
 UPDATED_AT       timestamp      default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '수정일시'
 )
