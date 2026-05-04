@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper">
+
+    <resultMap id="scheduleMap" type="com.api.alba.domain.staff.WorkplaceMemberSchedule">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="userId" column="USER_ID"/>
+        <result property="dayOfWeek" column="DAY_OF_WEEK"/>
+        <result property="scheduledCheckInTime" column="SCHEDULED_CHECK_IN_TIME"/>
+        <result property="scheduledCheckOutTime" column="SCHEDULED_CHECK_OUT_TIME"/>
+    </resultMap>
+
+    <insert id="insertAll">
+        INSERT INTO WORKPLACE_MEMBER_SCHEDULES (WORKPLACE_ID, USER_ID, DAY_OF_WEEK, SCHEDULED_CHECK_IN_TIME, SCHEDULED_CHECK_OUT_TIME)
+        VALUES
+        <foreach collection="schedules" item="s" separator=",">
+            (#{s.workplaceId}, #{s.userId}, #{s.dayOfWeek}, #{s.scheduledCheckInTime}, #{s.scheduledCheckOutTime})
+        </foreach>
+    </insert>
+
+    <select id="findByWorkplaceAndUser" resultMap="scheduleMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, DAY_OF_WEEK, SCHEDULED_CHECK_IN_TIME, SCHEDULED_CHECK_OUT_TIME
+        FROM WORKPLACE_MEMBER_SCHEDULES
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+        ORDER BY DAY_OF_WEEK
+    </select>
+
+    <delete id="deleteByWorkplaceAndUser">
+        DELETE FROM WORKPLACE_MEMBER_SCHEDULES
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </delete>
+
+</mapper>

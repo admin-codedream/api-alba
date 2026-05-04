@@ -34,8 +34,12 @@ import com.api.alba.dto.owner.PayslipDailyItemResponse;
 import com.api.alba.dto.owner.PayslipListItemResponse;
 import com.api.alba.dto.owner.PayslipRecordItem;
 import com.api.alba.dto.owner.PayslipResponse;
+import com.api.alba.dto.owner.MemberScheduleItemResponse;
+import com.api.alba.dto.owner.SaveMemberScheduleRequest;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
 import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
+import com.api.alba.domain.staff.WorkplaceMemberSchedule;
+import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
 import com.api.alba.domain.owner.Payslip;
 import com.api.alba.domain.owner.PayslipDeduction;
 import com.api.alba.mapper.owner.PayslipDeductionMapper;
@@ -128,6 +132,7 @@ public class OwnerService {
     private final ObjectMapper objectMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
+    private final WorkplaceMemberScheduleMapper workplaceMemberScheduleMapper;
 
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
@@ -286,6 +291,44 @@ public class OwnerService {
             throw new ApiException(HttpStatus.BAD_REQUEST, CANNOT_DELETE_OWNER_MEMBER);
         }
         workplaceMemberMapper.updateStatus(memberId, "INACTIVE");
+    }
+
+    public List<MemberScheduleItemResponse> getMemberSchedules(Long ownerUserId, Long workplaceId, Long memberId) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        return workplaceMemberScheduleMapper.findByWorkplaceAndUser(workplaceId, member.getUserId()).stream()
+                .map(s -> new MemberScheduleItemResponse(s.getDayOfWeek(), s.getScheduledCheckInTime(), s.getScheduledCheckOutTime()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<MemberScheduleItemResponse> saveMemberSchedules(Long ownerUserId, Long workplaceId, Long memberId, SaveMemberScheduleRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        workplaceMemberScheduleMapper.deleteByWorkplaceAndUser(workplaceId, member.getUserId());
+        if (request.getSchedules() != null && !request.getSchedules().isEmpty()) {
+            List<WorkplaceMemberSchedule> schedules = request.getSchedules().stream()
+                    .map(item -> {
+                        WorkplaceMemberSchedule s = new WorkplaceMemberSchedule();
+                        s.setWorkplaceId(workplaceId);
+                        s.setUserId(member.getUserId());
+                        s.setDayOfWeek(item.getDayOfWeek());
+                        s.setScheduledCheckInTime(item.getScheduledCheckInTime());
+                        s.setScheduledCheckOutTime(item.getScheduledCheckOutTime());
+                        return s;
+                    })
+                    .collect(Collectors.toList());
+            workplaceMemberScheduleMapper.insertAll(schedules);
+        }
+        return workplaceMemberScheduleMapper.findByWorkplaceAndUser(workplaceId, member.getUserId()).stream()
+                .map(s -> new MemberScheduleItemResponse(s.getDayOfWeek(), s.getScheduledCheckInTime(), s.getScheduledCheckOutTime()))
+                .collect(Collectors.toList());
     }
 
     public List<AttendanceRecord> getWorkplaceAttendanceRecords(

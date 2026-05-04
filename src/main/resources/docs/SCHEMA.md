@@ -227,6 +227,22 @@ TERMS 1:N USER_TERMS_AGREEMENTS
 - 기본 출퇴근 시간은 `WORKPLACE_SETTINGS.DEFAULT_CHECK_IN_TIME`, `WORKPLACE_SETTINGS.DEFAULT_CHECK_OUT_TIME`에서 관리합니다.
 - 주휴수당은 `WORKPLACE_SETTINGS.USE_WEEKLY_HOLIDAY_PAY`로 활성화하며, 급여명세서 발행 시 주 단위로 계산되어 `PAYSLIPS.WEEKLY_HOLIDAY_PAY`에 저장됩니다. 주 15시간(900분) 이상 근무한 주에 대해 `(주 근무분 / 2400) × 8시간 × 시급` 공식으로 계산합니다.
 
+### 직원 스케줄 테이블 DDL
+```sql
+CREATE TABLE WORKPLACE_MEMBER_SCHEDULES
+(
+    ID                       bigint unsigned auto_increment COMMENT '스케줄 PK' PRIMARY KEY,
+    WORKPLACE_ID             bigint unsigned NOT NULL COMMENT '사업장 ID',
+    USER_ID                  bigint unsigned NOT NULL COMMENT '직원 사용자 ID',
+    DAY_OF_WEEK              tinyint unsigned NOT NULL COMMENT '요일 (1=월, 2=화, 3=수, 4=목, 5=금, 6=토, 7=일)',
+    SCHEDULED_CHECK_IN_TIME  time NULL COMMENT '예정 출근 시간 (null이면 매장 기본값)',
+    SCHEDULED_CHECK_OUT_TIME time NULL COMMENT '예정 퇴근 시간 (null이면 매장 기본값)',
+    CREATED_AT               timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '생성일시',
+    UPDATED_AT               timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL COMMENT '수정일시',
+    CONSTRAINT UK_MEMBER_SCHEDULE_DOW UNIQUE (WORKPLACE_ID, USER_ID, DAY_OF_WEEK)
+) COMMENT '직원별 근무 요일 스케줄' CHARSET = utf8mb4;
+```
+
 ### 주휴수당 컬럼 추가 DDL
 ```sql
 ALTER TABLE WORKPLACE_SETTINGS
@@ -248,6 +264,7 @@ ALTER TABLE PAYSLIPS
 | 2026-04-29 | `WORKPLACE_MEMBERS.BREAK_MINUTES` 추가 (직원별 무급 휴게 설정) |
 | 2026-05-04 | `WORKPLACE_SETTINGS.USE_WEEKLY_HOLIDAY_PAY` 추가 (주휴수당 사용 여부) |
 | 2026-05-04 | `PAYSLIPS.WEEKLY_HOLIDAY_PAY` 추가 (주휴수당 금액) |
+| 2026-05-04 | `WORKPLACE_MEMBER_SCHEDULES` 테이블 추가 (직원별 근무 요일 스케줄) |
 
 ---
 

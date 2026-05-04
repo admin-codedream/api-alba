@@ -17,6 +17,8 @@ import com.api.alba.dto.owner.UpdateAttendancePushEnabledRequest;
 import com.api.alba.dto.owner.UpdateHourlyWageRequest;
 import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
 import com.api.alba.dto.owner.UpdateDefaultWorkTimeRequest;
+import com.api.alba.dto.owner.MemberScheduleItemResponse;
+import com.api.alba.dto.owner.SaveMemberScheduleRequest;
 import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
@@ -116,6 +118,25 @@ public class OwnerController {
             @PathVariable Long memberId
     ) {
         ownerService.deleteWorkplaceMember(requiredPrincipal(principal), workplaceId, memberId);
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/members/{memberId}/schedules")
+    public List<MemberScheduleItemResponse> getMemberSchedules(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId
+    ) {
+        return ownerService.getMemberSchedules(requiredPrincipal(principal), workplaceId, memberId);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/members/{memberId}/schedules")
+    public List<MemberScheduleItemResponse> saveMemberSchedules(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody SaveMemberScheduleRequest request
+    ) {
+        return ownerService.saveMemberSchedules(requiredPrincipal(principal), workplaceId, memberId, request);
     }
 
     @GetMapping("/workplaces/{workplaceId}/members/{memberId}/payslip")

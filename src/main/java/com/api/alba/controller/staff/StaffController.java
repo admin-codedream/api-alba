@@ -12,6 +12,7 @@ import com.api.alba.dto.staff.StaffPayslipDetailResponse;
 import com.api.alba.dto.staff.StaffPayslipListItemResponse;
 import com.api.alba.dto.staff.StaffTodaySummaryResponse;
 import com.api.alba.dto.staff.StaffWorkDetailResponse;
+import com.api.alba.dto.owner.MemberScheduleItemResponse;
 import com.api.alba.dto.staff.StaffWorkplaceSettingResponse;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
@@ -136,6 +137,14 @@ public class StaffController {
             @Valid @RequestBody UpdateMyBreakMinutesRequest request
     ) {
         staffService.updateMyBreakMinutes(requiredPrincipal(principal), workplaceId, request.getBreakMinutes());
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/schedules")
+    public List<MemberScheduleItemResponse> getMySchedules(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId
+    ) {
+        return staffService.getMySchedules(requiredPrincipal(principal), workplaceId);
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

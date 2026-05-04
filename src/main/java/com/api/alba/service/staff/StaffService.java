@@ -36,6 +36,9 @@ import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
+import com.api.alba.domain.staff.WorkplaceMemberSchedule;
+import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
+import com.api.alba.dto.owner.MemberScheduleItemResponse;
 import com.api.alba.dto.push.OwnerPushTokenTarget;
 import com.api.alba.firebase.FcmDto;
 import com.api.alba.firebase.FcmService;
@@ -76,6 +79,7 @@ public class StaffService {
     private final ObjectMapper objectMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
+    private final WorkplaceMemberScheduleMapper workplaceMemberScheduleMapper;
 
     @Transactional
     public JoinWorkplaceResponse joinWorkplaceByInviteCode(Long userId, JoinWorkplaceRequest request) {
@@ -440,6 +444,16 @@ public class StaffService {
                 payslip.getBaseWage(), whp, payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
                 payslip.getBonusNote(), deductions, records
         );
+    }
+
+    public List<MemberScheduleItemResponse> getMySchedules(Long userId, Long workplaceId) {
+        WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
+        if (member == null) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        return workplaceMemberScheduleMapper.findByWorkplaceAndUser(workplaceId, userId).stream()
+                .map(s -> new MemberScheduleItemResponse(s.getDayOfWeek(), s.getScheduledCheckInTime(), s.getScheduledCheckOutTime()))
+                .collect(Collectors.toList());
     }
 
     private List<PayslipRecordItem> deserializeSnapshot(String json) {
