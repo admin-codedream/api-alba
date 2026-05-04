@@ -15,6 +15,8 @@ public interface WorkplaceMemberScheduleMapper {
             @Param("userId") Long userId
     );
 
+    List<WorkplaceMemberSchedule> findAllByWorkplaceId(@Param("workplaceId") Long workplaceId);
+
     void deleteByWorkplaceAndUser(
             @Param("workplaceId") Long workplaceId,
             @Param("userId") Long userId

@@ -242,7 +242,16 @@ public class OwnerService {
 
     public List<OwnerWorkplaceMemberResponse> getWorkplaceMembers(Long ownerUserId, Long workplaceId) {
         ensureOwner(workplaceId, ownerUserId);
-        return workplaceMemberMapper.findActiveStaffMembersByWorkplaceId(workplaceId);
+        List<OwnerWorkplaceMemberResponse> members = workplaceMemberMapper.findActiveStaffMembersByWorkplaceId(workplaceId);
+
+        Map<Long, List<Integer>> scheduleMap = workplaceMemberScheduleMapper.findAllByWorkplaceId(workplaceId)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        WorkplaceMemberSchedule::getUserId,
+                        Collectors.mapping(WorkplaceMemberSchedule::getDayOfWeek, Collectors.toList())
+                ));
+        members.forEach(m -> m.setScheduleDays(scheduleMap.getOrDefault(m.getUserId(), List.of())));
+        return members;
     }
 
     @Transactional

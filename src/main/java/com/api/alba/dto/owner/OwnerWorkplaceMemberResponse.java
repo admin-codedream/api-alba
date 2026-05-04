@@ -1,12 +1,13 @@
 package com.api.alba.dto.owner;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@Setter
 public class OwnerWorkplaceMemberResponse {
     private Long memberId;
     private Long userId;
@@ -17,4 +18,5 @@ public class OwnerWorkplaceMemberResponse {
     private String status;
     private String memo;
     private Integer breakMinutes;
+    private List<Integer> scheduleDays;
 }

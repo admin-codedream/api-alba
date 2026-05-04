@@ -29,6 +29,13 @@
         ORDER BY DAY_OF_WEEK
     </select>
 
+    <select id="findAllByWorkplaceId" resultMap="scheduleMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, DAY_OF_WEEK, SCHEDULED_CHECK_IN_TIME, SCHEDULED_CHECK_OUT_TIME
+        FROM WORKPLACE_MEMBER_SCHEDULES
+        WHERE WORKPLACE_ID = #{workplaceId}
+        ORDER BY USER_ID, DAY_OF_WEEK
+    </select>
+
     <delete id="deleteByWorkplaceAndUser">
         DELETE FROM WORKPLACE_MEMBER_SCHEDULES
         WHERE WORKPLACE_ID = #{workplaceId}
