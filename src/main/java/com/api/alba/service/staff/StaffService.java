@@ -358,7 +358,7 @@ public class StaffService {
                 workplace.getLongitude(),
                 workplace.getUseLocationRestriction(),
                 Boolean.TRUE.equals(member.getReceiveAttendancePush()),
-                setting.getDefaultHourlyWage(),
+                resolveHourlyWage(member, setting),
                 setting.getSalaryCalcUnit(),
                 setting.getDefaultCheckInTime(),
                 setting.getDefaultCheckOutTime(),
@@ -400,10 +400,13 @@ public class StaffService {
     }
 
     private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
+        if (member != null && member.getHourlyWage() != null) {
+            return member.getHourlyWage();
+        }
         if (setting != null && setting.getDefaultHourlyWage() != null) {
             return setting.getDefaultHourlyWage();
         }
-        return safeWage(member.getHourlyWage());
+        return BigDecimal.ZERO;
     }
 
     private List<WorkplaceBreakPolicy> resolveBreakPolicies(Long workplaceId, WorkplaceSetting setting) {
