@@ -878,11 +878,11 @@ public class OwnerService {
     }
 
     private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
-        if (setting != null && setting.getDefaultHourlyWage() != null) {
-            return setting.getDefaultHourlyWage();
-        }
         if (member != null && member.getHourlyWage() != null) {
             return member.getHourlyWage();
+        }
+        if (setting != null && setting.getDefaultHourlyWage() != null) {
+            return setting.getDefaultHourlyWage();
         }
         return BigDecimal.ZERO;
     }

@@ -222,10 +222,13 @@ public class AttendanceService {
     }
 
     private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
+        if (member != null && member.getHourlyWage() != null) {
+            return member.getHourlyWage();
+        }
         if (setting != null && setting.getDefaultHourlyWage() != null) {
             return setting.getDefaultHourlyWage();
         }
-        return member.getHourlyWage() == null ? BigDecimal.ZERO : member.getHourlyWage();
+        return BigDecimal.ZERO;
     }
 
     private List<WorkplaceBreakPolicy> resolveBreakPolicies(Long workplaceId, WorkplaceSetting setting) {
