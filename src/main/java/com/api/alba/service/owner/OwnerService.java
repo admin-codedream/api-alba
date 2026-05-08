@@ -385,6 +385,9 @@ public class OwnerService {
         String status = request.getStatus().toUpperCase();
         if ("APPROVED".equals(status)) {
             applyApprovedRequest(record, attendanceRequest);
+        } else if ("REJECTED".equals(status) && "NEW_RECORD".equals(attendanceRequest.getType())) {
+            // NEW_RECORD 요청 반려 시 요청 제출 시 생성된 빈 레코드 삭제
+            attendanceRecordMapper.deleteById(record.getId());
         }
         attendanceRequestMapper.updateStatus(requestId, status);
     }

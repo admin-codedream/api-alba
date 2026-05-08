@@ -19,7 +19,9 @@ import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
 import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
+import com.api.alba.domain.staff.WorkplaceMemberSchedule;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -32,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,6 +58,7 @@ public class AttendanceService {
 
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
+    private final WorkplaceMemberScheduleMapper workplaceMemberScheduleMapper;
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
     private final WorkplaceBreakPolicyMapper workplaceBreakPolicyMapper;
@@ -110,6 +114,19 @@ public class AttendanceService {
                 userId,
                 workDate
         );
+        // 해당 날짜 기록이 없으면 전날(야간 근무 케이스) fallback
+        if (record == null || record.getCheckInAt() == null) {
+            LocalDate prevDate = workDate.minusDays(1);
+            AttendanceRecord prevRecord = attendanceRecordMapper.findByWorkplaceUserAndDate(
+                    member.getWorkplaceId(),
+                    userId,
+                    prevDate
+            );
+            if (prevRecord != null && prevRecord.getCheckInAt() != null && prevRecord.getCheckOutAt() == null) {
+                record = prevRecord;
+                workDate = prevDate;
+            }
+        }
         if (record == null || record.getCheckInAt() == null) {
             throw new ApiException(CHECK_IN_RECORD_NOT_FOUND_FOR_DATE);
         }
@@ -132,7 +149,8 @@ public class AttendanceService {
                 member.getBreakMinutes()
         );
 
-        String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting);
+        LocalTime scheduledCheckInTime = resolveScheduledCheckInTime(member, record.getCheckInAt());
+        String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting, scheduledCheckInTime);
         attendanceRecordMapper.updateCheckOut(
                 record.getId(),
                 checkOutAt,
@@ -155,13 +173,27 @@ public class AttendanceService {
         return attendanceRecordMapper.findMyRecordsByPeriod(workplaceId, userId, fromDate, toDate);
     }
 
-    private String resolveCheckOutStatus(LocalDateTime checkInAt, WorkplaceSetting setting) {
-        if (setting == null || setting.getDefaultCheckInTime() == null) {
+    private LocalTime resolveScheduledCheckInTime(WorkplaceMember member, LocalDateTime checkInAt) {
+        int dayOfWeek = checkInAt.getDayOfWeek().getValue();
+        List<WorkplaceMemberSchedule> schedules = workplaceMemberScheduleMapper.findByWorkplaceAndUser(
+                member.getWorkplaceId(), member.getUserId()
+        );
+        return schedules.stream()
+                .filter(s -> s.getDayOfWeek() != null && s.getDayOfWeek() == dayOfWeek
+                        && s.getScheduledCheckInTime() != null)
+                .map(WorkplaceMemberSchedule::getScheduledCheckInTime)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String resolveCheckOutStatus(LocalDateTime checkInAt, WorkplaceSetting setting, LocalTime scheduledCheckInTime) {
+        // 직원별 스케줄 출근 시간이 없으면 지각 판정 불가 → COMPLETED
+        if (scheduledCheckInTime == null) {
             return "COMPLETED";
         }
-        int graceMinutes = setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
+        int graceMinutes = setting != null && setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
         LocalDateTime deadline = checkInAt.toLocalDate()
-                .atTime(setting.getDefaultCheckInTime())
+                .atTime(scheduledCheckInTime)
                 .plusMinutes(graceMinutes);
         return checkInAt.isAfter(deadline) ? "LATE" : "COMPLETED";
     }
