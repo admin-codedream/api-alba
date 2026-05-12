@@ -23,4 +23,7 @@ public class AttendanceCheckOutRequest {
     @DecimalMin(value = "-180.0", message = "경도 값이 올바르지 않아요.")
     @DecimalMax(value = "180.0", message = "경도 값이 올바르지 않아요.")
     private Double longitude;
+
+    @DecimalMin(value = "0.0", message = "GPS 정확도 값이 올바르지 않아요.")
+    private Double gpsAccuracy;
 }

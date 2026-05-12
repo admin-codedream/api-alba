@@ -72,7 +72,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceRecord checkIn(Long userId, AttendanceCheckInRequest request) {
         WorkplaceMember member = validateActiveMember(request.getWorkplaceId(), userId);
-        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude());
+        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude(), request.getGpsAccuracy());
         LocalDate workDate = request.getWorkDate() == null ? LocalDate.now() : request.getWorkDate();
 
         AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
@@ -109,7 +109,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceRecord checkOut(Long userId, AttendanceCheckOutRequest request) {
         WorkplaceMember member = validateActiveMember(request.getWorkplaceId(), userId);
-        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude());
+        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude(), request.getGpsAccuracy());
         LocalDate workDate = request.getWorkDate() == null ? LocalDate.now() : request.getWorkDate();
 
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(
@@ -209,7 +209,9 @@ public class AttendanceService {
         return member;
     }
 
-    private void validateGeofence(Long workplaceId, Long userId, Double latitude, Double longitude) {
+    private static final int MAX_GPS_ACCURACY_BUFFER = 50;
+
+    private void validateGeofence(Long workplaceId, Long userId, Double latitude, Double longitude, Double gpsAccuracy) {
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
             throw new ApiException(WORKPLACE_NOT_FOUND);
@@ -231,6 +233,7 @@ public class AttendanceService {
         int allowedRadiusMeters = workplace.getAllowedRadiusMeters() == null
                 ? DEFAULT_ALLOWED_RADIUS_METERS
                 : workplace.getAllowedRadiusMeters();
+        int accuracyBuffer = gpsAccuracy == null ? 0 : Math.min(gpsAccuracy.intValue(), MAX_GPS_ACCURACY_BUFFER);
         double distanceMeters = distanceMeters(
                 workplace.getLatitude(),
                 workplace.getLongitude(),
@@ -238,16 +241,16 @@ public class AttendanceService {
                 longitude
         );
 
-        if (distanceMeters > allowedRadiusMeters) {
+        if (distanceMeters > allowedRadiusMeters + accuracyBuffer) {
             apiErrorLogService.insert(ApiErrorLog.builder()
                     .workplaceId(workplaceId)
                     .userId(userId)
                     .controller("AttendanceService#validateGeofence")
                     .requestParams(String.format(
-                            "{\"userLat\":%s,\"userLon\":%s,\"workplaceLat\":%s,\"workplaceLon\":%s,\"distanceMeters\":%.2f,\"allowedRadiusMeters\":%d}",
+                            "{\"userLat\":%s,\"userLon\":%s,\"workplaceLat\":%s,\"workplaceLon\":%s,\"distanceMeters\":%.2f,\"allowedRadiusMeters\":%d,\"accuracyBuffer\":%d}",
                             latitude, longitude,
                             workplace.getLatitude(), workplace.getLongitude(),
-                            distanceMeters, allowedRadiusMeters))
+                            distanceMeters, allowedRadiusMeters, accuracyBuffer))
                     .errorMessage(OUTSIDE_ALLOWED_WORKPLACE_RADIUS)
                     .build());
             throw new ApiException(HttpStatus.FORBIDDEN, OUTSIDE_ALLOWED_WORKPLACE_RADIUS);
