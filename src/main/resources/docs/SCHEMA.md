@@ -27,6 +27,7 @@
 | `PUSH_TOKENS` | 사용자 푸시 토큰 |
 | `PASSWORD_RESET_CODES` | 비밀번호 재설정 인증 코드 |
 | `NOTICES` | 공지사항 |
+| `API_ERROR_LOGS` | API 에러 로그 |
 
 ---
 
@@ -52,6 +53,9 @@
 
 ### `PAYSLIPS`
 급여명세서 발행 정보를 저장합니다. 급여 기간, 적용 시급, 근무일수, 근무시간, 기본급, 추가 지급액, 공제액, 최종 급여, 일별 근무 스냅샷을 관리합니다.
+
+### `API_ERROR_LOGS`
+API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 컨트롤러명, 요청한 사용자/사업장 ID, 요청 파라미터·헤더, 에러 메시지, 클라이언트 IP, User-Agent를 저장합니다. 비인증 요청의 경우 `USER_ID`, `WORKPLACE_ID`는 null이 될 수 있습니다.
 
 ### `WORKPLACE_BREAK_POLICIES`
 사업장별 휴게시간 정책을 저장합니다. 자동 차감 휴게와 고정 휴게를 구분하고, 유급/무급 여부를 관리합니다.
@@ -265,6 +269,7 @@ ALTER TABLE PAYSLIPS
 | 2026-05-04 | `WORKPLACE_SETTINGS.USE_WEEKLY_HOLIDAY_PAY` 추가 (주휴수당 사용 여부) |
 | 2026-05-04 | `PAYSLIPS.WEEKLY_HOLIDAY_PAY` 추가 (주휴수당 금액) |
 | 2026-05-04 | `WORKPLACE_MEMBER_SCHEDULES` 테이블 추가 (직원별 근무 요일 스케줄) |
+| 2026-05-12 | `API_ERROR_LOGS` 테이블 추가 (API 에러 로그 및 요청 파라미터 확인용) |
 
 ---
 
@@ -637,4 +642,36 @@ create index IDX_PAYSLIP_DEDUCTIONS_PAYSLIP_ID
 
 create index IDX_PAYSLIP_DEDUCTIONS_TYPE
     on albamm.PAYSLIP_DEDUCTIONS (DEDUCTION_TYPE);
+
+
+
+create table albamm.API_ERROR_LOGS
+(
+    ID             bigint unsigned auto_increment comment '에러 로그 PK'
+        primary key,
+    REQUEST_URI    varchar(500)                          null comment '요청 URI',
+    HTTP_METHOD    varchar(10)                           null comment 'HTTP Method(GET, POST 등)',
+    CONTROLLER     varchar(200)                          null comment '컨트롤러/핸들러명',
+    USER_ID        bigint unsigned                       null comment '요청 사용자 ID',
+    WORKPLACE_ID   bigint unsigned                       null comment '사업장 ID',
+    REQUEST_PARAMS longtext                              null comment '요청 파라미터/쿼리스트링/바디 JSON',
+    REQUEST_HEADERS longtext                             null comment '요청 헤더 JSON',
+    ERROR_MESSAGE  varchar(2000)                         null comment '에러 메시지',
+    CLIENT_IP     varchar(45)                           null comment '요청 IP',
+    USER_AGENT     varchar(500)                          null comment 'User-Agent',
+    CREATED_AT     timestamp default CURRENT_TIMESTAMP   not null comment '생성일시'
+)
+    comment 'API 에러 로그 및 요청 파라미터 확인용' charset = utf8mb4;
+
+create index IDX_API_ERROR_LOGS_CREATED_AT
+    on albamm.API_ERROR_LOGS (CREATED_AT);
+
+create index IDX_API_ERROR_LOGS_USER_ID
+    on albamm.API_ERROR_LOGS (USER_ID);
+
+create index IDX_API_ERROR_LOGS_WORKPLACE_ID
+    on albamm.API_ERROR_LOGS (WORKPLACE_ID);
+
+
 ```
+

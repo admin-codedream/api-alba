@@ -3,6 +3,7 @@ package com.api.alba.service.attendance;
 import com.api.alba.component.WageCalculationHelper;
 import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
+import com.api.alba.domain.log.ApiErrorLog;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
@@ -22,6 +23,7 @@ import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.domain.staff.WorkplaceMemberSchedule;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
+import com.api.alba.service.log.ApiErrorLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -65,11 +67,12 @@ public class AttendanceService {
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
     private final WageCalculationHelper wageCalculationHelper;
+    private final ApiErrorLogService apiErrorLogService;
 
     @Transactional
     public AttendanceRecord checkIn(Long userId, AttendanceCheckInRequest request) {
         WorkplaceMember member = validateActiveMember(request.getWorkplaceId(), userId);
-        validateGeofence(member.getWorkplaceId(), request.getLatitude(), request.getLongitude());
+        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude());
         LocalDate workDate = request.getWorkDate() == null ? LocalDate.now() : request.getWorkDate();
 
         AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(
@@ -106,7 +109,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceRecord checkOut(Long userId, AttendanceCheckOutRequest request) {
         WorkplaceMember member = validateActiveMember(request.getWorkplaceId(), userId);
-        validateGeofence(member.getWorkplaceId(), request.getLatitude(), request.getLongitude());
+        validateGeofence(member.getWorkplaceId(), userId, request.getLatitude(), request.getLongitude());
         LocalDate workDate = request.getWorkDate() == null ? LocalDate.now() : request.getWorkDate();
 
         AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(
@@ -206,7 +209,7 @@ public class AttendanceService {
         return member;
     }
 
-    private void validateGeofence(Long workplaceId, Double latitude, Double longitude) {
+    private void validateGeofence(Long workplaceId, Long userId, Double latitude, Double longitude) {
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
             throw new ApiException(WORKPLACE_NOT_FOUND);
@@ -236,6 +239,17 @@ public class AttendanceService {
         );
 
         if (distanceMeters > allowedRadiusMeters) {
+            apiErrorLogService.insert(ApiErrorLog.builder()
+                    .workplaceId(workplaceId)
+                    .userId(userId)
+                    .controller("AttendanceService#validateGeofence")
+                    .requestParams(String.format(
+                            "{\"userLat\":%s,\"userLon\":%s,\"workplaceLat\":%s,\"workplaceLon\":%s,\"distanceMeters\":%.2f,\"allowedRadiusMeters\":%d}",
+                            latitude, longitude,
+                            workplace.getLatitude(), workplace.getLongitude(),
+                            distanceMeters, allowedRadiusMeters))
+                    .errorMessage(OUTSIDE_ALLOWED_WORKPLACE_RADIUS)
+                    .build());
             throw new ApiException(HttpStatus.FORBIDDEN, OUTSIDE_ALLOWED_WORKPLACE_RADIUS);
         }
     }

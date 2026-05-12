@@ -6,7 +6,8 @@
       "Bash(node -e \":*)",
       "Bash(python3 -c \":*)",
       "Bash(./gradlew -q dependencies)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(grep -l \"schedule\" /c/git-repo/api-alba/src/main/resources/mappers/*/*.xml)"
     ]
   }
 }

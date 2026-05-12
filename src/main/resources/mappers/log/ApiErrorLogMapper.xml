@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.log.ApiErrorLogMapper">
+
+    <insert id="insert" parameterType="com.api.alba.domain.log.ApiErrorLog">
+        INSERT INTO API_ERROR_LOGS (
+            REQUEST_URI,
+            HTTP_METHOD,
+            CONTROLLER,
+            USER_ID,
+            WORKPLACE_ID,
+            REQUEST_PARAMS,
+            REQUEST_HEADERS,
+            ERROR_MESSAGE,
+            CLIENT_IP,
+            USER_AGENT
+        ) VALUES (
+            #{requestUri},
+            #{httpMethod},
+            #{controller},
+            #{userId},
+            #{workplaceId},
+            #{requestParams},
+            #{requestHeaders},
+            #{errorMessage},
+            #{clientIp},
+            #{userAgent}
+        )
+    </insert>
+
+</mapper>
