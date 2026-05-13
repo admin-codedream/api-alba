@@ -66,4 +66,10 @@ public final class ExceptionMessages {
     public static final String PAYSLIP_ALREADY_CANCELLED = "이미 취소된 급여 명세서예요.";
     public static final String PAYSLIP_ALREADY_CONFIRMED = "이미 확정된 급여 명세서예요.";
 
+    public static final String CONTRACT_NOT_FOUND = "근로계약서를 찾을 수 없어요.";
+    public static final String CONTRACT_ALREADY_SENT = "이미 전송된 계약서예요.";
+    public static final String CONTRACT_NOT_SENT = "전송된 계약서가 아니에요.";
+    public static final String CONTRACT_ACCESS_DENIED = "해당 계약서에 접근할 수 없어요.";
+    public static final String CONTRACT_CANNOT_BE_CANCELLED = "취소할 수 없는 계약서예요.";
+
 }

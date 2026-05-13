@@ -28,6 +28,7 @@
 | `PASSWORD_RESET_CODES` | 비밀번호 재설정 인증 코드 |
 | `NOTICES` | 공지사항 |
 | `API_ERROR_LOGS` | API 에러 로그 |
+| `LABOR_CONTRACTS` | 전자 근로계약서 |
 
 ---
 
@@ -56,6 +57,9 @@
 
 ### `API_ERROR_LOGS`
 API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 컨트롤러명, 요청한 사용자/사업장 ID, 요청 파라미터·헤더, 에러 메시지, 클라이언트 IP, User-Agent를 저장합니다. 비인증 요청의 경우 `USER_ID`, `WORKPLACE_ID`는 null이 될 수 있습니다.
+
+### `LABOR_CONTRACTS`
+전자 근로계약서를 저장합니다. 점주가 계약 내용을 작성하고 직원에게 전송하면, 직원이 앱에서 내용을 확인 후 동의(서명) 또는 거절합니다. 계약서 내용은 발행 시점의 스냅샷으로 저장되어 이후 사업장 정보가 변경되어도 원본이 보존됩니다.
 
 ### `WORKPLACE_BREAK_POLICIES`
 사업장별 휴게시간 정책을 저장합니다. 자동 차감 휴게와 고정 휴게를 구분하고, 유급/무급 여부를 관리합니다.
@@ -172,6 +176,15 @@ API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 
 | `WORKPLACE_CLOSED` | 사업장 폐업/종료 |
 | `OTHER` | 기타 |
 
+### `LABOR_CONTRACTS.STATUS`
+| 값 | 설명 |
+|---|---|
+| `DRAFT` | 작성 중 (점주가 저장만 한 상태) |
+| `SENT` | 직원에게 전송됨 (직원 검토 대기) |
+| `SIGNED` | 직원 서명 완료 |
+| `REJECTED` | 직원이 거절 |
+| `CANCELLED` | 점주가 취소 |
+
 ---
 
 ## 5. 테이블 관계
@@ -205,6 +218,13 @@ USERS 1:N USER_TERMS_AGREEMENTS
 TERMS 1:N USER_TERMS_AGREEMENTS
 ```
 
+### 전자 근로계약서
+
+```text
+WORKPLACES 1:N LABOR_CONTRACTS
+USERS(직원) 1:N LABOR_CONTRACTS
+```
+
 ---
 
 ## 6. 주요 제약조건
@@ -220,6 +240,50 @@ TERMS 1:N USER_TERMS_AGREEMENTS
 | `TERMS` | `UK_TERMS_TYPE_VERSION` | 약관 유형/버전 중복 방지 |
 | `USER_SOCIAL_ACCOUNTS` | `UK_USER_SOCIAL_PROVIDER_USER` | 소셜 제공자별 사용자 중복 방지 |
 | `USER_TERMS_AGREEMENTS` | `UK_USER_TERMS_AGREEMENTS_USER_TERMS` | 동일 약관 중복 동의 방지 |
+
+---
+
+### 전자 근로계약서 DDL
+```sql
+CREATE TABLE albamm.LABOR_CONTRACTS
+(
+    ID                    bigint unsigned auto_increment COMMENT '근로계약서 PK' PRIMARY KEY,
+    WORKPLACE_ID          bigint unsigned                          NOT NULL COMMENT '사업장 ID',
+    EMPLOYEE_USER_ID      bigint unsigned                          NOT NULL COMMENT '직원 사용자 ID',
+    STATUS                varchar(20)    DEFAULT 'DRAFT'           NOT NULL COMMENT '계약 상태(DRAFT, SENT, SIGNED, REJECTED, CANCELLED)',
+    CONTRACT_START_DATE   date                                     NOT NULL COMMENT '계약 시작일',
+    CONTRACT_END_DATE     date                                     NULL COMMENT '계약 종료일(null이면 기간의 정함이 없는 근로계약)',
+    WORKPLACE_NAME        varchar(150)                             NOT NULL COMMENT '사업장명 스냅샷',
+    WORKPLACE_ADDRESS     varchar(255)                             NULL COMMENT '사업장 주소 스냅샷',
+    OWNER_NAME            varchar(100)                             NOT NULL COMMENT '점주명 스냅샷',
+    EMPLOYEE_NAME         varchar(100)                             NOT NULL COMMENT '직원명 스냅샷',
+    JOB_DESCRIPTION       varchar(500)                             NULL COMMENT '담당 업무 내용',
+    WORK_DAYS             tinyint unsigned                         NOT NULL COMMENT '근무 요일 비트마스크(bit0=월, bit1=화, bit2=수, bit3=목, bit4=금, bit5=토, bit6=일)',
+    WORK_START_TIME       time                                     NOT NULL COMMENT '근무 시작 시간',
+    WORK_END_TIME         time                                     NOT NULL COMMENT '근무 종료 시간',
+    BREAK_MINUTES         int unsigned   DEFAULT 0                 NOT NULL COMMENT '휴게시간(분)',
+    HOURLY_WAGE           decimal(10, 2) DEFAULT 0.00              NOT NULL COMMENT '시급',
+    PAYMENT_DAY           tinyint unsigned                         NOT NULL COMMENT '급여 지급일(1~31)',
+    USE_NATIONAL_PENSION  tinyint(1)     DEFAULT 0                 NOT NULL COMMENT '국민연금 적용 여부',
+    USE_HEALTH_INSURANCE  tinyint(1)     DEFAULT 0                 NOT NULL COMMENT '건강보험 적용 여부',
+    USE_EMP_INSURANCE     tinyint(1)     DEFAULT 0                 NOT NULL COMMENT '고용보험 적용 여부',
+    OWNER_SIGNED_AT       datetime                                 NULL COMMENT '점주 서명 일시',
+    EMPLOYEE_SIGNED_AT    datetime                                 NULL COMMENT '직원 서명 일시',
+    SENT_AT               datetime                                 NULL COMMENT '직원에게 전송한 일시',
+    REJECTED_REASON       varchar(500)                             NULL COMMENT '직원 거절 사유',
+    CREATED_AT            timestamp      DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '생성일시',
+    UPDATED_AT            timestamp      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL COMMENT '수정일시'
+) COMMENT '전자 근로계약서' CHARSET = utf8mb4;
+
+CREATE INDEX IDX_LABOR_CONTRACTS_WORKPLACE_ID
+    ON albamm.LABOR_CONTRACTS (WORKPLACE_ID);
+
+CREATE INDEX IDX_LABOR_CONTRACTS_EMPLOYEE_USER_ID
+    ON albamm.LABOR_CONTRACTS (EMPLOYEE_USER_ID);
+
+CREATE INDEX IDX_LABOR_CONTRACTS_STATUS
+    ON albamm.LABOR_CONTRACTS (STATUS);
+```
 
 ---
 
@@ -270,6 +334,7 @@ ALTER TABLE PAYSLIPS
 | 2026-05-04 | `PAYSLIPS.WEEKLY_HOLIDAY_PAY` 추가 (주휴수당 금액) |
 | 2026-05-04 | `WORKPLACE_MEMBER_SCHEDULES` 테이블 추가 (직원별 근무 요일 스케줄) |
 | 2026-05-12 | `API_ERROR_LOGS` 테이블 추가 (API 에러 로그 및 요청 파라미터 확인용) |
+| 2026-05-13 | `LABOR_CONTRACTS` 테이블 추가 (전자 근로계약서) |
 
 ---
 

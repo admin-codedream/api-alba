@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.contract.LaborContractMapper">
+
+    <resultMap id="laborContractMap" type="com.api.alba.domain.contract.LaborContract">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="employeeUserId" column="EMPLOYEE_USER_ID"/>
+        <result property="status" column="STATUS"/>
+        <result property="contractStartDate" column="CONTRACT_START_DATE"/>
+        <result property="contractEndDate" column="CONTRACT_END_DATE"/>
+        <result property="workplaceName" column="WORKPLACE_NAME"/>
+        <result property="workplaceAddress" column="WORKPLACE_ADDRESS"/>
+        <result property="ownerName" column="OWNER_NAME"/>
+        <result property="employeeName" column="EMPLOYEE_NAME"/>
+        <result property="jobDescription" column="JOB_DESCRIPTION"/>
+        <result property="workDays" column="WORK_DAYS"/>
+        <result property="workStartTime" column="WORK_START_TIME"/>
+        <result property="workEndTime" column="WORK_END_TIME"/>
+        <result property="breakMinutes" column="BREAK_MINUTES"/>
+        <result property="hourlyWage" column="HOURLY_WAGE"/>
+        <result property="paymentDay" column="PAYMENT_DAY"/>
+        <result property="useNationalPension" column="USE_NATIONAL_PENSION"/>
+        <result property="useHealthInsurance" column="USE_HEALTH_INSURANCE"/>
+        <result property="useEmpInsurance" column="USE_EMP_INSURANCE"/>
+        <result property="ownerSignedAt" column="OWNER_SIGNED_AT"/>
+        <result property="employeeSignedAt" column="EMPLOYEE_SIGNED_AT"/>
+        <result property="sentAt" column="SENT_AT"/>
+        <result property="rejectedReason" column="REJECTED_REASON"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.contract.LaborContract"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO LABOR_CONTRACTS (
+            WORKPLACE_ID, EMPLOYEE_USER_ID, STATUS,
+            CONTRACT_START_DATE, CONTRACT_END_DATE,
+            WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
+            JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
+            BREAK_MINUTES, HOURLY_WAGE, PAYMENT_DAY,
+            USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE
+        ) VALUES (
+            #{workplaceId}, #{employeeUserId}, #{status},
+            #{contractStartDate}, #{contractEndDate},
+            #{workplaceName}, #{workplaceAddress}, #{ownerName}, #{employeeName},
+            #{jobDescription}, #{workDays}, #{workStartTime}, #{workEndTime},
+            #{breakMinutes}, #{hourlyWage}, #{paymentDay},
+            #{useNationalPension}, #{useHealthInsurance}, #{useEmpInsurance}
+        )
+    </insert>
+
+    <select id="findById" resultMap="laborContractMap">
+        SELECT ID, WORKPLACE_ID, EMPLOYEE_USER_ID, STATUS,
+               CONTRACT_START_DATE, CONTRACT_END_DATE,
+               WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
+               JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
+               BREAK_MINUTES, HOURLY_WAGE, PAYMENT_DAY,
+               USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
+               OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
+               CREATED_AT, UPDATED_AT
+        FROM LABOR_CONTRACTS
+        WHERE ID = #{id}
+    </select>
+
+    <select id="findByWorkplaceId" resultMap="laborContractMap">
+        SELECT ID, WORKPLACE_ID, EMPLOYEE_USER_ID, STATUS,
+               CONTRACT_START_DATE, CONTRACT_END_DATE,
+               WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
+               JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
+               BREAK_MINUTES, HOURLY_WAGE, PAYMENT_DAY,
+               USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
+               OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
+               CREATED_AT, UPDATED_AT
+        FROM LABOR_CONTRACTS
+        WHERE WORKPLACE_ID = #{workplaceId}
+        ORDER BY CREATED_AT DESC
+    </select>
+
+    <select id="findByEmployeeUserId" resultMap="laborContractMap">
+        SELECT ID, WORKPLACE_ID, EMPLOYEE_USER_ID, STATUS,
+               CONTRACT_START_DATE, CONTRACT_END_DATE,
+               WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
+               JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
+               BREAK_MINUTES, HOURLY_WAGE, PAYMENT_DAY,
+               USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
+               OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
+               CREATED_AT, UPDATED_AT
+        FROM LABOR_CONTRACTS
+        WHERE EMPLOYEE_USER_ID = #{employeeUserId}
+        ORDER BY CREATED_AT DESC
+    </select>
+
+    <update id="updateToSent">
+        UPDATE LABOR_CONTRACTS
+        SET STATUS          = 'SENT',
+            OWNER_SIGNED_AT = #{ownerSignedAt},
+            SENT_AT         = #{sentAt}
+        WHERE ID = #{id}
+          AND STATUS = 'DRAFT'
+    </update>
+
+    <update id="updateToSigned">
+        UPDATE LABOR_CONTRACTS
+        SET STATUS             = 'SIGNED',
+            EMPLOYEE_SIGNED_AT = #{employeeSignedAt}
+        WHERE ID = #{id}
+          AND STATUS = 'SENT'
+    </update>
+
+    <update id="updateToRejected">
+        UPDATE LABOR_CONTRACTS
+        SET STATUS          = 'REJECTED',
+            REJECTED_REASON = #{rejectedReason}
+        WHERE ID = #{id}
+          AND STATUS = 'SENT'
+    </update>
+
+    <update id="updateToCancelled">
+        UPDATE LABOR_CONTRACTS
+        SET STATUS = 'CANCELLED'
+        WHERE ID = #{id}
+          AND STATUS IN ('DRAFT', 'SENT')
+    </update>
+
+</mapper>
