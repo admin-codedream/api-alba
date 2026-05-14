@@ -26,7 +26,9 @@ public class LaborContract {
     private LocalTime workStartTime;
     private LocalTime workEndTime;
     private Integer breakMinutes;
+    private String wageType;
     private BigDecimal hourlyWage;
+    private BigDecimal monthlyWage;
     private Integer paymentDay;
     private Boolean useNationalPension;
     private Boolean useHealthInsurance;

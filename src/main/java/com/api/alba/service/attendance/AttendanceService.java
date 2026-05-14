@@ -143,7 +143,7 @@ public class AttendanceService {
 
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(member.getWorkplaceId());
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(member.getWorkplaceId(), setting);
-        BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+        BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
         WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
                 hourlyWage,
                 grossWorkedMinutes,

@@ -23,7 +23,7 @@ import com.api.alba.dto.owner.UpdateSalaryCalcUnitRequest;
 import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateMemberBreakMinutesRequest;
-import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
+import com.api.alba.dto.owner.UpdateMemberWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
 import com.api.alba.dto.owner.ConfirmPayslipResponse;
@@ -216,15 +216,15 @@ public class OwnerController {
         return ownerService.confirmPayslip(requiredPrincipal(principal), workplaceId, payslipId);
     }
 
-    @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/hourly-wage")
+    @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/wage")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateMemberHourlyWage(
+    public void updateMemberWage(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long workplaceId,
             @PathVariable Long memberId,
-            @Valid @RequestBody UpdateMemberHourlyWageRequest request
+            @Valid @RequestBody UpdateMemberWageRequest request
     ) {
-        ownerService.updateMemberHourlyWage(requiredPrincipal(principal), workplaceId, memberId, request.getHourlyWage());
+        ownerService.updateMemberWage(requiredPrincipal(principal), workplaceId, memberId, request);
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/break-minutes")

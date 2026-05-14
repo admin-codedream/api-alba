@@ -41,7 +41,7 @@
 사업장 정보를 저장합니다. 사업장 소유자, 초대코드, 주소, 위치 기반 출퇴근 제한 여부, 출퇴근 허용 반경을 관리합니다.
 
 ### `WORKPLACE_MEMBERS`
-사용자와 사업장의 소속 관계를 저장합니다. 역할, 시급, 소속 상태, 출퇴근 푸시 수신 여부, 직원 메모를 관리합니다.
+사용자와 사업장의 소속 관계를 저장합니다. 역할, 급여 유형(시급제/월급제), 시급, 월급, 소속 상태, 출퇴근 푸시 수신 여부, 직원 메모를 관리합니다.
 
 ### `WORKPLACE_SETTINGS`
 사업장별 근태/급여 계산 설정을 저장합니다. 급여 계산 단위, 반올림 정책, 기본 시급, 휴게시간 정책 사용 여부, 기본 출퇴근 시간을 관리합니다.
@@ -53,7 +53,7 @@
 직원의 출퇴근 기록 정정 요청을 저장합니다. 출근 수정, 퇴근 수정, 출퇴근 모두 수정 요청을 구분합니다.
 
 ### `PAYSLIPS`
-급여명세서 발행 정보를 저장합니다. 급여 기간, 적용 시급, 근무일수, 근무시간, 기본급, 추가 지급액, 공제액, 최종 급여, 일별 근무 스냅샷을 관리합니다.
+급여명세서 발행 정보를 저장합니다. 급여 기간, 급여 유형(시급제/월급제), 적용 시급 또는 월급, 근무일수, 근무시간, 기본급, 추가 지급액, 공제액, 최종 급여, 일별 근무 스냅샷을 관리합니다.
 
 ### `API_ERROR_LOGS`
 API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 컨트롤러명, 요청한 사용자/사업장 ID, 요청 파라미터·헤더, 에러 메시지, 클라이언트 IP, User-Agent를 저장합니다. 비인증 요청의 경우 `USER_ID`, `WORKPLACE_ID`는 null이 될 수 있습니다.
@@ -89,6 +89,12 @@ API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 
 | `OWNER` | 사업장 소유자 |
 | `MANAGER` | 매니저 |
 | `STAFF` | 직원 |
+
+### `WORKPLACE_MEMBERS.WAGE_TYPE`
+| 값 | 설명 |
+|---|---|
+| `HOURLY` | 시급제 |
+| `MONTHLY` | 월급제 |
 
 ### `WORKPLACE_MEMBERS.STATUS`
 | 값 | 설명 |
@@ -320,6 +326,27 @@ ALTER TABLE PAYSLIPS
     ADD COLUMN WEEKLY_HOLIDAY_PAY DECIMAL(12, 2) DEFAULT 0.00 NOT NULL COMMENT '주휴수당 금액';
 ```
 
+### 월급제 지원 컬럼 추가 DDL
+```sql
+ALTER TABLE WORKPLACE_MEMBERS
+    ADD COLUMN WAGE_TYPE    VARCHAR(10)    DEFAULT 'HOURLY' NOT NULL COMMENT '급여 유형(HOURLY: 시급제, MONTHLY: 월급제)'
+        AFTER ROLE,
+    ADD COLUMN MONTHLY_WAGE DECIMAL(12, 2) DEFAULT NULL     NULL     COMMENT '월급(월급제일 때 사용)'
+        AFTER HOURLY_WAGE;
+
+ALTER TABLE PAYSLIPS
+    ADD COLUMN WAGE_TYPE    VARCHAR(10)    DEFAULT 'HOURLY' NOT NULL COMMENT '급여 유형(HOURLY: 시급제, MONTHLY: 월급제)'
+        AFTER TO_DATE,
+    ADD COLUMN MONTHLY_WAGE DECIMAL(12, 2) DEFAULT 0.00     NOT NULL COMMENT '월급 스냅샷(월급제일 때 사용)'
+        AFTER HOURLY_WAGE;
+
+ALTER TABLE LABOR_CONTRACTS
+    ADD COLUMN WAGE_TYPE    VARCHAR(10)    DEFAULT 'HOURLY' NOT NULL COMMENT '급여 유형(HOURLY: 시급제, MONTHLY: 월급제)'
+        AFTER BREAK_MINUTES,
+    ADD COLUMN MONTHLY_WAGE DECIMAL(12, 2) DEFAULT 0.00     NOT NULL COMMENT '월급(월급제일 때 사용)'
+        AFTER HOURLY_WAGE;
+```
+
 ---
 
 ## 8. 변경 이력
@@ -335,6 +362,9 @@ ALTER TABLE PAYSLIPS
 | 2026-05-04 | `WORKPLACE_MEMBER_SCHEDULES` 테이블 추가 (직원별 근무 요일 스케줄) |
 | 2026-05-12 | `API_ERROR_LOGS` 테이블 추가 (API 에러 로그 및 요청 파라미터 확인용) |
 | 2026-05-13 | `LABOR_CONTRACTS` 테이블 추가 (전자 근로계약서) |
+| 2026-05-14 | `WORKPLACE_MEMBERS.WAGE_TYPE`, `WORKPLACE_MEMBERS.MONTHLY_WAGE` 추가 (월급제 지원) |
+| 2026-05-14 | `PAYSLIPS.WAGE_TYPE`, `PAYSLIPS.MONTHLY_WAGE` 추가 (월급제 급여명세서 스냅샷) |
+| 2026-05-14 | `LABOR_CONTRACTS.WAGE_TYPE`, `LABOR_CONTRACTS.MONTHLY_WAGE` 추가 (월급제 계약서 지원) |
 
 ---
 

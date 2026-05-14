@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,7 +78,16 @@ public class LaborContractService {
         contract.setWorkStartTime(request.getWorkStartTime());
         contract.setWorkEndTime(request.getWorkEndTime());
         contract.setBreakMinutes(request.getBreakMinutes());
-        contract.setHourlyWage(request.getHourlyWage());
+        String wageType = request.getWageType().toUpperCase();
+        if ("MONTHLY".equals(wageType)) {
+            contract.setWageType("MONTHLY");
+            contract.setHourlyWage(BigDecimal.ZERO);
+            contract.setMonthlyWage(request.getMonthlyWage() != null ? request.getMonthlyWage() : BigDecimal.ZERO);
+        } else {
+            contract.setWageType("HOURLY");
+            contract.setHourlyWage(request.getHourlyWage() != null ? request.getHourlyWage() : BigDecimal.ZERO);
+            contract.setMonthlyWage(BigDecimal.ZERO);
+        }
         contract.setPaymentDay(request.getPaymentDay());
         contract.setUseNationalPension(Boolean.TRUE.equals(request.getUseNationalPension()));
         contract.setUseHealthInsurance(Boolean.TRUE.equals(request.getUseHealthInsurance()));

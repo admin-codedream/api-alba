@@ -5,63 +5,34 @@ import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.auth.User;
+import com.api.alba.domain.owner.Payslip;
+import com.api.alba.domain.owner.PayslipDeduction;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
-import com.api.alba.dto.owner.AttendancePushSettingResponse;
-import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
-import com.api.alba.dto.owner.BreakPoliciesResponse;
-import com.api.alba.dto.owner.CreateWorkplaceRequest;
-import com.api.alba.dto.owner.PayslipDeductionItemResponse;
-import com.api.alba.dto.owner.SavePayslipDeductionsRequest;
-import com.api.alba.dto.owner.DashboardTodayResponse;
-import com.api.alba.dto.owner.OwnerDecisionRequest;
-import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
-import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
-import com.api.alba.dto.owner.SaveBreakPoliciesRequest;
-import com.api.alba.dto.owner.UpdateLocationRestrictionRequest;
-import com.api.alba.dto.owner.UpdateMemberHourlyWageRequest;
-import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
-import com.api.alba.dto.owner.CancelPayslipResponse;
-import com.api.alba.dto.owner.ConfirmPayslipResponse;
-import com.api.alba.dto.owner.IssuePayslipRequest;
-import com.api.alba.dto.owner.IssuePayslipResponse;
-import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
-import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
-import com.api.alba.dto.owner.PayslipDetailResponse;
-import com.api.alba.dto.owner.PayslipDailyItemResponse;
-import com.api.alba.dto.owner.PayslipListItemResponse;
-import com.api.alba.dto.owner.PayslipRecordItem;
-import com.api.alba.dto.owner.PayslipResponse;
-import com.api.alba.dto.owner.MemberScheduleItemResponse;
-import com.api.alba.dto.owner.SaveMemberScheduleRequest;
-import com.api.alba.dto.owner.UpdatePayslipRequest;
-import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.domain.staff.WorkplaceMemberSchedule;
-import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
-import com.api.alba.domain.owner.Payslip;
-import com.api.alba.domain.owner.PayslipDeduction;
-import com.api.alba.mapper.owner.PayslipDeductionMapper;
-import com.api.alba.mapper.owner.PayslipMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.api.alba.dto.owner.*;
+import com.api.alba.dto.push.StaffReminderTarget;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
-import com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse;
 import com.api.alba.exception.ApiException;
-import com.api.alba.mapper.attendance.AttendanceRecordMapper;
-import com.api.alba.mapper.attendance.AttendanceRequestMapper;
-import com.api.alba.mapper.auth.UserMapper;
-import com.api.alba.mapper.owner.WorkplaceMapper;
-import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
-import com.api.alba.mapper.settings.WorkplaceSettingMapper;
-import com.api.alba.dto.push.StaffReminderTarget;
 import com.api.alba.firebase.FcmDto;
 import com.api.alba.firebase.FcmService;
 import com.api.alba.firebase.ProjectId;
+import com.api.alba.mapper.attendance.AttendanceRecordMapper;
+import com.api.alba.mapper.attendance.AttendanceRequestMapper;
+import com.api.alba.mapper.auth.UserMapper;
+import com.api.alba.mapper.owner.PayslipDeductionMapper;
+import com.api.alba.mapper.owner.PayslipMapper;
+import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
+import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
+import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
+import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -70,43 +41,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.YearMonth;
+import java.time.*;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.api.alba.exception.ExceptionMessages.ACTIVE_WORKPLACE_MEMBER_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_ALREADY_EXISTS;
-import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_RECORD_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.CHECK_OUT_MUST_BE_AFTER_CHECK_IN;
-import static com.api.alba.exception.ExceptionMessages.INVALID_REQUEST;
-import static com.api.alba.exception.ExceptionMessages.ATTENDANCE_REQUEST_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.CANNOT_DELETE_OWNER_MEMBER;
-import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
-import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
-import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED_WHEN_USE_LOCATION_RESTRICTION_TRUE;
-import static com.api.alba.exception.ExceptionMessages.MEMBER_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.ONLY_OWNER_USER_TYPE_CAN_CREATE_WORKPLACE;
-import static com.api.alba.exception.ExceptionMessages.ONLY_PENDING_REQUESTS_CAN_BE_PROCESSED;
-import static com.api.alba.exception.ExceptionMessages.OWNER_ACCESS_ONLY;
-import static com.api.alba.exception.ExceptionMessages.STATUS_MUST_BE_PENDING_APPROVED_REJECTED;
-import static com.api.alba.exception.ExceptionMessages.PAYSLIP_ALREADY_CANCELLED;
-import static com.api.alba.exception.ExceptionMessages.PAYSLIP_ALREADY_CONFIRMED;
-import static com.api.alba.exception.ExceptionMessages.PAYSLIP_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.USER_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
-import static com.api.alba.exception.ExceptionMessages.WORKPLACE_SETTING_NOT_FOUND;
+import static com.api.alba.exception.ExceptionMessages.*;
 
 @Slf4j
 @Service
@@ -255,13 +195,25 @@ public class OwnerService {
     }
 
     @Transactional
-    public void updateMemberHourlyWage(Long ownerUserId, Long workplaceId, Long memberId, BigDecimal hourlyWage) {
+    public void updateMemberWage(Long ownerUserId, Long workplaceId, Long memberId, UpdateMemberWageRequest request) {
         ensureOwner(workplaceId, ownerUserId);
         WorkplaceMember member = workplaceMemberMapper.findById(memberId);
         if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
             throw new ApiException(WORKPLACE_NOT_FOUND);
         }
-        workplaceMemberMapper.updateHourlyWage(memberId, hourlyWage);
+        String wageType = request.getWageType().toUpperCase();
+        if (!"HOURLY".equals(wageType) && !"MONTHLY".equals(wageType)) {
+            throw new ApiException(INVALID_REQUEST);
+        }
+        if ("HOURLY".equals(wageType) && request.getHourlyWage() == null) {
+            throw new ApiException(INVALID_REQUEST);
+        }
+        if ("MONTHLY".equals(wageType) && request.getMonthlyWage() == null) {
+            throw new ApiException(INVALID_REQUEST);
+        }
+        BigDecimal hourlyWage = "HOURLY".equals(wageType) ? request.getHourlyWage() : null;
+        BigDecimal monthlyWage = "MONTHLY".equals(wageType) ? request.getMonthlyWage() : null;
+        workplaceMemberMapper.updateWage(memberId, wageType, hourlyWage, monthlyWage);
     }
 
     @Transactional
@@ -471,14 +423,20 @@ public class OwnerService {
             WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, userId);
             if (member == null) continue;
 
-            BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+            boolean isMonthly = "MONTHLY".equals(member.getWageType());
+            BigDecimal hourlyWage = isMonthly ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
             List<PayslipRecordItem> records = buildRecords(workplaceId, member, setting, breakPolicies, hourlyWage, request.getFromDate(), request.getToDate());
-            BigDecimal baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
             int totalWorkedMinutes = records.stream().mapToInt(PayslipRecordItem::getWorkedMinutes).sum();
 
+            BigDecimal baseWage;
             BigDecimal weeklyHolidayPay = BigDecimal.ZERO;
-            if (Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay())) {
-                weeklyHolidayPay = calculateWeeklyHolidayPay(records, hourlyWage);
+            if (isMonthly) {
+                baseWage = member.getMonthlyWage() != null ? member.getMonthlyWage() : BigDecimal.ZERO;
+            } else {
+                baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay())) {
+                    weeklyHolidayPay = calculateWeeklyHolidayPay(records, hourlyWage);
+                }
             }
 
             Payslip payslip = new Payslip();
@@ -486,7 +444,9 @@ public class OwnerService {
             payslip.setUserId(userId);
             payslip.setFromDate(request.getFromDate());
             payslip.setToDate(request.getToDate());
-            payslip.setHourlyWage(hourlyWage);
+            payslip.setWageType(isMonthly ? "MONTHLY" : "HOURLY");
+            payslip.setHourlyWage(isMonthly ? BigDecimal.ZERO : hourlyWage);
+            payslip.setMonthlyWage(isMonthly ? baseWage : BigDecimal.ZERO);
             payslip.setWorkedDays(records.size());
             payslip.setWorkedMinutes(totalWorkedMinutes);
             payslip.setBaseWage(baseWage);
@@ -511,7 +471,7 @@ public class OwnerService {
                     return new PayslipListItemResponse(
                             p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                             p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
-                            p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                            p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
                             p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
                             p.getStatus()
                     );
@@ -661,7 +621,7 @@ public class OwnerService {
         return new PayslipDetailResponse(
                 p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                 p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
-                p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
                 p.getBaseWage(), weeklyHolidayPay, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
                 p.getBonusNote(), deductions, deserializeSnapshot(p.getDailySnapshot())
         );
@@ -785,6 +745,7 @@ public class OwnerService {
         List<AttendanceRecord> records = attendanceRecordMapper.findCompletedRecordsByWorkplace(workplaceId, fromDate, toDate);
         for (AttendanceRecord record : records) {
             WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
+            if ("MONTHLY".equals(member != null ? member.getWageType() : null)) continue;
             BigDecimal hourlyWage = resolveHourlyWage(member, setting);
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
             WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
@@ -810,7 +771,8 @@ public class OwnerService {
         WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(record.getWorkplaceId(), record.getUserId());
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(record.getWorkplaceId());
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(record.getWorkplaceId(), setting);
-        BigDecimal hourlyWage = resolveHourlyWage(staffMember, setting);
+        BigDecimal hourlyWage = "MONTHLY".equals(staffMember != null ? staffMember.getWageType() : null)
+                ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
         WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
                 hourlyWage,
                 grossWorkedMinutes,

@@ -423,7 +423,7 @@ public class StaffService {
                     return new StaffPayslipListItemResponse(
                             p.getId(), p.getWorkplaceId(), p.getWorkplaceName(),
                             p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
-                            p.getWorkedDays(), p.getWorkedMinutes(), p.getHourlyWage(),
+                            p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
                             p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
                     );
                 })
@@ -443,7 +443,7 @@ public class StaffService {
         return new StaffPayslipDetailResponse(
                 payslip.getId(), payslip.getWorkplaceId(), payslip.getWorkplaceName(),
                 payslip.getFromDate(), payslip.getToDate(), payslip.getCreatedAt().toLocalDate(),
-                payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getHourlyWage(),
+                payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getWageType(), payslip.getHourlyWage(), payslip.getMonthlyWage(),
                 payslip.getBaseWage(), whp, payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
                 payslip.getBonusNote(), deductions, records
         );

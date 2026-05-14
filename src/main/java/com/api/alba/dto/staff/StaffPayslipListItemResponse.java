@@ -17,7 +17,9 @@ public class StaffPayslipListItemResponse {
     private LocalDate issuedAt;
     private int workedDays;
     private int workedMinutes;
+    private String wageType;
     private BigDecimal hourlyWage;
+    private BigDecimal monthlyWage;
     private BigDecimal baseWage;
     private BigDecimal weeklyHolidayPay;
     private BigDecimal bonusAmount;

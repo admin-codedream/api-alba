@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import java.math.BigDecimal;
 import java.util.List;
 
+
 @Mapper
 public interface WorkplaceMemberMapper {
     int insert(WorkplaceMember workplaceMember);
@@ -46,7 +47,8 @@ public interface WorkplaceMemberMapper {
 
     int updateMemo(@Param("id") Long id, @Param("memo") String memo);
 
-    int updateHourlyWage(@Param("id") Long id, @Param("hourlyWage") BigDecimal hourlyWage);
+    int updateWage(@Param("id") Long id, @Param("wageType") String wageType,
+                   @Param("hourlyWage") BigDecimal hourlyWage, @Param("monthlyWage") BigDecimal monthlyWage);
 
     int updateBreakMinutes(@Param("id") Long id, @Param("breakMinutes") Integer breakMinutes);
 }
