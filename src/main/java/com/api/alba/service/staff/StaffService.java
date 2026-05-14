@@ -130,6 +130,8 @@ public class StaffService {
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
         BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+        String wageType = resolveWageType(member);
+        BigDecimal monthlyWage = resolveMonthlyWage(member);
         if (record == null) {
             return new StaffHomeTodayResponse(
                     workplaceId,
@@ -139,7 +141,9 @@ public class StaffService {
                     null,
                     0,
                     BigDecimal.ZERO,
-                    hourlyWage
+                    hourlyWage,
+                    wageType,
+                    monthlyWage
             );
         }
 
@@ -159,7 +163,9 @@ public class StaffService {
                 record.getCheckOutAt(),
                 workedMinutes,
                 expectedWage,
-                hourlyWage
+                hourlyWage,
+                wageType,
+                monthlyWage
         );
     }
 
@@ -206,7 +212,9 @@ public class StaffService {
                 todayWorkedMinutes,
                 todayExpectedWage,
                 cumulativeWorkedMinutes,
-                cumulativeExpectedWage
+                cumulativeExpectedWage,
+                resolveWageType(member),
+                resolveMonthlyWage(member)
         );
     }
 
@@ -397,6 +405,14 @@ public class StaffService {
         } catch (DateTimeParseException e) {
             throw new ApiException(INVALID_REQUEST);
         }
+    }
+
+    private String resolveWageType(WorkplaceMember member) {
+        return (member != null && member.getWageType() != null) ? member.getWageType() : "HOURLY";
+    }
+
+    private BigDecimal resolveMonthlyWage(WorkplaceMember member) {
+        return (member != null && member.getMonthlyWage() != null) ? member.getMonthlyWage() : BigDecimal.ZERO;
     }
 
     private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {

@@ -10,6 +10,8 @@
         <result property="userId" column="USER_ID"/>
         <result property="userName" column="USER_NAME"/>
         <result property="profileColor" column="PROFILE_COLOR"/>
+        <result property="wageType" column="WAGE_TYPE"/>
+        <result property="monthlyWage" column="MONTHLY_WAGE"/>
         <result property="workDate" column="WORK_DATE"/>
         <result property="checkInAt" column="CHECK_IN_AT"/>
         <result property="checkOutAt" column="CHECK_OUT_AT"/>
@@ -85,10 +87,12 @@
 
     <select id="findWorkplaceRecordsByPeriod" resultMap="attendanceRecordMap">
         SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, u.NAME AS USER_NAME, u.PROFILE_COLOR AS PROFILE_COLOR,
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE,
                ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
                ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
         <if test="userId != null">

@@ -18,4 +18,6 @@ public class StaffHomeTodayResponse {
     private Integer currentWorkedMinutes;
     private BigDecimal expectedWage;
     private BigDecimal hourlyWage;
+    private String wageType;
+    private BigDecimal monthlyWage;
 }

@@ -15,4 +15,6 @@ public class StaffTodaySummaryResponse {
     private BigDecimal todayExpectedWage;
     private Integer cumulativeWorkedMinutes;
     private BigDecimal cumulativeExpectedWage;
+    private String wageType;
+    private BigDecimal monthlyWage;
 }
