@@ -57,6 +57,7 @@
                ar.ATTENDANCE_RECORD_ID AS attendanceRecordId,
                ar.USER_ID AS userId,
                u.NAME AS userName,
+               u.PROFILE_COLOR AS profileColor,
                rec.WORK_DATE AS workDate,
                ar.TYPE AS type,
                ar.REQUESTED_CHECK_IN_AT AS requestedCheckInAt,

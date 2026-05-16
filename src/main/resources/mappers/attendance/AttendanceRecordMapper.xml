@@ -33,12 +33,14 @@
     </insert>
 
     <select id="findByWorkplaceUserAndDate" resultMap="attendanceRecordMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
-               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
-        FROM ATTENDANCE_RECORDS
-        WHERE WORKPLACE_ID = #{workplaceId}
-          AND USER_ID = #{userId}
-          AND WORK_DATE = #{workDate}
+        SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
+               ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT,
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE
+        FROM ATTENDANCE_RECORDS ar
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.USER_ID = #{userId}
+          AND ar.WORK_DATE = #{workDate}
     </select>
 
     <select id="findById" resultMap="attendanceRecordMap">
@@ -59,13 +61,15 @@
     </update>
 
     <select id="findMyRecordsByPeriod" resultMap="attendanceRecordMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, WORK_DATE, CHECK_IN_AT, CHECK_OUT_AT, STATUS,
-               WORKED_MINUTES, BASE_WAGE, FINAL_WAGE, NOTE, CREATED_AT, UPDATED_AT
-        FROM ATTENDANCE_RECORDS
-        WHERE WORKPLACE_ID = #{workplaceId}
-          AND USER_ID = #{userId}
-          AND WORK_DATE BETWEEN #{fromDate} AND #{toDate}
-        ORDER BY WORK_DATE DESC
+        SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
+               ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT,
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE
+        FROM ATTENDANCE_RECORDS ar
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
+        WHERE ar.WORKPLACE_ID = #{workplaceId}
+          AND ar.USER_ID = #{userId}
+          AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+        ORDER BY ar.WORK_DATE DESC
     </select>
 
     <select id="countTodayCheckedIn" resultType="int">
@@ -109,20 +113,27 @@
                u.NAME AS userName,
                u.PROFILE_COLOR AS profileColor,
                COALESCE(SUM(ar.WORKED_MINUTES), 0) AS totalWorkedMinutes,
-               COALESCE(SUM(ar.FINAL_WAGE), 0) AS totalExpectedWage
+               CASE
+                   WHEN wm.WAGE_TYPE = 'MONTHLY' THEN COALESCE(wm.MONTHLY_WAGE, 0)
+                   ELSE COALESCE(SUM(ar.FINAL_WAGE), 0)
+               END AS totalExpectedWage
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
-        GROUP BY ar.USER_ID, u.NAME, u.PROFILE_COLOR
+        GROUP BY ar.USER_ID, u.NAME, u.PROFILE_COLOR, wm.WAGE_TYPE, wm.MONTHLY_WAGE
         ORDER BY totalExpectedWage DESC
     </select>
 
     <select id="findMonthlyCalendarByPeriod" resultType="com.api.alba.dto.staff.StaffMonthlyCalendarItemResponse">
         SELECT ar.WORK_DATE AS workDate,
                COALESCE(ar.WORKED_MINUTES, 0) AS workedMinutes,
-               COALESCE(ar.FINAL_WAGE, 0) AS finalWage
+               COALESCE(ar.FINAL_WAGE, 0) AS finalWage,
+               wm.WAGE_TYPE AS wageType,
+               wm.MONTHLY_WAGE AS monthlyWage
         FROM ATTENDANCE_RECORDS ar
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.USER_ID = #{userId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
@@ -138,9 +149,12 @@
                ar.CHECK_IN_AT AS checkInAt,
                ar.CHECK_OUT_AT AS checkOutAt,
                ar.WORKED_MINUTES AS workedMinutes,
-               COALESCE(ar.FINAL_WAGE, 0) AS finalWage
+               COALESCE(ar.FINAL_WAGE, 0) AS finalWage,
+               wm.WAGE_TYPE AS wageType,
+               wm.MONTHLY_WAGE AS monthlyWage
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
+        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE = #{workDate}
         ORDER BY ar.CHECK_IN_AT ASC
@@ -210,5 +224,13 @@
         DELETE FROM ATTENDANCE_RECORDS WHERE ID = #{id}
         ]]>
     </delete>
+
+    <update id="clearWagesByMember">
+        UPDATE ATTENDANCE_RECORDS
+        SET BASE_WAGE = NULL,
+            FINAL_WAGE = NULL
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+    </update>
 
 </mapper>

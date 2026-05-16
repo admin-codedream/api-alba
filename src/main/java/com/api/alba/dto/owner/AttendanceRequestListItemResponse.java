@@ -13,6 +13,7 @@ public class AttendanceRequestListItemResponse {
     private Long attendanceRecordId;
     private Long userId;
     private String userName;
+    private String profileColor;
     private LocalDate workDate;
     private String type;
     private LocalDateTime requestedCheckInAt;

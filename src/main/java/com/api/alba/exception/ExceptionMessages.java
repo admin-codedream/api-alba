@@ -72,4 +72,6 @@ public final class ExceptionMessages {
     public static final String CONTRACT_ACCESS_DENIED = "해당 계약서에 접근할 수 없어요.";
     public static final String CONTRACT_CANNOT_BE_CANCELLED = "취소할 수 없는 계약서예요.";
 
+    public static final String MONTHLY_WAGE_REQUIRED = "월급제로 설정할 경우 월급을 입력해 주세요.";
+
 }

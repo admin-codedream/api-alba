@@ -209,11 +209,14 @@ public class OwnerService {
             throw new ApiException(INVALID_REQUEST);
         }
         if ("MONTHLY".equals(wageType) && request.getMonthlyWage() == null) {
-            throw new ApiException(INVALID_REQUEST);
+            throw new ApiException(MONTHLY_WAGE_REQUIRED);
         }
         BigDecimal hourlyWage = "HOURLY".equals(wageType) ? request.getHourlyWage() : null;
         BigDecimal monthlyWage = "MONTHLY".equals(wageType) ? request.getMonthlyWage() : null;
         workplaceMemberMapper.updateWage(memberId, wageType, hourlyWage, monthlyWage);
+        if ("MONTHLY".equals(wageType)) {
+            attendanceRecordMapper.clearWagesByMember(workplaceId, member.getUserId());
+        }
     }
 
     @Transactional
@@ -400,7 +403,9 @@ public class OwnerService {
                         r.getCheckOutAt(),
                         r.getWorkedMinutes() != null ? r.getWorkedMinutes() : 0,
                         r.getFinalWage() != null ? r.getFinalWage() : BigDecimal.ZERO,
-                        r.getStatus()
+                        r.getStatus(),
+                        r.getWageType(),
+                        r.getMonthlyWage()
                 ))
                 .collect(Collectors.toList());
 

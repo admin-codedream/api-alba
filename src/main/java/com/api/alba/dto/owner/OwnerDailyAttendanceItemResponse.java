@@ -18,4 +18,6 @@ public class OwnerDailyAttendanceItemResponse {
     private LocalDateTime checkOutAt;
     private Integer workedMinutes;
     private BigDecimal finalWage;
+    private String wageType;
+    private BigDecimal monthlyWage;
 }

@@ -112,4 +112,6 @@ public interface AttendanceRecordMapper {
     );
 
     int deleteById(@Param("id") Long id);
+
+    int clearWagesByMember(@Param("workplaceId") Long workplaceId, @Param("userId") Long userId);
 }
