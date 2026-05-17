@@ -100,6 +100,7 @@ public class StaffService {
             newMember.setWorkplaceId(workplace.getId());
             newMember.setUserId(userId);
             newMember.setRole("STAFF");
+            newMember.setWageType("HOURLY");
             newMember.setStatus("ACTIVE");
             newMember.setHourlyWage(null);
             newMember.setReceiveAttendancePush(true);

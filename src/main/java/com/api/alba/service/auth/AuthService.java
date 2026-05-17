@@ -535,6 +535,7 @@ public class AuthService {
         member.setWorkplaceId(workplace.getId());
         member.setUserId(user.getId());
         member.setRole("OWNER");
+        member.setWageType("HOURLY");
         member.setHourlyWage(resolvedHourlyWage);
         member.setMemo(null);
         member.setReceiveAttendancePush(false);

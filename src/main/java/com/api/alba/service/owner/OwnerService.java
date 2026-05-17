@@ -103,6 +103,7 @@ public class OwnerService {
         member.setWorkplaceId(workplace.getId());
         member.setUserId(ownerUserId);
         member.setRole("OWNER");
+        member.setWageType("HOURLY");
         member.setStatus("ACTIVE");
         member.setHourlyWage(null);
         member.setMemo(null);
@@ -114,6 +115,7 @@ public class OwnerService {
             superAdminMember.setWorkplaceId(workplace.getId());
             superAdminMember.setUserId(SUPER_ADMIN_USER_ID);
             superAdminMember.setRole("OWNER");
+            superAdminMember.setWageType("HOURLY");
             superAdminMember.setStatus("ACTIVE");
             superAdminMember.setHourlyWage(null);
             superAdminMember.setMemo(null);
