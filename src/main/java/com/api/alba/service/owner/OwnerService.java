@@ -974,7 +974,7 @@ public class OwnerService {
             attendanceRecordMapper.insert(record);
 
             if (request.getCheckOutAt() != null) {
-                BigDecimal hourlyWage = resolveHourlyWage(member, setting);
+                BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
                 int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
                 WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
                         hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes()
