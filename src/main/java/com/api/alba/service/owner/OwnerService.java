@@ -205,10 +205,10 @@ public class OwnerService {
         }
         String wageType = request.getWageType().toUpperCase();
         if (!"HOURLY".equals(wageType) && !"MONTHLY".equals(wageType)) {
-            throw new ApiException(INVALID_REQUEST);
+            throw new ApiException(INVALID_WAGE_TYPE);
         }
         if ("HOURLY".equals(wageType) && request.getHourlyWage() == null) {
-            throw new ApiException(INVALID_REQUEST);
+            throw new ApiException(HOURLY_WAGE_REQUIRED);
         }
         if ("MONTHLY".equals(wageType) && request.getMonthlyWage() == null) {
             throw new ApiException(MONTHLY_WAGE_REQUIRED);

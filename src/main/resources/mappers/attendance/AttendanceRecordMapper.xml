@@ -237,8 +237,8 @@
 
     <update id="clearWagesByMember">
         UPDATE ATTENDANCE_RECORDS
-        SET BASE_WAGE = NULL,
-            FINAL_WAGE = NULL
+        SET BASE_WAGE = 0,
+            FINAL_WAGE = 0
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
     </update>
