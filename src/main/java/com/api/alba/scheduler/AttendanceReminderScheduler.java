@@ -4,6 +4,7 @@ import com.api.alba.dto.push.StaffReminderTarget;
 import com.api.alba.firebase.FcmDto;
 import com.api.alba.firebase.FcmService;
 import com.api.alba.firebase.ProjectId;
+import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,37 @@ public class AttendanceReminderScheduler {
     private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
 
     private final PushTokenMapper pushTokenMapper;
+    private final AttendanceRecordMapper attendanceRecordMapper;
     private final FcmService fcmService;
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void sendLongWorkingReminders() {
+        List<StaffReminderTarget> targets = pushTokenMapper.findStaffWorkingOverHours(4);
+        if (targets.isEmpty()) return;
+
+        List<FcmDto> fcmList = targets.stream()
+                .map(t -> FcmDto.builder()
+                        .pushSeq(0L)
+                        .pushToken(t.getToken())
+                        .title("근무시간 확인 알림")
+                        .content(t.getWorkplaceName() + " 출근 후 4시간이 경과했습니다.")
+                        .pushLink("")
+                        .project(ProjectId.ALBAM.getMessage())
+                        .build())
+                .collect(Collectors.toList());
+
+        log.info("[장시간 근무 알림] 발송 대상 {}명", fcmList.size());
+        fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
+
+        List<Long> recordIds = targets.stream()
+                .map(StaffReminderTarget::getRecordId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        if (!recordIds.isEmpty()) {
+            attendanceRecordMapper.markLongWorkingNotifiedBatch(recordIds);
+        }
+    }
 
     @Scheduled(cron = "0 0 10 * * *")
     public void sendNoStaffReminders() {

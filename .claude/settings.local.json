@@ -7,7 +7,9 @@
       "Bash(python3 -c \":*)",
       "Bash(./gradlew -q dependencies)",
       "mcp__ide__getDiagnostics",
-      "Bash(grep -l \"schedule\" /c/git-repo/api-alba/src/main/resources/mappers/*/*.xml)"
+      "Bash(grep -l \"schedule\" /c/git-repo/api-alba/src/main/resources/mappers/*/*.xml)",
+      "Bash(mv C:/git-repo/api-alba/docs/attendance-flow.md C:/git-repo/api-alba/src/main/resources/docs/attendance-flow.md)",
+      "Bash(rmdir C:/git-repo/api-alba/docs)"
     ]
   }
 }

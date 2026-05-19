@@ -39,4 +39,6 @@ public interface PushTokenMapper {
             @Param("userId") Long userId,
             @Param("workplaceId") Long workplaceId
     );
+
+    List<StaffReminderTarget> findStaffWorkingOverHours(@Param("hours") int hours);
 }

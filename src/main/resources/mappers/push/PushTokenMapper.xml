@@ -47,6 +47,7 @@
         <result property="workplaceName" column="WORKPLACE_NAME"/>
         <result property="userId" column="USER_ID"/>
         <result property="token" column="TOKEN"/>
+        <result property="recordId" column="RECORD_ID"/>
     </resultMap>
 
     <delete id="deleteByToken">
@@ -153,6 +154,29 @@
         WHERE WM.USER_ID = #{userId}
           AND WM.WORKPLACE_ID = #{workplaceId}
           AND WM.STATUS = 'ACTIVE'
+    </select>
+
+
+    <select id="findStaffWorkingOverHours" resultMap="staffReminderTargetMap">
+        <![CDATA[
+        SELECT
+            AR.ID AS RECORD_ID,
+            WM.WORKPLACE_ID,
+            W.NAME AS WORKPLACE_NAME,
+            WM.USER_ID,
+            PT.TOKEN
+        FROM ATTENDANCE_RECORDS AR
+                 INNER JOIN WORKPLACE_MEMBERS WM ON WM.WORKPLACE_ID = AR.WORKPLACE_ID
+                    AND WM.USER_ID = AR.USER_ID
+                    AND WM.STATUS = 'ACTIVE'
+                    AND WM.ROLE IN ('STAFF', 'MANAGER')
+                 INNER JOIN WORKPLACES W ON W.ID = AR.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = AR.USER_ID AND PT.IS_ACTIVE = 1
+        WHERE AR.STATUS = 'WORKING'
+          AND AR.CHECK_OUT_AT IS NULL
+          AND AR.CHECK_IN_AT <= NOW() - INTERVAL #{hours} HOUR
+          AND (AR.LONG_WORKING_NOTIFIED IS NULL OR AR.LONG_WORKING_NOTIFIED = 0)
+        ]]>
     </select>
 
 </mapper>

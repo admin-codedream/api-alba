@@ -44,3 +44,7 @@
 - Spring 계층 구조(`controller -> service -> mapper -> DB`)
 - 도메인 기준 패키지 정리
 - xml 작성시 CDATA 활용
+
+## 참고사항
+- 테이블 컬럼 추가시 반드시 `src/main/resources/docs/SCHEMA.md`에 추가할 것
+- NOT NULL 사용시 기존 코드에 오류 발생할 수 있는 부분 체크할 것

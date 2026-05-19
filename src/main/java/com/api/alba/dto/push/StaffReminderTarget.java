@@ -8,4 +8,5 @@ public class StaffReminderTarget {
     private String workplaceName;
     private Long userId;
     private String token;
+    private Long recordId;
 }

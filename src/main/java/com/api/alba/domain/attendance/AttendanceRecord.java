@@ -25,6 +25,7 @@ public class AttendanceRecord {
     private BigDecimal baseWage;
     private BigDecimal finalWage;
     private String note;
+    private Boolean longWorkingNotified;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

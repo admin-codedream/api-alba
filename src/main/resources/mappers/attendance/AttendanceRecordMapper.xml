@@ -20,6 +20,7 @@
         <result property="baseWage" column="BASE_WAGE"/>
         <result property="finalWage" column="FINAL_WAGE"/>
         <result property="note" column="NOTE"/>
+        <result property="longWorkingNotified" column="LONG_WORKING_NOTIFIED"/>
         <result property="createdAt" column="CREATED_AT"/>
         <result property="updatedAt" column="UPDATED_AT"/>
     </resultMap>
@@ -224,6 +225,15 @@
         DELETE FROM ATTENDANCE_RECORDS WHERE ID = #{id}
         ]]>
     </delete>
+
+    <update id="markLongWorkingNotifiedBatch">
+        UPDATE ATTENDANCE_RECORDS
+        SET LONG_WORKING_NOTIFIED = 1
+        WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 
     <update id="clearWagesByMember">
         UPDATE ATTENDANCE_RECORDS
