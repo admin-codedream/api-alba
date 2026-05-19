@@ -40,9 +40,6 @@
 - `logback-spring.xml`, `log4jdbc.log4j2.properties`: 로그 설정
 - `banner.txt`: 실행 배너
 
-## `src/test`
-- `AlbaApplicationTests.java`: 기본 스프링 부트 테스트
-
 ## 구조 특징
 - Spring 계층 구조(`controller -> service -> mapper -> DB`)
 - 도메인 기준 패키지 정리
