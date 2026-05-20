@@ -9,6 +9,7 @@ import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -98,6 +99,7 @@ public class AttendanceReminderScheduler {
         fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
     }
 
+    @Async
     @Scheduled(cron = "0 * * * * *")
     public void sendAttendanceReminders() {
         // 현재 시각 기준 5분 후의 HH:mm → 해당 시각이 DEFAULT_CHECK_IN/OUT_TIME인 매장 대상
