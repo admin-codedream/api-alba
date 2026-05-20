@@ -52,7 +52,7 @@ import static com.api.alba.exception.ExceptionMessages.*;
 @Service
 @RequiredArgsConstructor
 public class OwnerService {
-    private static final int DEFAULT_ALLOWED_RADIUS_METERS = 100;
+    private static final int DEFAULT_ALLOWED_RADIUS_METERS = 150;
     private static final boolean DEFAULT_USE_LOCATION_RESTRICTION = false;
     private static final BigDecimal DEFAULT_WORKPLACE_HOURLY_WAGE = BigDecimal.ZERO;
     private static final String DEFAULT_SALARY_CALC_UNIT = "10MIN";
