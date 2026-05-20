@@ -64,14 +64,16 @@
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
                  INNER JOIN WORKPLACE_SETTINGS WS ON WS.WORKPLACE_ID = WM.WORKPLACE_ID
                  INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+                 LEFT JOIN WORKPLACE_MEMBER_SCHEDULES WMS ON WMS.WORKPLACE_ID = WM.WORKPLACE_ID
+                    AND WMS.USER_ID = WM.USER_ID
+                    AND WMS.DAY_OF_WEEK = WEEKDAY(CURDATE()) + 1
                  LEFT JOIN ATTENDANCE_RECORDS AR ON AR.WORKPLACE_ID = WM.WORKPLACE_ID
                     AND AR.USER_ID = WM.USER_ID
                     AND AR.WORK_DATE = CURDATE()
                     AND AR.CHECK_IN_AT IS NOT NULL
         WHERE WM.STATUS = 'ACTIVE'
           AND WM.ROLE IN ('STAFF', 'MANAGER')
-          AND WS.DEFAULT_CHECK_IN_TIME IS NOT NULL
-          AND DATE_FORMAT(WS.DEFAULT_CHECK_IN_TIME, '%H:%i') = #{targetTime}
+          AND DATE_FORMAT(COALESCE(WMS.SCHEDULED_CHECK_IN_TIME, WS.DEFAULT_CHECK_IN_TIME), '%H:%i') = #{targetTime}
           AND AR.ID IS NULL
     </select>
 
@@ -85,6 +87,9 @@
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
                  INNER JOIN WORKPLACE_SETTINGS WS ON WS.WORKPLACE_ID = WM.WORKPLACE_ID
                  INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+                 LEFT JOIN WORKPLACE_MEMBER_SCHEDULES WMS ON WMS.WORKPLACE_ID = WM.WORKPLACE_ID
+                    AND WMS.USER_ID = WM.USER_ID
+                    AND WMS.DAY_OF_WEEK = WEEKDAY(CURDATE()) + 1
                  INNER JOIN ATTENDANCE_RECORDS AR ON AR.WORKPLACE_ID = WM.WORKPLACE_ID
                     AND AR.USER_ID = WM.USER_ID
                     AND AR.WORK_DATE = CURDATE()
@@ -92,8 +97,7 @@
                     AND AR.CHECK_OUT_AT IS NULL
         WHERE WM.STATUS = 'ACTIVE'
           AND WM.ROLE IN ('STAFF', 'MANAGER')
-          AND WS.DEFAULT_CHECK_OUT_TIME IS NOT NULL
-          AND DATE_FORMAT(WS.DEFAULT_CHECK_OUT_TIME, '%H:%i') = #{targetTime}
+          AND DATE_FORMAT(COALESCE(WMS.SCHEDULED_CHECK_OUT_TIME, WS.DEFAULT_CHECK_OUT_TIME), '%H:%i') = #{targetTime}
     </select>
 
     <select id="findOwnersWithNoStaff" resultMap="staffReminderTargetMap">
@@ -177,6 +181,26 @@
           AND AR.CHECK_IN_AT <= NOW() - INTERVAL #{hours} HOUR
           AND (AR.LONG_WORKING_NOTIFIED IS NULL OR AR.LONG_WORKING_NOTIFIED = 0)
         ]]>
+    </select>
+
+
+    <select id="findOwnersWithPendingAttendanceRequests" resultType="com.api.alba.dto.push.OwnerPendingRequestTarget">
+        SELECT WM.WORKPLACE_ID      AS workplaceId,
+               W.NAME               AS workplaceName,
+               PT.TOKEN             AS token,
+               pending.CNT          AS pendingCount
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+                 INNER JOIN (
+                     SELECT AR.WORKPLACE_ID, COUNT(*) AS CNT
+                     FROM ATTENDANCE_REQUESTS ARQ
+                              INNER JOIN ATTENDANCE_RECORDS AR ON AR.ID = ARQ.ATTENDANCE_RECORD_ID
+                     WHERE ARQ.STATUS = 'PENDING'
+                     GROUP BY AR.WORKPLACE_ID
+                 ) pending ON pending.WORKPLACE_ID = WM.WORKPLACE_ID
+        WHERE WM.STATUS = 'ACTIVE'
+          AND WM.ROLE = 'OWNER'
     </select>
 
 </mapper>

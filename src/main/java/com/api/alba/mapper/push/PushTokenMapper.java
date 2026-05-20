@@ -1,6 +1,7 @@
 package com.api.alba.mapper.push;
 
 import com.api.alba.domain.push.PushToken;
+import com.api.alba.dto.push.OwnerPendingRequestTarget;
 import com.api.alba.dto.push.OwnerPushTokenTarget;
 import com.api.alba.dto.push.StaffReminderTarget;
 import org.apache.ibatis.annotations.Mapper;
@@ -41,4 +42,6 @@ public interface PushTokenMapper {
     );
 
     List<StaffReminderTarget> findStaffWorkingOverHours(@Param("hours") int hours);
+
+    List<OwnerPendingRequestTarget> findOwnersWithPendingAttendanceRequests();
 }

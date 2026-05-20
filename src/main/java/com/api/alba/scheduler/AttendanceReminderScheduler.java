@@ -1,5 +1,6 @@
 package com.api.alba.scheduler;
 
+import com.api.alba.dto.push.OwnerPendingRequestTarget;
 import com.api.alba.dto.push.StaffReminderTarget;
 import com.api.alba.firebase.FcmDto;
 import com.api.alba.firebase.FcmService;
@@ -55,6 +56,26 @@ public class AttendanceReminderScheduler {
         if (!recordIds.isEmpty()) {
             attendanceRecordMapper.markLongWorkingNotifiedBatch(recordIds);
         }
+    }
+
+    @Scheduled(cron = "0 0 9 * * *")
+    public void sendPendingAttendanceRequestReminders() {
+        List<OwnerPendingRequestTarget> targets = pushTokenMapper.findOwnersWithPendingAttendanceRequests();
+        if (targets.isEmpty()) return;
+
+        List<FcmDto> fcmList = targets.stream()
+                .map(t -> FcmDto.builder()
+                        .pushSeq(0L)
+                        .pushToken(t.getToken())
+                        .title("근무 정정 요청 알림")
+                        .content(t.getWorkplaceName() + "에 미처리된 정정 요청이 " + t.getPendingCount() + "건 있습니다.")
+                        .pushLink("")
+                        .project(ProjectId.ALBAM.getMessage())
+                        .build())
+                .collect(Collectors.toList());
+
+        log.info("[정정 요청 알림] 발송 대상 {}명", fcmList.size());
+        fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
     }
 
     @Scheduled(cron = "0 0 10 * * *")
