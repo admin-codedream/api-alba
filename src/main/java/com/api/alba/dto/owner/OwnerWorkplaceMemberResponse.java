@@ -1,9 +1,11 @@
 package com.api.alba.dto.owner;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -20,5 +22,7 @@ public class OwnerWorkplaceMemberResponse {
     private String status;
     private String memo;
     private Integer breakMinutes;
+    @JsonFormat(pattern = "yy.MM.dd")
+    private LocalDateTime joinedAt;
     private List<MemberScheduleItemResponse> scheduleDays;
 }

@@ -95,7 +95,8 @@
                WM.MONTHLY_WAGE AS monthlyWage,
                WM.STATUS AS status,
                WM.MEMO AS memo,
-               WM.BREAK_MINUTES AS breakMinutes
+               WM.BREAK_MINUTES AS breakMinutes,
+               WM.JOINED_AT AS joinedAt
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN USERS U ON U.ID = WM.USER_ID
         WHERE WM.WORKPLACE_ID = #{workplaceId}
