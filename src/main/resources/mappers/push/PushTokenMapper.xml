@@ -185,12 +185,13 @@
 
 
     <select id="findOwnersWithPendingAttendanceRequests" resultType="com.api.alba.dto.push.OwnerPendingRequestTarget">
+        <![CDATA[
         SELECT WM.WORKPLACE_ID      AS workplaceId,
                W.NAME               AS workplaceName,
                PT.TOKEN             AS token,
                pending.CNT          AS pendingCount
         FROM WORKPLACE_MEMBERS WM
-                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID AND WM.USER_ID <> 1
                  INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
                  INNER JOIN (
                      SELECT AR.WORKPLACE_ID, COUNT(*) AS CNT
@@ -201,6 +202,7 @@
                  ) pending ON pending.WORKPLACE_ID = WM.WORKPLACE_ID
         WHERE WM.STATUS = 'ACTIVE'
           AND WM.ROLE = 'OWNER'
+        ]]>
     </select>
 
 </mapper>
