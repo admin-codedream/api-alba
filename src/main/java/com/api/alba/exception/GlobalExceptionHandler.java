@@ -20,10 +20,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, String>> handleApi(ApiException ex) {
-        log.error("Handled ApiException. status={}, message={}", ex.getStatus(), ex.getMessage(), ex);
+        if (ex.getStatus().is5xxServerError()) {
+            log.error("Handled ApiException. status={}, message={}", ex.getStatus(), ex.getMessage(), ex);
+        } else {
+            log.warn("Handled ApiException. status={}, message={}", ex.getStatus(), ex.getMessage());
+        }
         Map<String, String> body = new HashMap<>();
         body.put("message", ex.getMessage());
         return ResponseEntity.status(ex.getStatus()).body(body);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleUnexpected(Exception ex) {
+        log.error("Unhandled exception occurred.", ex);
+        Map<String, String> body = new HashMap<>();
+        body.put("message", "서버 오류가 발생했습니다.");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
