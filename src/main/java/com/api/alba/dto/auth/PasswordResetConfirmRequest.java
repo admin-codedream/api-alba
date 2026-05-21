@@ -1,5 +1,6 @@
 package com.api.alba.dto.auth;
 
+import com.api.alba.component.Masked;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +19,7 @@ public class PasswordResetConfirmRequest {
     @Pattern(regexp = "^\\d{6}$", message = "인증 코드는 6자리 숫자여야 해요.")
     private String code;
 
+    @Masked
     @NotBlank(message = "새 비밀번호를 입력해 주세요.")
     @Size(min = 8, max = 100, message = "새 비밀번호는 8자 이상 100자 이하여야 해요.")
     private String newPassword;

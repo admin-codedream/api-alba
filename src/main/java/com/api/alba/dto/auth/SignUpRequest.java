@@ -1,5 +1,6 @@
 package com.api.alba.dto.auth;
 
+import com.api.alba.component.Masked;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +21,7 @@ public class SignUpRequest {
     @Size(min = 4, max = 191, message = "아이디는 4자 이상 191자 이하여야 해요.")
     private String loginId;
 
+    @Masked
     @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 해요.")
     private String password;
 
@@ -41,9 +43,11 @@ public class SignUpRequest {
     @Pattern(regexp = "^(?i)(KAKAO|GOOGLE|APPLE)$", message = "소셜 로그인 제공자가 올바르지 않아요.")
     private String provider;
 
+    @Masked
     @Size(max = 191, message = "소셜 사용자 ID는 191자 이하여야 해요.")
     private String providerUserId;
 
+    @Masked
     @Size(max = 255, message = "소셜 이메일은 255자 이하여야 해요.")
     private String providerEmail;
 

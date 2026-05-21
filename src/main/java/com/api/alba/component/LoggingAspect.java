@@ -1,7 +1,9 @@
 package com.api.alba.component;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Aspect
@@ -69,10 +75,35 @@ public class LoggingAspect {
     private String toJson(Object value) {
         if (value == null) return "null";
         try {
-            return objectMapper.writeValueAsString(value);
+            JsonNode node = objectMapper.valueToTree(value);
+            if (node.isObject()) {
+                Set<String> maskedFields = getMaskedFieldNames(value.getClass());
+                if (!maskedFields.isEmpty()) {
+                    maskObjectNode((ObjectNode) node, maskedFields);
+                }
+            }
+            return objectMapper.writeValueAsString(node);
         } catch (Exception e) {
             return String.valueOf(value);
         }
+    }
+
+    private Set<String> getMaskedFieldNames(Class<?> clazz) {
+        Set<String> masked = new HashSet<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Masked.class)) {
+                masked.add(field.getName());
+            }
+        }
+        return masked;
+    }
+
+    private void maskObjectNode(ObjectNode node, Set<String> maskedFields) {
+        maskedFields.forEach(fieldName -> {
+            if (node.has(fieldName)) {
+                node.put(fieldName, "***");
+            }
+        });
     }
 
     private HttpServletRequest getCurrentHttpRequest() {
