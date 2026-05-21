@@ -1,7 +1,9 @@
 package com.api.alba.component;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -16,7 +18,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Slf4j
 @Aspect
 @Component
+@RequiredArgsConstructor
 public class LoggingAspect {
+
+    private final ObjectMapper objectMapper;
 
     @Pointcut("execution(* com.api.alba.controller..*Controller.*(..))")
     private static void advicePoint() {}
@@ -39,7 +44,7 @@ public class LoggingAspect {
         if (paramNames != null && paramValues != null) {
             for (int i = 0; i < paramNames.length; i++) {
                 paramsLog.append(paramNames[i]).append("=")
-                    .append(paramValues[i]).append(", ");
+                    .append(toJson(paramValues[i])).append(", ");
             }
         }
 
@@ -59,6 +64,15 @@ public class LoggingAspect {
         // END 로그
         log.info("[API] END   [{}] {} :: {} | duration={}ms", httpMethod, requestUri, fullMethod, (end - start));
         return result;
+    }
+
+    private String toJson(Object value) {
+        if (value == null) return "null";
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception e) {
+            return String.valueOf(value);
+        }
     }
 
     private HttpServletRequest getCurrentHttpRequest() {
