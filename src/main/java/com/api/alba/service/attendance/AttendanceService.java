@@ -253,7 +253,9 @@ public class AttendanceService {
                             distanceMeters, allowedRadiusMeters, accuracyBuffer))
                     .errorMessage(OUTSIDE_ALLOWED_WORKPLACE_RADIUS)
                     .build());
-            throw new ApiException(HttpStatus.FORBIDDEN, OUTSIDE_ALLOWED_WORKPLACE_RADIUS);
+            throw new ApiException(HttpStatus.FORBIDDEN, String.format(
+                    "%s (현재 근무지로부터 약 %dm, 허용 반경: %dm)",
+                    OUTSIDE_ALLOWED_WORKPLACE_RADIUS, Math.round(distanceMeters), allowedRadiusMeters));
         }
     }
 

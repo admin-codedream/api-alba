@@ -16,7 +16,7 @@ public final class ExceptionMessages {
     public static final String LAT_LON_REQUIRED = "위치 정보가 필요해요.";
     public static final String LAT_LON_MUST_BE_PROVIDED_TOGETHER = "위도와 경도를 함께 입력해 주세요.";
     public static final String WORKPLACE_LOCATION_NOT_CONFIGURED = "근무지 위치가 아직 설정되지 않았어요.";
-    public static final String OUTSIDE_ALLOWED_WORKPLACE_RADIUS = "근무지 반경 밖에서는 출퇴근할 수 없어요.";
+    public static final String OUTSIDE_ALLOWED_WORKPLACE_RADIUS = "현재 위치가 허용 반경을 벗어났어요.";
     public static final String LOGIN_ID_ALREADY_IN_USE = "이미 사용 중인 아이디예요.";
     public static final String INVALID_LOGIN_ID_OR_PASSWORD = "아이디 또는 비밀번호가 올바르지 않아요.";
     public static final String ACCOUNT_NOT_ACTIVE = "비활성화된 계정이에요.";

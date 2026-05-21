@@ -20,5 +20,5 @@ public class OwnerWorkplaceMemberResponse {
     private String status;
     private String memo;
     private Integer breakMinutes;
-    private List<Integer> scheduleDays;
+    private List<MemberScheduleItemResponse> scheduleDays;
 }
