@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.notice.WorkplaceNoticeMapper">
+
+    <resultMap id="workplaceNoticeMap" type="com.api.alba.domain.notice.WorkplaceNotice">
+        <id property="id" column="ID"/>
+        <result property="workplaceId" column="WORKPLACE_ID"/>
+        <result property="authorId" column="AUTHOR_ID"/>
+        <result property="title" column="TITLE"/>
+        <result property="content" column="CONTENT"/>
+        <result property="pinned" column="IS_PINNED"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.api.alba.domain.notice.WorkplaceNotice" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO WORKPLACE_NOTICES (WORKPLACE_ID, AUTHOR_ID, TITLE, CONTENT, IS_PINNED)
+        VALUES (#{workplaceId}, #{authorId}, #{title}, #{content}, #{pinned})
+    </insert>
+
+    <select id="findById" resultMap="workplaceNoticeMap">
+        SELECT ID, WORKPLACE_ID, AUTHOR_ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
+        FROM WORKPLACE_NOTICES
+        WHERE ID = #{id}
+    </select>
+
+    <select id="findAllByWorkplaceId" resultMap="workplaceNoticeMap">
+        SELECT ID, WORKPLACE_ID, AUTHOR_ID, TITLE, CONTENT, IS_PINNED, CREATED_AT, UPDATED_AT
+        FROM WORKPLACE_NOTICES
+        WHERE WORKPLACE_ID = #{workplaceId}
+        ORDER BY IS_PINNED DESC, CREATED_AT DESC
+    </select>
+
+    <update id="update">
+        UPDATE WORKPLACE_NOTICES
+        SET TITLE   = #{title},
+            CONTENT = #{content}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updatePinned">
+        UPDATE WORKPLACE_NOTICES
+        SET IS_PINNED = #{pinned}
+        WHERE ID = #{id}
+    </update>
+
+    <delete id="deleteById">
+        <![CDATA[
+        DELETE FROM WORKPLACE_NOTICES WHERE ID = #{id}
+        ]]>
+    </delete>
+
+</mapper>

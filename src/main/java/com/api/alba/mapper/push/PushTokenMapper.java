@@ -44,4 +44,6 @@ public interface PushTokenMapper {
     List<StaffReminderTarget> findStaffWorkingOverHours(@Param("hours") int hours);
 
     List<OwnerPendingRequestTarget> findOwnersWithPendingAttendanceRequests();
+
+    List<StaffReminderTarget> findActiveStaffTokensByWorkplaceId(@Param("workplaceId") Long workplaceId);
 }

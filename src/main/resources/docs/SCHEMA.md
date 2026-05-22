@@ -453,6 +453,23 @@ on albamm.NOTICES (CREATED_AT);
 create index IDX_NOTICES_PINNED_CREATED_AT
 on albamm.NOTICES (IS_PINNED, CREATED_AT);
 
+create table albamm.WORKPLACE_NOTICES
+(
+    ID           bigint unsigned auto_increment comment '매장 공지사항 PK'
+        primary key,
+    WORKPLACE_ID bigint unsigned                       not null comment '매장 FK',
+    AUTHOR_ID    bigint unsigned                       not null comment '작성자 사용자 FK',
+    TITLE        varchar(200)                          not null comment '공지 제목',
+    CONTENT      varchar(5000)                         not null comment '공지 내용',
+    IS_PINNED    tinyint(1) default 0                  not null comment '상단 고정 여부',
+    CREATED_AT   timestamp  default CURRENT_TIMESTAMP  not null comment '생성일시',
+    UPDATED_AT   timestamp  default CURRENT_TIMESTAMP  not null on update CURRENT_TIMESTAMP comment '수정일시'
+)
+    comment '매장별 공지사항' charset = utf8mb4;
+
+create index IDX_WORKPLACE_NOTICES_WORKPLACE_ID
+    on albamm.WORKPLACE_NOTICES (WORKPLACE_ID, IS_PINNED, CREATED_AT);
+
 create table albamm.PASSWORD_RESET_CODES
 (
 ID         bigint unsigned auto_increment comment 'Password reset code PK'

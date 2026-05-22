@@ -184,6 +184,19 @@
     </select>
 
 
+    <select id="findActiveStaffTokensByWorkplaceId" resultMap="staffReminderTargetMap">
+        SELECT WM.WORKPLACE_ID,
+               W.NAME AS WORKPLACE_NAME,
+               WM.USER_ID,
+               PT.TOKEN
+        FROM WORKPLACE_MEMBERS WM
+                 INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
+                 INNER JOIN PUSH_TOKENS PT ON PT.USER_ID = WM.USER_ID AND PT.IS_ACTIVE = 1
+        WHERE WM.WORKPLACE_ID = #{workplaceId}
+          AND WM.STATUS = 'ACTIVE'
+          AND WM.ROLE IN ('STAFF', 'MANAGER')
+    </select>
+
     <select id="findOwnersWithPendingAttendanceRequests" resultType="com.api.alba.dto.push.OwnerPendingRequestTarget">
         <![CDATA[
         SELECT WM.WORKPLACE_ID      AS workplaceId,
