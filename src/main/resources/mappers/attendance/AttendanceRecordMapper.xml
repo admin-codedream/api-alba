@@ -243,4 +243,67 @@
           AND USER_ID = #{userId}
     </update>
 
+    <select id="findMissingCheckOutWithSchedule" resultType="com.api.alba.dto.attendance.AutoCheckOutTarget">
+        <![CDATA[
+        /* 당일 근무: 오늘 출근 + 당일 퇴근 스케줄 (예: 09:00~18:00) */
+        SELECT AR.ID                          AS recordId,
+               AR.WORKPLACE_ID               AS workplaceId,
+               AR.USER_ID                    AS userId,
+               AR.CHECK_IN_AT                AS checkInAt,
+               WMS.SCHEDULED_CHECK_IN_TIME   AS scheduledCheckInTime,
+               WMS.SCHEDULED_CHECK_OUT_TIME  AS scheduledCheckOutTime,
+               WM.WAGE_TYPE                  AS wageType,
+               WM.HOURLY_WAGE                AS hourlyWage,
+               WM.MONTHLY_WAGE               AS monthlyWage,
+               WM.BREAK_MINUTES              AS breakMinutes,
+               0                             AS overnight
+        FROM ATTENDANCE_RECORDS AR
+                 JOIN WORKPLACE_MEMBER_SCHEDULES WMS
+                      ON WMS.WORKPLACE_ID = AR.WORKPLACE_ID
+                          AND WMS.USER_ID = AR.USER_ID
+                          AND WMS.DAY_OF_WEEK = #{todayDow}
+                 JOIN WORKPLACE_MEMBERS WM
+                      ON WM.WORKPLACE_ID = AR.WORKPLACE_ID
+                          AND WM.USER_ID = AR.USER_ID
+                          AND WM.STATUS = 'ACTIVE'
+        WHERE AR.WORK_DATE = #{today}
+          AND AR.CHECK_IN_AT IS NOT NULL
+          AND AR.CHECK_OUT_AT IS NULL
+          AND WMS.SCHEDULED_CHECK_IN_TIME IS NOT NULL
+          AND WMS.SCHEDULED_CHECK_OUT_TIME IS NOT NULL
+          AND WMS.SCHEDULED_CHECK_OUT_TIME > WMS.SCHEDULED_CHECK_IN_TIME
+          AND TIME(AR.CHECK_IN_AT) < WMS.SCHEDULED_CHECK_OUT_TIME
+
+        UNION ALL
+
+        /* 야간 근무: 전날 출근 + 익일 퇴근 스케줄 (예: 22:00~06:00) */
+        SELECT AR.ID                          AS recordId,
+               AR.WORKPLACE_ID               AS workplaceId,
+               AR.USER_ID                    AS userId,
+               AR.CHECK_IN_AT                AS checkInAt,
+               WMS.SCHEDULED_CHECK_IN_TIME   AS scheduledCheckInTime,
+               WMS.SCHEDULED_CHECK_OUT_TIME  AS scheduledCheckOutTime,
+               WM.WAGE_TYPE                  AS wageType,
+               WM.HOURLY_WAGE                AS hourlyWage,
+               WM.MONTHLY_WAGE               AS monthlyWage,
+               WM.BREAK_MINUTES              AS breakMinutes,
+               1                             AS overnight
+        FROM ATTENDANCE_RECORDS AR
+                 JOIN WORKPLACE_MEMBER_SCHEDULES WMS
+                      ON WMS.WORKPLACE_ID = AR.WORKPLACE_ID
+                          AND WMS.USER_ID = AR.USER_ID
+                          AND WMS.DAY_OF_WEEK = #{yesterdayDow}
+                 JOIN WORKPLACE_MEMBERS WM
+                      ON WM.WORKPLACE_ID = AR.WORKPLACE_ID
+                          AND WM.USER_ID = AR.USER_ID
+                          AND WM.STATUS = 'ACTIVE'
+        WHERE AR.WORK_DATE = #{yesterday}
+          AND AR.CHECK_IN_AT IS NOT NULL
+          AND AR.CHECK_OUT_AT IS NULL
+          AND WMS.SCHEDULED_CHECK_IN_TIME IS NOT NULL
+          AND WMS.SCHEDULED_CHECK_OUT_TIME IS NOT NULL
+          AND WMS.SCHEDULED_CHECK_OUT_TIME < WMS.SCHEDULED_CHECK_IN_TIME
+        ]]>
+    </select>
+
 </mapper>

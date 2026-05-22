@@ -7,12 +7,14 @@ import com.api.alba.firebase.FcmService;
 import com.api.alba.firebase.ProjectId;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
+import com.api.alba.service.attendance.AttendanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -29,6 +31,7 @@ public class AttendanceReminderScheduler {
     private final PushTokenMapper pushTokenMapper;
     private final AttendanceRecordMapper attendanceRecordMapper;
     private final FcmService fcmService;
+    private final AttendanceService attendanceService;
 
     @Scheduled(cron = "0 0 * * * *")
     public void sendLongWorkingReminders() {
@@ -97,6 +100,13 @@ public class AttendanceReminderScheduler {
 
         log.info("[직원 미등록 알림] 발송 대상 {}명", fcmList.size());
         fcmService.sendMultiEachMessage(ProjectId.ALBAM.getMessage(), fcmList);
+    }
+
+    @Scheduled(cron = "0 59 23 * * *")
+    public void autoCheckOutMissedStaff() {
+        log.info("[자동 퇴근 배치] 시작");
+        attendanceService.autoCheckOutMissed(LocalDate.now());
+        log.info("[자동 퇴근 배치] 완료");
     }
 
     @Async

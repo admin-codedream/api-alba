@@ -4,6 +4,7 @@ import com.api.alba.component.WageCalculationHelper;
 import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.log.ApiErrorLog;
+import com.api.alba.dto.attendance.AutoCheckOutTarget;
 import com.api.alba.domain.owner.Workplace;
 import com.api.alba.domain.settings.WorkplaceBreakPolicy;
 import com.api.alba.domain.settings.WorkplaceSetting;
@@ -287,6 +288,61 @@ public class AttendanceService {
             return List.of();
         }
         return workplaceBreakPolicyMapper.findAllByWorkplaceId(workplaceId);
+    }
+
+    @Transactional
+    public void autoCheckOutMissed(LocalDate today) {
+        LocalDate yesterday = today.minusDays(1);
+        List<AutoCheckOutTarget> targets = attendanceRecordMapper.findMissingCheckOutWithSchedule(
+                today, today.getDayOfWeek().getValue(),
+                yesterday, yesterday.getDayOfWeek().getValue()
+        );
+
+        if (targets.isEmpty()) {
+            log.info("[자동 퇴근] 처리 대상 없음 (today={})", today);
+            return;
+        }
+
+        log.info("[자동 퇴근] 처리 대상 {}건 (today={})", targets.size(), today);
+        for (AutoCheckOutTarget target : targets) {
+            try {
+                LocalDate workDate = target.getCheckInAt().toLocalDate();
+                LocalDate checkOutDate = target.isOvernight() ? workDate.plusDays(1) : workDate;
+                LocalDateTime checkOutAt = checkOutDate.atTime(target.getScheduledCheckOutTime());
+                long diffMinutes = Duration.between(target.getCheckInAt(), checkOutAt).toMinutes();
+                int grossWorkedMinutes = (int) Math.max(diffMinutes, 0);
+
+                WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(target.getWorkplaceId());
+                List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(target.getWorkplaceId(), setting);
+
+                BigDecimal hourlyWage = "MONTHLY".equals(target.getWageType())
+                        ? BigDecimal.ZERO
+                        : resolveHourlyWageFromTarget(target, setting);
+
+                WageCalculationResult wageResult = wageCalculationHelper.calculate(
+                        hourlyWage, grossWorkedMinutes, setting, breakPolicies, target.getBreakMinutes()
+                );
+
+                String status = resolveCheckOutStatus(target.getCheckInAt(), setting, target.getScheduledCheckInTime());
+
+                attendanceRecordMapper.updateCheckOut(
+                        target.getRecordId(), checkOutAt,
+                        wageResult.workedMinutes(), wageResult.baseWage(), wageResult.finalWage(),
+                        status
+                );
+                log.info("[자동 퇴근] 처리 완료 recordId={}, workplaceId={}, userId={}, checkOutAt={}",
+                        target.getRecordId(), target.getWorkplaceId(), target.getUserId(), checkOutAt);
+            } catch (Exception e) {
+                log.warn("[자동 퇴근] 처리 실패 recordId={}, workplaceId={}, userId={}, message={}",
+                        target.getRecordId(), target.getWorkplaceId(), target.getUserId(), e.getMessage(), e);
+            }
+        }
+    }
+
+    private BigDecimal resolveHourlyWageFromTarget(AutoCheckOutTarget target, WorkplaceSetting setting) {
+        if (target.getHourlyWage() != null) return target.getHourlyWage();
+        if (setting != null && setting.getDefaultHourlyWage() != null) return setting.getDefaultHourlyWage();
+        return BigDecimal.ZERO;
     }
 
     private void sendAttendancePushSafely(Long workplaceId, Long userId, String title, String contentFormat) {

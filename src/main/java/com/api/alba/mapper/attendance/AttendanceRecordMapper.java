@@ -1,6 +1,7 @@
 package com.api.alba.mapper.attendance;
 
 import com.api.alba.domain.attendance.AttendanceRecord;
+import com.api.alba.dto.attendance.AutoCheckOutTarget;
 import com.api.alba.dto.owner.OwnerDailyAttendanceItemResponse;
 import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
 import com.api.alba.dto.staff.EmployeeWageSummary;
@@ -116,4 +117,11 @@ public interface AttendanceRecordMapper {
     int clearWagesByMember(@Param("workplaceId") Long workplaceId, @Param("userId") Long userId);
 
     int markLongWorkingNotifiedBatch(@Param("ids") List<Long> ids);
+
+    List<AutoCheckOutTarget> findMissingCheckOutWithSchedule(
+            @Param("today") LocalDate today,
+            @Param("todayDow") int todayDow,
+            @Param("yesterday") LocalDate yesterday,
+            @Param("yesterdayDow") int yesterdayDow
+    );
 }
