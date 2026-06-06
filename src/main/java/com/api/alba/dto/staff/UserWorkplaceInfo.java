@@ -10,4 +10,5 @@ public class UserWorkplaceInfo {
     private String workplaceName;
     private Boolean isPersonal;
     private Boolean receiveAttendancePush;
+    private Integer memberCount;
 }

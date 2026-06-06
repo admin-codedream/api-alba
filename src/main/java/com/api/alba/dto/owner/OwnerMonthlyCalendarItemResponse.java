@@ -14,6 +14,6 @@ public class OwnerMonthlyCalendarItemResponse {
     private String profileColor;
     private String profileInitial;
     private LocalDate workDate;
-    private Integer workedHours;
+    private BigDecimal workedHours;
     private BigDecimal finalWage;
 }

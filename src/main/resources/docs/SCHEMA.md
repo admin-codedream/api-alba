@@ -130,6 +130,7 @@ API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 
 |---|---|
 | `MINUTE` | 1분 단위 계산 |
 | `10MIN` | 10분 단위 계산 |
+| `30MIN` | 30분 단위 계산 |
 | `HOUR` | 1시간 단위 계산 |
 
 ### `WORKPLACE_SETTINGS.ROUNDING_POLICY`
@@ -372,6 +373,7 @@ ALTER TABLE LABOR_CONTRACTS
 | 2026-05-14 | `PAYSLIPS.WAGE_TYPE`, `PAYSLIPS.MONTHLY_WAGE` 추가 (월급제 급여명세서 스냅샷) |
 | 2026-05-14 | `LABOR_CONTRACTS.WAGE_TYPE`, `LABOR_CONTRACTS.MONTHLY_WAGE` 추가 (월급제 계약서 지원) |
 | 2026-05-19 | `ATTENDANCE_RECORDS.LONG_WORKING_NOTIFIED` 추가 (장시간 근무 알림 발송 여부) |
+| 2026-06-06 | `USERS.NAME`, `USERS.PROFILE_INITIAL` — 이름 변경 API 추가 (`PATCH /api/staff/name`, 이름 변경 시 PROFILE_INITIAL 자동 갱신) |
 
 ---
 

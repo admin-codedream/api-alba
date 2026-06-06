@@ -35,6 +35,7 @@ import com.api.alba.mapper.owner.WorkplaceMapper;
 import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.push.PushTokenMapper;
+import com.api.alba.mapper.auth.UserMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.domain.staff.WorkplaceMemberSchedule;
 import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
@@ -67,6 +68,7 @@ import static com.api.alba.exception.ExceptionMessages.*;
 @Service
 @RequiredArgsConstructor
 public class StaffService {
+    private final UserMapper userMapper;
     private final WorkplaceMapper workplaceMapper;
     private final WorkplaceMemberMapper workplaceMemberMapper;
     private final WorkplaceSettingMapper workplaceSettingMapper;
@@ -373,6 +375,12 @@ public class StaffService {
                 setting.getDefaultCheckOutTime(),
                 member.getBreakMinutes()
         );
+    }
+
+    public void updateMyName(Long userId, String name) {
+        String trimmed = name.trim();
+        String profileInitial = trimmed.isEmpty() ? "?" : trimmed.substring(0, 1);
+        userMapper.updateName(userId, trimmed, profileInitial);
     }
 
     public void updateMyBreakMinutes(Long userId, Long workplaceId, Integer breakMinutes) {

@@ -97,7 +97,7 @@
                ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
-        LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
+        JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID AND wm.STATUS = 'ACTIVE'
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
         <if test="userId != null">
@@ -167,10 +167,11 @@
                u.PROFILE_COLOR AS profileColor,
                u.PROFILE_INITIAL AS profileInitial,
                ar.WORK_DATE AS workDate,
-               FLOOR(COALESCE(ar.WORKED_MINUTES, 0) / 60) AS workedHours,
+               ROUND(COALESCE(ar.WORKED_MINUTES, 0) / 60, 1) AS workedHours,
                COALESCE(ar.FINAL_WAGE, 0) AS finalWage
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
+        JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID AND wm.STATUS = 'ACTIVE'
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
         <if test="userId != null">

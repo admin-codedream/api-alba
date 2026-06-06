@@ -24,5 +24,6 @@ public class OwnerWorkplaceMemberResponse {
     private Integer breakMinutes;
     @JsonFormat(pattern = "yy.MM.dd")
     private LocalDateTime joinedAt;
+    private String contractSigned;
     private List<MemberScheduleItemResponse> scheduleDays;
 }

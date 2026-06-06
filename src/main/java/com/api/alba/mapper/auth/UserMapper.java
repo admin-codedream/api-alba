@@ -21,4 +21,6 @@ public interface UserMapper {
     int updatePasswordHash(@Param("id") Long id, @Param("passwordHash") String passwordHash);
 
     int anonymizeUser(@Param("id") Long id, @Param("loginId") String loginId);
+
+    int updateName(@Param("id") Long id, @Param("name") String name, @Param("profileInitial") String profileInitial);
 }

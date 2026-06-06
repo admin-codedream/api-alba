@@ -11,7 +11,8 @@
       "Bash(mv C:/git-repo/api-alba/docs/attendance-flow.md C:/git-repo/api-alba/src/main/resources/docs/attendance-flow.md)",
       "Bash(rmdir C:/git-repo/api-alba/docs)",
       "Bash(find /c/git-repo/api-alba/src/main/resources/mappers -type f -name *Mapper.xml)",
-      "Bash(find /c/git-repo/api-alba/src/main/java -type f -name *Schedule* -o -name *Shift*)"
+      "Bash(find /c/git-repo/api-alba/src/main/java -type f -name *Schedule* -o -name *Shift*)",
+      "Bash(xargs cat -n)"
     ]
   }
 }

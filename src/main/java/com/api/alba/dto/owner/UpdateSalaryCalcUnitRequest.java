@@ -11,7 +11,7 @@ import javax.validation.constraints.Pattern;
 public class UpdateSalaryCalcUnitRequest {
     @NotBlank(message = "급여 계산 단위를 입력해 주세요.")
     @Pattern(
-            regexp = "MINUTE|10MIN|HOUR",
+            regexp = "MINUTE|10MIN|30MIN|HOUR",
             message = "급여 계산 단위가 올바르지 않아요."
     )
     private String salaryCalcUnit;

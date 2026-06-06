@@ -53,6 +53,13 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="updateName">
+        UPDATE USERS
+        SET NAME            = #{name},
+            PROFILE_INITIAL = #{profileInitial}
+        WHERE ID = #{id}
+    </update>
+
     <update id="anonymizeUser">
         UPDATE USERS
         SET LOGIN_ID      = #{loginId},

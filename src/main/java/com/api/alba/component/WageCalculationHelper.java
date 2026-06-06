@@ -14,6 +14,7 @@ import java.util.Locale;
 public class WageCalculationHelper {
     private static final BigDecimal TEN_WON_UNIT = BigDecimal.TEN;
     private static final String SALARY_CALC_UNIT_TEN_MIN = "10MIN";
+    private static final String SALARY_CALC_UNIT_THIRTY_MIN = "30MIN";
     private static final String SALARY_CALC_UNIT_HOUR = "HOUR";
 
     public WageCalculationResult calculate(
@@ -96,6 +97,9 @@ public class WageCalculationHelper {
         // 10분 단위와 1시간 단위는 모두 해당 단위 기준으로 버림 처리합니다.
         if (SALARY_CALC_UNIT_TEN_MIN.equals(salaryCalcUnit)) {
             return floorToUnit(normalizedWorkedMinutes, 10);
+        }
+        if (SALARY_CALC_UNIT_THIRTY_MIN.equals(salaryCalcUnit)) {
+            return floorToUnit(normalizedWorkedMinutes, 30);
         }
         if (SALARY_CALC_UNIT_HOUR.equals(salaryCalcUnit)) {
             return floorToUnit(normalizedWorkedMinutes, 60);

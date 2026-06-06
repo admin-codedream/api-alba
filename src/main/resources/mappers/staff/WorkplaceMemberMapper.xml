@@ -23,6 +23,7 @@
         <result property="workplaceName" column="WORKPLACE_NAME"/>
         <result property="isPersonal" column="IS_PERSONAL"/>
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
+        <result property="memberCount" column="MEMBER_COUNT"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
@@ -73,7 +74,8 @@
         SELECT WM.WORKPLACE_ID,
                W.NAME AS WORKPLACE_NAME,
                W.IS_PERSONAL,
-               WM.RECEIVE_ATTENDANCE_PUSH
+               WM.RECEIVE_ATTENDANCE_PUSH,
+               (SELECT COUNT(*) FROM WORKPLACE_MEMBERS WHERE WORKPLACE_ID = WM.WORKPLACE_ID AND STATUS = 'ACTIVE' AND ROLE NOT IN ('OWNER', 'SUPER_ADMIN')) AS MEMBER_COUNT
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
                  INNER JOIN USERS U ON U.ID = W.OWNER_ID
@@ -96,7 +98,8 @@
                WM.STATUS AS status,
                WM.MEMO AS memo,
                WM.BREAK_MINUTES AS breakMinutes,
-               WM.JOINED_AT AS joinedAt
+               WM.JOINED_AT AS joinedAt,
+               IF((SELECT STATUS FROM LABOR_CONTRACTS WHERE WORKPLACE_ID = WM.WORKPLACE_ID AND EMPLOYEE_USER_ID = WM.USER_ID ORDER BY CREATED_AT DESC LIMIT 1) = 'SIGNED', 'Y', 'N') AS contractSigned
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN USERS U ON U.ID = WM.USER_ID
         WHERE WM.WORKPLACE_ID = #{workplaceId}

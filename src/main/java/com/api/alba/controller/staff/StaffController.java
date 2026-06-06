@@ -4,6 +4,7 @@ import com.api.alba.dto.attendance.AttendanceNewRecordRequestCreateRequest;
 import com.api.alba.dto.attendance.AttendanceRequestCreatedResponse;
 import com.api.alba.dto.staff.JoinWorkplaceRequest;
 import com.api.alba.dto.staff.UpdateMyBreakMinutesRequest;
+import com.api.alba.dto.staff.UpdateMyNameRequest;
 import com.api.alba.dto.staff.JoinWorkplaceResponse;
 import com.api.alba.dto.staff.StaffAttendanceRequestListItemResponse;
 import com.api.alba.dto.staff.StaffHomeTodayResponse;
@@ -127,6 +128,15 @@ public class StaffController {
             @PathVariable Long payslipId
     ) {
         return staffService.getMyPayslipDetail(requiredPrincipal(principal), payslipId);
+    }
+
+    @PatchMapping("/name")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMyName(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody UpdateMyNameRequest request
+    ) {
+        staffService.updateMyName(requiredPrincipal(principal), request.getName());
     }
 
     @PatchMapping("/workplaces/{workplaceId}/break-minutes")
