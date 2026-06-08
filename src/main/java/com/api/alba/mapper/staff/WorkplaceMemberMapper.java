@@ -51,4 +51,6 @@ public interface WorkplaceMemberMapper {
                    @Param("hourlyWage") BigDecimal hourlyWage, @Param("monthlyWage") BigDecimal monthlyWage);
 
     int updateBreakMinutes(@Param("id") Long id, @Param("breakMinutes") Integer breakMinutes);
+
+    int updateUseWeeklyHolidayPay(@Param("id") Long id, @Param("useWeeklyHolidayPay") Boolean useWeeklyHolidayPay);
 }

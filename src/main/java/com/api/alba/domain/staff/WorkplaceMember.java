@@ -19,4 +19,5 @@ public class WorkplaceMember {
     private Boolean receiveAttendancePush;
     private String status;
     private Integer breakMinutes;
+    private Boolean useWeeklyHolidayPay;
 }

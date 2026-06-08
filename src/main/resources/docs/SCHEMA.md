@@ -352,6 +352,12 @@ ALTER TABLE LABOR_CONTRACTS
         AFTER BREAK_MINUTES,
     ADD COLUMN MONTHLY_WAGE DECIMAL(12, 2) DEFAULT 0.00     NOT NULL COMMENT '월급(월급제일 때 사용)'
         AFTER HOURLY_WAGE;
+
+-- 2026-06-08: 직원별 주휴수당 설정
+ALTER TABLE WORKPLACE_MEMBERS
+    ADD COLUMN USE_WEEKLY_HOLIDAY_PAY TINYINT(1) DEFAULT NULL
+        COMMENT '직원별 주휴수당 사용 여부, NULL이면 매장 설정(WORKPLACE_SETTINGS.USE_WEEKLY_HOLIDAY_PAY) 상속'
+        AFTER BREAK_MINUTES;
 ```
 
 ---
@@ -374,6 +380,7 @@ ALTER TABLE LABOR_CONTRACTS
 | 2026-05-14 | `LABOR_CONTRACTS.WAGE_TYPE`, `LABOR_CONTRACTS.MONTHLY_WAGE` 추가 (월급제 계약서 지원) |
 | 2026-05-19 | `ATTENDANCE_RECORDS.LONG_WORKING_NOTIFIED` 추가 (장시간 근무 알림 발송 여부) |
 | 2026-06-06 | `USERS.NAME`, `USERS.PROFILE_INITIAL` — 이름 변경 API 추가 (`PATCH /api/staff/name`, 이름 변경 시 PROFILE_INITIAL 자동 갱신) |
+| 2026-06-08 | `WORKPLACE_MEMBERS.USE_WEEKLY_HOLIDAY_PAY` 추가 (직원별 주휴수당 사용 여부, NULL이면 매장 설정 상속) |
 
 ---
 
@@ -710,6 +717,7 @@ STATUS                  varchar(30) default 'ACTIVE'          not null comment '
 RECEIVE_ATTENDANCE_PUSH tinyint(1)  default 1                 not null comment '직원 출퇴근 푸시 수신 여부',
 MEMO                    varchar(1000)                         null comment '직원 메모',
 BREAK_MINUTES           int unsigned                          null comment '직원별 무급 휴게(분), null이면 매장 정책 적용',
+USE_WEEKLY_HOLIDAY_PAY  tinyint(1)                            null comment '직원별 주휴수당 사용 여부, null이면 매장 설정 상속',
 constraint UK_WORKPLACE_MEMBERS_WORKPLACE_USER
 unique (WORKPLACE_ID, USER_ID)
 )
