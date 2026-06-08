@@ -11,6 +11,8 @@ import com.api.alba.domain.settings.WorkplaceSetting;
 import com.api.alba.domain.staff.WorkplaceMember;
 import com.api.alba.dto.attendance.AttendanceCheckInRequest;
 import com.api.alba.dto.attendance.AttendanceCheckOutRequest;
+import com.api.alba.dto.attendance.QrAttendanceRequest;
+import com.api.alba.security.JwtTokenProvider;
 import com.api.alba.dto.push.OwnerPushTokenTarget;
 import com.api.alba.exception.ApiException;
 import com.api.alba.firebase.FcmDto;
@@ -49,6 +51,7 @@ import static com.api.alba.exception.ExceptionMessages.INVALID_DATE_RANGE;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_MUST_BE_PROVIDED_TOGETHER;
 import static com.api.alba.exception.ExceptionMessages.LAT_LON_REQUIRED;
 import static com.api.alba.exception.ExceptionMessages.OUTSIDE_ALLOWED_WORKPLACE_RADIUS;
+import static com.api.alba.exception.ExceptionMessages.QR_TOKEN_INVALID;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_LOCATION_NOT_CONFIGURED;
 import static com.api.alba.exception.ExceptionMessages.WORKPLACE_NOT_FOUND;
 
@@ -69,6 +72,7 @@ public class AttendanceService {
     private final FcmService fcmService;
     private final WageCalculationHelper wageCalculationHelper;
     private final ApiErrorLogService apiErrorLogService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public AttendanceRecord checkIn(Long userId, AttendanceCheckInRequest request) {
@@ -343,6 +347,69 @@ public class AttendanceService {
         if (target.getHourlyWage() != null) return target.getHourlyWage();
         if (setting != null && setting.getDefaultHourlyWage() != null) return setting.getDefaultHourlyWage();
         return BigDecimal.ZERO;
+    }
+
+    @Transactional
+    public AttendanceRecord attendanceByQr(Long userId, QrAttendanceRequest request) {
+        Long workplaceId = jwtTokenProvider.validateQrToken(request.getToken());
+        if (workplaceId == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, QR_TOKEN_INVALID);
+        }
+
+        WorkplaceMember member = validateActiveMember(workplaceId, userId);
+
+        if ("IN".equals(request.getType())) {
+            LocalDate workDate = LocalDate.now();
+            AttendanceRecord existing = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
+            if (existing != null) {
+                throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
+            }
+            AttendanceRecord record = new AttendanceRecord();
+            record.setWorkplaceId(workplaceId);
+            record.setUserId(userId);
+            record.setWorkDate(workDate);
+            record.setCheckInAt(LocalDateTime.now());
+            record.setStatus("WORKING");
+            record.setWorkedMinutes(0);
+            record.setBaseWage(BigDecimal.ZERO);
+            record.setFinalWage(BigDecimal.ZERO);
+            try {
+                attendanceRecordMapper.insert(record);
+            } catch (DuplicateKeyException e) {
+                throw new ApiException(ALREADY_CHECKED_IN_FOR_DATE);
+            }
+            sendAttendancePushSafely(workplaceId, userId, "출근 완료 알림", "%s님 출근이 완료되었습니다.");
+            return attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
+        } else {
+            LocalDate workDate = LocalDate.now();
+            AttendanceRecord record = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
+            if (record == null || record.getCheckInAt() == null) {
+                LocalDate prevDate = workDate.minusDays(1);
+                AttendanceRecord prevRecord = attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, prevDate);
+                if (prevRecord != null && prevRecord.getCheckInAt() != null && prevRecord.getCheckOutAt() == null) {
+                    record = prevRecord;
+                    workDate = prevDate;
+                }
+            }
+            if (record == null || record.getCheckInAt() == null) {
+                throw new ApiException(CHECK_IN_RECORD_NOT_FOUND_FOR_DATE);
+            }
+            if (record.getCheckOutAt() != null) {
+                throw new ApiException(ALREADY_CHECKED_OUT_FOR_DATE);
+            }
+            LocalDateTime checkOutAt = LocalDateTime.now();
+            long diff = Duration.between(record.getCheckInAt(), checkOutAt).toMinutes();
+            int grossWorkedMinutes = (int) Math.max(diff, 0);
+            WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+            List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+            BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+            LocalTime scheduledCheckInTime = resolveScheduledCheckInTime(member, record.getCheckInAt());
+            String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting, scheduledCheckInTime);
+            attendanceRecordMapper.updateCheckOut(record.getId(), checkOutAt, wageCalculation.workedMinutes(), wageCalculation.baseWage(), wageCalculation.finalWage(), finalStatus);
+            sendAttendancePushSafely(workplaceId, userId, "퇴근 완료 알림", "%s님 퇴근이 완료되었습니다.");
+            return attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
+        }
     }
 
     private void sendAttendancePushSafely(Long workplaceId, Long userId, String title, String contentFormat) {

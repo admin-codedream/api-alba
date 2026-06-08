@@ -12,7 +12,8 @@
       "Bash(rmdir C:/git-repo/api-alba/docs)",
       "Bash(find /c/git-repo/api-alba/src/main/resources/mappers -type f -name *Mapper.xml)",
       "Bash(find /c/git-repo/api-alba/src/main/java -type f -name *Schedule* -o -name *Shift*)",
-      "Bash(xargs cat -n)"
+      "Bash(xargs cat -n)",
+      "Bash(bash gradlew compileJava)"
     ]
   }
 }

@@ -16,6 +16,7 @@ public class StaffWorkplaceSettingResponse {
     private Double latitude;
     private Double longitude;
     private Boolean useLocationRestriction;
+    private Boolean useQrAttendance;
     private Boolean receiveAttendancePush;
     private BigDecimal hourlyWage;
     private String salaryCalcUnit;

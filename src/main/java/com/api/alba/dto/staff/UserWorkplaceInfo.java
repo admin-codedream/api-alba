@@ -11,4 +11,5 @@ public class UserWorkplaceInfo {
     private Boolean isPersonal;
     private Boolean receiveAttendancePush;
     private Integer memberCount;
+    private Boolean useQrAttendance;
 }

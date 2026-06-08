@@ -3,6 +3,7 @@ package com.api.alba.controller.attendance;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.dto.attendance.AttendanceCheckInRequest;
 import com.api.alba.dto.attendance.AttendanceCheckOutRequest;
+import com.api.alba.dto.attendance.QrAttendanceRequest;
 import com.api.alba.exception.ApiException;
 import com.api.alba.security.UserPrincipal;
 import com.api.alba.service.attendance.AttendanceService;
@@ -53,6 +54,18 @@ public class AttendanceController {
             throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
         }
         return attendanceService.checkOut(principal.getUserId(), request);
+    }
+
+    @PostMapping("/qr")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AttendanceRecord attendanceByQr(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody QrAttendanceRequest request
+    ) {
+        if (principal == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, AUTHENTICATION_REQUIRED);
+        }
+        return attendanceService.attendanceByQr(principal.getUserId(), request);
     }
 
     // 본인의 기간별 근태 기록을 조회합니다.

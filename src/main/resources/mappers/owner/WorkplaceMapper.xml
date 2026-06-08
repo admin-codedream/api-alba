@@ -14,17 +14,18 @@
         <result property="longitude" column="LONGITUDE"/>
         <result property="allowedRadiusMeters" column="ALLOWED_RADIUS_METERS"/>
         <result property="useLocationRestriction" column="USE_LOCATION_RESTRICTION"/>
+        <result property="useQrAttendance" column="USE_QR_ATTENDANCE"/>
         <result property="isPersonal" column="IS_PERSONAL"/>
         <result property="createdAt" column="CREATED_AT"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.owner.Workplace" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO WORKPLACES (OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, IS_PERSONAL)
-        VALUES (#{ownerId}, #{name}, #{address}, #{inviteCode}, #{latitude}, #{longitude}, #{allowedRadiusMeters}, #{useLocationRestriction}, #{isPersonal})
+        INSERT INTO WORKPLACES (OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, USE_QR_ATTENDANCE, IS_PERSONAL)
+        VALUES (#{ownerId}, #{name}, #{address}, #{inviteCode}, #{latitude}, #{longitude}, #{allowedRadiusMeters}, #{useLocationRestriction}, #{useQrAttendance}, #{isPersonal})
     </insert>
 
     <select id="findById" resultMap="workplaceMap">
-        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, IS_PERSONAL, CREATED_AT
+        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, USE_QR_ATTENDANCE, IS_PERSONAL, CREATED_AT
         FROM WORKPLACES
         WHERE ID = #{id}
     </select>
@@ -48,8 +49,24 @@
         ]]>
     </update>
 
+    <update id="updateQrAttendance">
+        <![CDATA[
+        UPDATE WORKPLACES
+        SET USE_QR_ATTENDANCE = #{useQrAttendance}
+        WHERE ID = #{id}
+        ]]>
+    </update>
+
+    <update id="updateLocationRestrictionFlag">
+        <![CDATA[
+        UPDATE WORKPLACES
+        SET USE_LOCATION_RESTRICTION = #{useLocationRestriction}
+        WHERE ID = #{id}
+        ]]>
+    </update>
+
     <select id="findByInviteCode" resultMap="workplaceMap">
-        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, IS_PERSONAL, CREATED_AT
+        SELECT ID, OWNER_ID, NAME, ADDRESS, INVITE_CODE, LATITUDE, LONGITUDE, ALLOWED_RADIUS_METERS, USE_LOCATION_RESTRICTION, USE_QR_ATTENDANCE, IS_PERSONAL, CREATED_AT
         FROM WORKPLACES
         WHERE INVITE_CODE = #{inviteCode}
     </select>

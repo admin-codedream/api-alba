@@ -76,4 +76,6 @@ public final class ExceptionMessages {
     public static final String INVALID_WAGE_TYPE = "임금 타입은 시급 또는 월급만 가능해요.";
     public static final String HOURLY_WAGE_REQUIRED = "시급제로 설정할 경우 시급을 입력해 주세요.";
 
+    public static final String QR_TOKEN_INVALID = "QR 코드가 유효하지 않아요.";
+
 }

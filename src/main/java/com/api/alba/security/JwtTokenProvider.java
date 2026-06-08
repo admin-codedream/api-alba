@@ -16,14 +16,17 @@ import java.util.Date;
 public class JwtTokenProvider {
     private final String secret;
     private final long expirationSeconds;
+    private final long qrTokenExpirationSeconds;
     private Key key;
 
     public JwtTokenProvider(
             @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.expiration-seconds}") long expirationSeconds
+            @Value("${security.jwt.expiration-seconds}") long expirationSeconds,
+            @Value("${security.jwt.qr-token-expiration-seconds:600}") long qrTokenExpirationSeconds
     ) {
         this.secret = secret;
         this.expirationSeconds = expirationSeconds;
+        this.qrTokenExpirationSeconds = qrTokenExpirationSeconds;
     }
 
     @PostConstruct
@@ -65,5 +68,33 @@ public class JwtTokenProvider {
 
     public long getExpirationSeconds() {
         return expirationSeconds;
+    }
+
+    public String createQrToken(Long workplaceId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + (qrTokenExpirationSeconds * 1000));
+        return Jwts.builder()
+                .setSubject("QR")
+                .claim("workplaceId", workplaceId)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public Long validateQrToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            if (!"QR".equals(claims.getSubject())) {
+                return null;
+            }
+            return claims.get("workplaceId", Long.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public long getQrTokenExpirationSeconds() {
+        return qrTokenExpirationSeconds;
     }
 }

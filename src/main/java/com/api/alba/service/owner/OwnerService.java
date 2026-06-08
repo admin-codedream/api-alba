@@ -31,6 +31,8 @@ import com.api.alba.mapper.settings.WorkplaceBreakPolicyMapper;
 import com.api.alba.mapper.settings.WorkplaceSettingMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberMapper;
 import com.api.alba.mapper.staff.WorkplaceMemberScheduleMapper;
+import com.api.alba.dto.attendance.QrTokenResponse;
+import com.api.alba.security.JwtTokenProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +75,7 @@ public class OwnerService {
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
     private final WorkplaceMemberScheduleMapper workplaceMemberScheduleMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public Workplace createWorkplace(Long ownerUserId, CreateWorkplaceRequest request) {
@@ -96,6 +99,7 @@ public class OwnerService {
                         ? DEFAULT_USE_LOCATION_RESTRICTION
                         : request.getUseLocationRestriction()
         );
+        workplace.setUseQrAttendance(false);
         workplace.setIsPersonal(false);
         workplaceMapper.insert(workplace);
 
@@ -173,6 +177,7 @@ public class OwnerService {
                 workplace.getLatitude(),
                 workplace.getLongitude(),
                 workplace.getUseLocationRestriction(),
+                workplace.getUseQrAttendance(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage(),
                 setting.getSalaryCalcUnit(),
@@ -673,6 +678,18 @@ public class OwnerService {
     public void updateLocationRestriction(Long ownerUserId, Long workplaceId, UpdateLocationRestrictionRequest request) {
         ensureOwner(workplaceId, ownerUserId);
         workplaceMapper.updateLocationRestriction(workplaceId, request.getUseLocationRestriction(), request.getAddress(), request.getLatitude(), request.getLongitude());
+        if (Boolean.TRUE.equals(request.getUseLocationRestriction())) {
+            workplaceMapper.updateQrAttendance(workplaceId, false);
+        }
+    }
+
+    @Transactional
+    public void updateQrAttendance(Long ownerUserId, Long workplaceId, Boolean useQrAttendance) {
+        ensureOwner(workplaceId, ownerUserId);
+        workplaceMapper.updateQrAttendance(workplaceId, useQrAttendance);
+        if (Boolean.TRUE.equals(useQrAttendance)) {
+            workplaceMapper.updateLocationRestrictionFlag(workplaceId, false);
+        }
     }
 
     @Transactional
@@ -1025,5 +1042,12 @@ public class OwnerService {
         }
         String trimmed = memo.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    public QrTokenResponse generateQrToken(Long userId, Long workplaceId) {
+        ensureOwner(workplaceId, userId);
+        String token = jwtTokenProvider.createQrToken(workplaceId);
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtTokenProvider.getQrTokenExpirationSeconds());
+        return new QrTokenResponse(token, expiresAt.toString());
     }
 }

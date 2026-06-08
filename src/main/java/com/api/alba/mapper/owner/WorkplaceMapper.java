@@ -14,5 +14,9 @@ public interface WorkplaceMapper {
 
     int updateLocationRestriction(@Param("id") Long id, @Param("useLocationRestriction") Boolean useLocationRestriction, @Param("address") String address, @Param("latitude") Double latitude, @Param("longitude") Double longitude);
 
+    int updateLocationRestrictionFlag(@Param("id") Long id, @Param("useLocationRestriction") Boolean useLocationRestriction);
+
+    int updateQrAttendance(@Param("id") Long id, @Param("useQrAttendance") Boolean useQrAttendance);
+
     Workplace findByInviteCode(@Param("inviteCode") String inviteCode);
 }

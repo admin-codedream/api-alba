@@ -35,6 +35,7 @@ import com.api.alba.dto.owner.PayslipDetailResponse;
 import com.api.alba.dto.owner.PayslipListItemResponse;
 import com.api.alba.dto.owner.PayslipResponse;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
+import com.api.alba.dto.owner.UpdateQrAttendanceRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -382,6 +383,16 @@ public class OwnerController {
             @Valid @RequestBody UpdateLocationRestrictionRequest request
     ) {
         ownerService.updateLocationRestriction(requiredPrincipal(principal), workplaceId, request);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/settings/qr-checkin")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateQrAttendance(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @Valid @RequestBody UpdateQrAttendanceRequest request
+    ) {
+        ownerService.updateQrAttendance(requiredPrincipal(principal), workplaceId, request.getUseQrAttendance());
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings/attendance-push")

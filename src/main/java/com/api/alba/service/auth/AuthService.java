@@ -528,6 +528,7 @@ public class AuthService {
         workplace.setLongitude(null);
         workplace.setAllowedRadiusMeters(DEFAULT_ALLOWED_RADIUS_METERS);
         workplace.setUseLocationRestriction(DEFAULT_USE_LOCATION_RESTRICTION);
+        workplace.setUseQrAttendance(false);
         workplace.setIsPersonal(true);
         workplaceMapper.insert(workplace);
 
