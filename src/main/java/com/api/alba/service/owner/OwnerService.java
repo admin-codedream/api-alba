@@ -402,7 +402,7 @@ public class OwnerService {
                 grossWorkedMinutes,
                 setting,
                 breakPolicies,
-                staffMember != null ? staffMember.getBreakMinutes() : 0
+                staffMember != null && staffMember.getBreakMinutes() != null ? staffMember.getBreakMinutes() : 0
         );
 
         String status = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
