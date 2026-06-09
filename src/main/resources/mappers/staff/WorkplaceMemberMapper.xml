@@ -16,6 +16,7 @@
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
         <result property="status" column="STATUS"/>
         <result property="breakMinutes" column="BREAK_MINUTES"/>
+        <result property="useWeeklyHolidayPay" column="USE_WEEKLY_HOLIDAY_PAY"/>
     </resultMap>
 
     <resultMap id="userWorkplaceInfoMap" type="com.api.alba.dto.staff.UserWorkplaceInfo">
@@ -33,14 +34,14 @@
     </insert>
 
     <select id="findMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
     </select>
 
     <select id="findActiveMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -48,7 +49,7 @@
     </select>
 
     <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -57,7 +58,7 @@
     </select>
 
     <select id="findFirstActiveByUserId" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE USER_ID = #{userId}
           AND STATUS = 'ACTIVE'
@@ -66,7 +67,7 @@
     </select>
 
     <select id="findById" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE ID = #{id}
     </select>
@@ -100,6 +101,7 @@
                WM.STATUS AS status,
                WM.MEMO AS memo,
                WM.BREAK_MINUTES AS breakMinutes,
+               WM.USE_WEEKLY_HOLIDAY_PAY AS useWeeklyHolidayPay,
                WM.JOINED_AT AS joinedAt,
                IF((SELECT STATUS FROM LABOR_CONTRACTS WHERE WORKPLACE_ID = WM.WORKPLACE_ID AND EMPLOYEE_USER_ID = WM.USER_ID ORDER BY CREATED_AT DESC LIMIT 1) = 'SIGNED', 'Y', 'N') AS contractSigned
         FROM WORKPLACE_MEMBERS WM
@@ -113,7 +115,7 @@
 
     <select id="findAllActiveStaffMembers" resultMap="workplaceMemberMap">
         <![CDATA[
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND STATUS = 'ACTIVE'
@@ -161,6 +163,12 @@
     <update id="updateBreakMinutes">
         UPDATE WORKPLACE_MEMBERS
         SET BREAK_MINUTES = #{breakMinutes}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateUseWeeklyHolidayPay">
+        UPDATE WORKPLACE_MEMBERS
+        SET USE_WEEKLY_HOLIDAY_PAY = #{useWeeklyHolidayPay}
         WHERE ID = #{id}
     </update>
 

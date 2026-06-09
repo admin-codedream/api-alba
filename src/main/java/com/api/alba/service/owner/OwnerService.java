@@ -237,6 +237,16 @@ public class OwnerService {
     }
 
     @Transactional
+    public void updateMemberUseWeeklyHolidayPay(Long ownerUserId, Long workplaceId, Long memberId, Boolean useWeeklyHolidayPay) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        workplaceMemberMapper.updateUseWeeklyHolidayPay(memberId, useWeeklyHolidayPay);
+    }
+
+    @Transactional
     public void updateWorkplaceMemberMemo(
             Long ownerUserId,
             Long workplaceId,
@@ -446,7 +456,10 @@ public class OwnerService {
                 baseWage = member.getMonthlyWage() != null ? member.getMonthlyWage() : BigDecimal.ZERO;
             } else {
                 baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
-                if (Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay())) {
+                boolean applyWeeklyHolidayPay = member.getUseWeeklyHolidayPay() != null
+                        ? member.getUseWeeklyHolidayPay()
+                        : Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay());
+                if (applyWeeklyHolidayPay) {
                     weeklyHolidayPay = calculateWeeklyHolidayPay(records, hourlyWage);
                 }
             }
