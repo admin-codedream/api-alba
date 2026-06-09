@@ -374,6 +374,52 @@ public class OwnerService {
         attendanceRecordMapper.deleteById(recordId);
     }
 
+    @Transactional
+    public AttendanceRecord updateAttendanceRecord(Long ownerUserId, Long workplaceId, Long recordId, OwnerUpdateAttendanceRecordRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+
+        if (request.getCheckOutAt() != null && !request.getCheckOutAt().isAfter(request.getCheckInAt())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, CHECK_OUT_MUST_BE_AFTER_CHECK_IN);
+        }
+
+        AttendanceRecord record = attendanceRecordMapper.findById(recordId);
+        if (record == null) {
+            throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
+        }
+
+        LocalDateTime newCheckIn = request.getCheckInAt();
+        LocalDateTime newCheckOut = request.getCheckOutAt();
+
+        WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
+        WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
+        List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
+        BigDecimal hourlyWage = "MONTHLY".equals(staffMember != null ? staffMember.getWageType() : null)
+                ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
+
+        int grossWorkedMinutes = newCheckOut != null ? calculateWorkedMinutes(newCheckIn, newCheckOut) : 0;
+        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
+                hourlyWage,
+                grossWorkedMinutes,
+                setting,
+                breakPolicies,
+                staffMember != null ? staffMember.getBreakMinutes() : 0
+        );
+
+        String status = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
+        attendanceRecordMapper.updateByOwnerDecision(
+                recordId,
+                newCheckIn,
+                newCheckOut,
+                wageCalculation.workedMinutes(),
+                wageCalculation.baseWage(),
+                wageCalculation.finalWage(),
+                status,
+                request.getNote()
+        );
+
+        return attendanceRecordMapper.findById(recordId);
+    }
+
     public List<OwnerDailyAttendanceItemResponse> getDailyAttendance(
             Long ownerUserId,
             Long workplaceId,
@@ -826,7 +872,8 @@ public class OwnerService {
                 wageCalculation.workedMinutes(),
                 wageCalculation.baseWage(),
                 wageCalculation.finalWage(),
-                attendanceStatus
+                attendanceStatus,
+                record.getNote()
         );
     }
 

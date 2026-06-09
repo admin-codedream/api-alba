@@ -92,7 +92,8 @@ public interface AttendanceRecordMapper {
             @Param("workedMinutes") Integer workedMinutes,
             @Param("baseWage") BigDecimal baseWage,
             @Param("finalWage") BigDecimal finalWage,
-            @Param("status") String status
+            @Param("status") String status,
+            @Param("note") String note
     );
 
     List<AttendanceRecord> findCompletedRecordsByWorkplace(

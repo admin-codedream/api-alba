@@ -7,6 +7,7 @@ import com.api.alba.dto.owner.AttendanceRequestListItemResponse;
 import com.api.alba.dto.owner.BreakPoliciesResponse;
 import com.api.alba.dto.owner.CreateWorkplaceRequest;
 import com.api.alba.dto.owner.OwnerCreateAttendanceRecordRequest;
+import com.api.alba.dto.owner.OwnerUpdateAttendanceRecordRequest;
 import com.api.alba.dto.owner.DashboardTodayResponse;
 import com.api.alba.dto.owner.OwnerDecisionRequest;
 import com.api.alba.dto.owner.OwnerWorkplaceMemberResponse;
@@ -330,6 +331,16 @@ public class OwnerController {
             @Valid @RequestBody OwnerCreateAttendanceRecordRequest request
     ) {
         return ownerService.createAttendanceRecord(requiredPrincipal(principal), workplaceId, request);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/attendance-records/{recordId}")
+    public AttendanceRecord updateAttendanceRecord(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long recordId,
+            @Valid @RequestBody OwnerUpdateAttendanceRecordRequest request
+    ) {
+        return ownerService.updateAttendanceRecord(requiredPrincipal(principal), workplaceId, recordId, request);
     }
 
     @PostMapping("/workplaces/{workplaceId}/attendance-records/{recordId}/delete")

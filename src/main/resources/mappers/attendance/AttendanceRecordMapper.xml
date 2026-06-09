@@ -217,7 +217,8 @@
             WORKED_MINUTES = #{workedMinutes},
             BASE_WAGE = #{baseWage},
             FINAL_WAGE = #{finalWage},
-            STATUS = #{status}
+            STATUS = #{status},
+            NOTE = #{note}
         WHERE ID = #{id}
     </update>
 
