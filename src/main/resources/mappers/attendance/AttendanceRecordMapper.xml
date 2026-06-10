@@ -101,6 +101,13 @@
         JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID AND wm.STATUS = 'ACTIVE'
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE BETWEEN #{fromDate} AND #{toDate}
+          AND NOT EXISTS (
+              /* findWorkplaceRecordsByPeriod - exclude pending NEW_RECORD */
+              SELECT 1 FROM ATTENDANCE_REQUESTS req
+              WHERE req.ATTENDANCE_RECORD_ID = ar.ID
+                AND req.TYPE = 'NEW_RECORD'
+                AND req.STATUS = 'PENDING'
+          )
         <if test="userId != null">
           AND ar.USER_ID = #{userId}
         </if>
