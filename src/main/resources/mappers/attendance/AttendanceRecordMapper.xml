@@ -227,6 +227,7 @@
 
     <delete id="deleteById">
         <![CDATA[
+        /* AttendanceRecordMapper.deleteById */
         DELETE FROM ATTENDANCE_RECORDS WHERE ID = #{id}
         ]]>
     </delete>

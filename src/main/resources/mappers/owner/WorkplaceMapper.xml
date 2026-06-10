@@ -32,6 +32,7 @@
 
     <update id="updateName">
         <![CDATA[
+        /* WorkplaceMapper.updateName */
         UPDATE WORKPLACES
         SET NAME = #{name}
         WHERE ID = #{id}
@@ -40,6 +41,7 @@
 
     <update id="updateLocationRestriction">
         <![CDATA[
+        /* WorkplaceMapper.updateLocationRestriction */
         UPDATE WORKPLACES
         SET ADDRESS = #{address},
             LATITUDE = #{latitude},
@@ -51,6 +53,7 @@
 
     <update id="updateQrAttendance">
         <![CDATA[
+        /* WorkplaceMapper.updateQrAttendance */
         UPDATE WORKPLACES
         SET USE_QR_ATTENDANCE = #{useQrAttendance}
         WHERE ID = #{id}
@@ -59,6 +62,7 @@
 
     <update id="updateLocationRestrictionFlag">
         <![CDATA[
+        /* WorkplaceMapper.updateLocationRestrictionFlag */
         UPDATE WORKPLACES
         SET USE_LOCATION_RESTRICTION = #{useLocationRestriction}
         WHERE ID = #{id}

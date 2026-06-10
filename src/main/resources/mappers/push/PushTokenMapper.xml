@@ -102,6 +102,7 @@
 
     <select id="findOwnersWithNoStaff" resultMap="staffReminderTargetMap">
         <![CDATA[
+        /* PushTokenMapper.findOwnersWithNoStaff */
         SELECT DISTINCT
             WM.WORKPLACE_ID,
             W.NAME AS WORKPLACE_NAME,
@@ -125,6 +126,7 @@
 
     <select id="findOwnerPushTokensByWorkplaceAndUserId" resultMap="ownerPushTokenTargetMap">
         <![CDATA[
+        /* PushTokenMapper.findOwnerPushTokensByWorkplaceAndUserId */
         SELECT DISTINCT SU.NAME AS STAFF_NAME,
                         PT.ID AS PUSH_TOKEN_ID,
                         WMM.USER_ID AS OWNER_USER_ID,
@@ -163,6 +165,7 @@
 
     <select id="findStaffWorkingOverHours" resultMap="staffReminderTargetMap">
         <![CDATA[
+        /* PushTokenMapper.findStaffWorkingOverHours */
         SELECT
             AR.ID AS RECORD_ID,
             WM.WORKPLACE_ID,
@@ -199,6 +202,7 @@
 
     <select id="findOwnersWithPendingAttendanceRequests" resultType="com.api.alba.dto.push.OwnerPendingRequestTarget">
         <![CDATA[
+        /* PushTokenMapper.findOwnersWithPendingAttendanceRequests */
         SELECT WM.WORKPLACE_ID      AS workplaceId,
                W.NAME               AS workplaceName,
                PT.TOKEN             AS token,

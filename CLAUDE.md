@@ -49,3 +49,4 @@
 - 테이블 컬럼 추가시 반드시 `src/main/resources/docs/SCHEMA.md`에 추가할 것
 - NOT NULL 사용시 기존 코드에 오류 발생할 수 있는 부분 체크할 것
 - 기능 추가시 프론트가 같이 배포되지 않아도 오류가 발생하지 않도록 구현할 것
+- Mapper 파일 수정시 CDATA 안에서 SQL 주석 /* queryId */를 쓸 것

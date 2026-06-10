@@ -48,6 +48,7 @@
 
     <delete id="deleteById">
         <![CDATA[
+        /* WorkplaceNoticeMapper.deleteById */
         DELETE FROM WORKPLACE_NOTICES WHERE ID = #{id}
         ]]>
     </delete>
