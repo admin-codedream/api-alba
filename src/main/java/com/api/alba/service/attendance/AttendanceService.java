@@ -206,10 +206,11 @@ public class AttendanceService {
             return "COMPLETED";
         }
         int graceMinutes = setting != null && setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
+        LocalDateTime checkInAtTruncated = checkInAt.truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
         LocalDateTime deadline = checkInAt.toLocalDate()
                 .atTime(scheduledCheckInTime)
                 .plusMinutes(graceMinutes);
-        return checkInAt.isAfter(deadline) ? "LATE" : "COMPLETED";
+        return checkInAtTruncated.isAfter(deadline) ? "LATE" : "COMPLETED";
     }
 
     private WorkplaceMember validateActiveMember(Long workplaceId, Long userId) {

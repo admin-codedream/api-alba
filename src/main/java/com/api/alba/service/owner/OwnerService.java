@@ -916,10 +916,11 @@ public class OwnerService {
             return "COMPLETED";
         }
         int graceMinutes = setting.getLateGraceMinutes() != null ? setting.getLateGraceMinutes() : 0;
+        LocalDateTime checkInAtTruncated = checkInAt.truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
         LocalDateTime deadline = checkInAt.toLocalDate()
                 .atTime(setting.getDefaultCheckInTime())
                 .plusMinutes(graceMinutes);
-        return checkInAt.isAfter(deadline) ? "LATE" : "COMPLETED";
+        return checkInAtTruncated.isAfter(deadline) ? "LATE" : "COMPLETED";
     }
 
     private WorkplaceMember ensureOwner(Long workplaceId, Long userId) {
