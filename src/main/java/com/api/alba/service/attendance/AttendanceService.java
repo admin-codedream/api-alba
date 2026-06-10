@@ -98,7 +98,6 @@ public class AttendanceService {
         record.setWorkedMinutes(0);
         record.setBaseWage(BigDecimal.ZERO);
         record.setFinalWage(BigDecimal.ZERO);
-        record.setNote(request.getNote());
 
         try {
             attendanceRecordMapper.insert(record);
