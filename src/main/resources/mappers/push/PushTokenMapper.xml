@@ -134,7 +134,7 @@
                             ON SU.ID = WM.USER_ID
                  INNER JOIN WORKPLACE_MEMBERS WMM
                             ON WM.WORKPLACE_ID = WMM.WORKPLACE_ID
-                           AND WMM.ROLE = 'OWNER'
+                           AND WMM.ROLE IN ('OWNER', 'MANAGER')
                            AND WMM.RECEIVE_ATTENDANCE_PUSH = 1
                            AND WMM.STATUS = 'ACTIVE'
                  INNER JOIN PUSH_TOKENS PT
