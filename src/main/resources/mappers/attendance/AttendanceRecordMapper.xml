@@ -161,6 +161,13 @@
         LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
           AND ar.WORK_DATE = #{workDate}
+          AND NOT EXISTS (
+              /* findDailyAttendanceByWorkDate - exclude pending NEW_RECORD */
+              SELECT 1 FROM ATTENDANCE_REQUESTS req
+              WHERE req.ATTENDANCE_RECORD_ID = ar.ID
+                AND req.TYPE = 'NEW_RECORD'
+                AND req.STATUS = 'PENDING'
+          )
         ORDER BY ar.CHECK_IN_AT ASC
     </select>
 
