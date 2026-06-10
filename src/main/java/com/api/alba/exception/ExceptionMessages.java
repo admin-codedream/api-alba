@@ -79,4 +79,7 @@ public final class ExceptionMessages {
 
     public static final String QR_TOKEN_INVALID = "QR 코드가 유효하지 않아요.";
 
+    public static final String INVALID_MEMBER_ROLE = "역할은 STAFF 또는 MANAGER만 설정할 수 있어요.";
+    public static final String CANNOT_CHANGE_OWNER_ROLE = "사장님의 역할은 변경할 수 없어요.";
+
 }

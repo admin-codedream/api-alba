@@ -148,6 +148,15 @@
         WHERE ID = #{id}
     </update>
 
+    <select id="findActiveOwnerOrManagerMember" resultMap="workplaceMemberMap">
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        FROM WORKPLACE_MEMBERS
+        WHERE WORKPLACE_ID = #{workplaceId}
+          AND USER_ID = #{userId}
+          AND ROLE IN ('OWNER', 'MANAGER')
+          AND STATUS = 'ACTIVE'
+    </select>
+
     <update id="updateMemo">
         UPDATE WORKPLACE_MEMBERS
         SET MEMO = #{memo}
@@ -172,6 +181,12 @@
     <update id="updateUseWeeklyHolidayPay">
         UPDATE WORKPLACE_MEMBERS
         SET USE_WEEKLY_HOLIDAY_PAY = #{useWeeklyHolidayPay}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateRole">
+        UPDATE WORKPLACE_MEMBERS
+        SET ROLE = #{role}
         WHERE ID = #{id}
     </update>
 

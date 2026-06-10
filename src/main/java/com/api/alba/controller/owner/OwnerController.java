@@ -25,6 +25,7 @@ import com.api.alba.dto.owner.UpdateWeeklyHolidayPayRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceNameRequest;
 import com.api.alba.dto.owner.UpdateMemberBreakMinutesRequest;
 import com.api.alba.dto.owner.UpdateMemberWeeklyHolidayPayRequest;
+import com.api.alba.dto.owner.UpdateMemberRoleRequest;
 import com.api.alba.dto.owner.UpdateMemberWageRequest;
 import com.api.alba.dto.owner.UpdateWorkplaceMemberMemoRequest;
 import com.api.alba.dto.owner.CancelPayslipResponse;
@@ -217,6 +218,17 @@ public class OwnerController {
             @PathVariable Long payslipId
     ) {
         return ownerService.confirmPayslip(requiredPrincipal(principal), workplaceId, payslipId);
+    }
+
+    @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/role")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateMemberRole(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody UpdateMemberRoleRequest request
+    ) {
+        ownerService.updateMemberRole(requiredPrincipal(principal), workplaceId, memberId, request.getRole());
     }
 
     @PatchMapping("/workplaces/{workplaceId}/members/{memberId}/wage")

@@ -141,7 +141,7 @@ public class OwnerService {
     }
 
     public InviteCodeResponse getInviteCode(Long ownerUserId, Long workplaceId) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         Workplace workplace = workplaceMapper.findById(workplaceId);
         if (workplace == null) {
             throw new ApiException(WORKPLACE_NOT_FOUND);
@@ -188,7 +188,7 @@ public class OwnerService {
     }
 
     public List<OwnerWorkplaceMemberResponse> getWorkplaceMembers(Long ownerUserId, Long workplaceId) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         List<OwnerWorkplaceMemberResponse> members = workplaceMemberMapper.findActiveStaffMembersByWorkplaceId(workplaceId);
 
         Map<Long, List<MemberScheduleItemResponse>> scheduleMap = workplaceMemberScheduleMapper.findAllByWorkplaceId(workplaceId)
@@ -203,7 +203,7 @@ public class OwnerService {
 
     @Transactional
     public void updateMemberWage(Long ownerUserId, Long workplaceId, Long memberId, UpdateMemberWageRequest request) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         WorkplaceMember member = workplaceMemberMapper.findById(memberId);
         if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
             throw new ApiException(WORKPLACE_NOT_FOUND);
@@ -232,7 +232,7 @@ public class OwnerService {
 
     @Transactional
     public void updateMemberBreakMinutes(Long ownerUserId, Long workplaceId, Long memberId, Integer breakMinutes) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         WorkplaceMember member = workplaceMemberMapper.findById(memberId);
         if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
             throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
@@ -263,6 +263,23 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_NOT_FOUND);
         }
         workplaceMemberMapper.updateMemo(memberId, normalizeMemo(request.getMemo()));
+    }
+
+    @Transactional
+    public void updateMemberRole(Long ownerUserId, Long workplaceId, Long memberId, String role) {
+        ensureOwner(workplaceId, ownerUserId);
+        String normalizedRole = role.toUpperCase();
+        if (!"STAFF".equals(normalizedRole) && !"MANAGER".equals(normalizedRole)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, INVALID_MEMBER_ROLE);
+        }
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !workplaceId.equals(member.getWorkplaceId()) || !"ACTIVE".equals(member.getStatus())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        if ("OWNER".equals(member.getRole())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, CANNOT_CHANGE_OWNER_ROLE);
+        }
+        workplaceMemberMapper.updateRole(memberId, normalizedRole);
     }
 
     @Transactional
@@ -336,7 +353,7 @@ public class OwnerService {
             Long workplaceId,
             String status
     ) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         String normalizedStatus = normalizeRequestStatus(status);
         return attendanceRequestMapper.findByWorkplaceId(workplaceId, normalizedStatus);
     }
@@ -356,7 +373,7 @@ public class OwnerService {
             throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
         }
 
-        ensureOwner(record.getWorkplaceId(), ownerUserId);
+        ensureOwnerOrManager(record.getWorkplaceId(), ownerUserId);
 
         String status = request.getStatus().toUpperCase();
         if ("APPROVED".equals(status)) {
@@ -933,6 +950,18 @@ public class OwnerService {
             throw new ApiException(HttpStatus.FORBIDDEN, OWNER_ACCESS_ONLY);
         }
         return ownerMember;
+    }
+
+    private WorkplaceMember ensureOwnerOrManager(Long workplaceId, Long userId) {
+        User user = userMapper.findById(userId);
+        if (user != null && "SUPER_ADMIN".equals(user.getUserType())) {
+            return null;
+        }
+        WorkplaceMember member = workplaceMemberMapper.findActiveOwnerOrManagerMember(workplaceId, userId);
+        if (member == null) {
+            throw new ApiException(HttpStatus.FORBIDDEN, OWNER_ACCESS_ONLY);
+        }
+        return member;
     }
 
     private String generateInviteCode() {

@@ -29,6 +29,11 @@ public interface WorkplaceMemberMapper {
             @Param("userId") Long userId
     );
 
+    WorkplaceMember findActiveOwnerOrManagerMember(
+            @Param("workplaceId") Long workplaceId,
+            @Param("userId") Long userId
+    );
+
     WorkplaceMember findFirstActiveByUserId(@Param("userId") Long userId);
 
     WorkplaceMember findById(@Param("id") Long id);
@@ -54,4 +59,6 @@ public interface WorkplaceMemberMapper {
     int updateBreakMinutes(@Param("id") Long id, @Param("breakMinutes") Integer breakMinutes);
 
     int updateUseWeeklyHolidayPay(@Param("id") Long id, @Param("useWeeklyHolidayPay") Boolean useWeeklyHolidayPay);
+
+    int updateRole(@Param("id") Long id, @Param("role") String role);
 }
