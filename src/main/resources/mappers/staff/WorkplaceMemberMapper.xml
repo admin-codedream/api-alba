@@ -12,6 +12,7 @@
         <result property="wageType" column="WAGE_TYPE"/>
         <result property="hourlyWage" column="HOURLY_WAGE"/>
         <result property="monthlyWage" column="MONTHLY_WAGE"/>
+        <result property="dailyWage" column="DAILY_WAGE"/>
         <result property="memo" column="MEMO"/>
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
         <result property="status" column="STATUS"/>
@@ -29,19 +30,19 @@
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS)
-        VALUES (#{workplaceId}, #{userId}, #{role}, #{wageType}, #{hourlyWage}, #{monthlyWage}, #{memo}, #{receiveAttendancePush}, #{status})
+        INSERT INTO WORKPLACE_MEMBERS (WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS)
+        VALUES (#{workplaceId}, #{userId}, #{role}, #{wageType}, #{hourlyWage}, #{monthlyWage}, #{dailyWage}, #{memo}, #{receiveAttendancePush}, #{status})
     </insert>
 
     <select id="findMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
     </select>
 
     <select id="findActiveMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -49,7 +50,7 @@
     </select>
 
     <select id="findActiveOwnerMember" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND USER_ID = #{userId}
@@ -58,7 +59,7 @@
     </select>
 
     <select id="findFirstActiveByUserId" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE USER_ID = #{userId}
           AND STATUS = 'ACTIVE'
@@ -67,7 +68,7 @@
     </select>
 
     <select id="findById" resultMap="workplaceMemberMap">
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE ID = #{id}
     </select>
@@ -98,6 +99,7 @@
                WM.WAGE_TYPE AS wageType,
                WM.HOURLY_WAGE AS hourlyWage,
                WM.MONTHLY_WAGE AS monthlyWage,
+               WM.DAILY_WAGE AS dailyWage,
                WM.STATUS AS status,
                WM.MEMO AS memo,
                WM.BREAK_MINUTES AS breakMinutes,
@@ -115,7 +117,7 @@
 
     <select id="findAllActiveStaffMembers" resultMap="workplaceMemberMap">
         <![CDATA[
-        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
+        SELECT ID, WORKPLACE_ID, USER_ID, ROLE, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, MEMO, RECEIVE_ATTENDANCE_PUSH, STATUS, BREAK_MINUTES, USE_WEEKLY_HOLIDAY_PAY
         FROM WORKPLACE_MEMBERS
         WHERE WORKPLACE_ID = #{workplaceId}
           AND STATUS = 'ACTIVE'
@@ -156,7 +158,8 @@
         UPDATE WORKPLACE_MEMBERS
         SET WAGE_TYPE    = #{wageType},
             HOURLY_WAGE  = #{hourlyWage},
-            MONTHLY_WAGE = #{monthlyWage}
+            MONTHLY_WAGE = #{monthlyWage},
+            DAILY_WAGE   = #{dailyWage}
         WHERE ID = #{id}
     </update>
 

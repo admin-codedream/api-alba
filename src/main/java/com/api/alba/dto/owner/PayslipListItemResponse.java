@@ -21,6 +21,7 @@ public class PayslipListItemResponse {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private BigDecimal baseWage;
     private BigDecimal weeklyHolidayPay;
     private BigDecimal bonusAmount;

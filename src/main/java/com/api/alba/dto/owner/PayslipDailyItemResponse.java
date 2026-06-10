@@ -22,4 +22,5 @@ public class PayslipDailyItemResponse {
     private String status;
     private String wageType;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
 }

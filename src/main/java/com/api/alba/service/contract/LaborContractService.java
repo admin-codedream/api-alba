@@ -83,10 +83,17 @@ public class LaborContractService {
             contract.setWageType("MONTHLY");
             contract.setHourlyWage(BigDecimal.ZERO);
             contract.setMonthlyWage(request.getMonthlyWage() != null ? request.getMonthlyWage() : BigDecimal.ZERO);
+            contract.setDailyWage(BigDecimal.ZERO);
+        } else if ("DAILY".equals(wageType)) {
+            contract.setWageType("DAILY");
+            contract.setHourlyWage(BigDecimal.ZERO);
+            contract.setMonthlyWage(BigDecimal.ZERO);
+            contract.setDailyWage(request.getDailyWage() != null ? request.getDailyWage() : BigDecimal.ZERO);
         } else {
             contract.setWageType("HOURLY");
             contract.setHourlyWage(request.getHourlyWage() != null ? request.getHourlyWage() : BigDecimal.ZERO);
             contract.setMonthlyWage(BigDecimal.ZERO);
+            contract.setDailyWage(BigDecimal.ZERO);
         }
         contract.setPaymentDay(request.getPaymentDay());
         contract.setUseNationalPension(Boolean.TRUE.equals(request.getUseNationalPension()));

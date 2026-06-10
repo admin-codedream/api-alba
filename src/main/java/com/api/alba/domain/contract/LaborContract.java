@@ -29,6 +29,7 @@ public class LaborContract {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private Integer paymentDay;
     private Boolean useNationalPension;
     private Boolean useHealthInsurance;

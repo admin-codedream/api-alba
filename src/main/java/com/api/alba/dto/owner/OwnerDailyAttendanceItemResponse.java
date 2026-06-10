@@ -20,4 +20,5 @@ public class OwnerDailyAttendanceItemResponse {
     private BigDecimal finalWage;
     private String wageType;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
 }

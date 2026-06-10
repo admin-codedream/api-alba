@@ -19,6 +19,7 @@ public class OwnerWorkplaceMemberResponse {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private String status;
     private String memo;
     private Integer breakMinutes;

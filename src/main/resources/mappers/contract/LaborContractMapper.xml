@@ -22,6 +22,7 @@
         <result property="wageType" column="WAGE_TYPE"/>
         <result property="hourlyWage" column="HOURLY_WAGE"/>
         <result property="monthlyWage" column="MONTHLY_WAGE"/>
+        <result property="dailyWage" column="DAILY_WAGE"/>
         <result property="paymentDay" column="PAYMENT_DAY"/>
         <result property="useNationalPension" column="USE_NATIONAL_PENSION"/>
         <result property="useHealthInsurance" column="USE_HEALTH_INSURANCE"/>
@@ -41,14 +42,14 @@
             CONTRACT_START_DATE, CONTRACT_END_DATE,
             WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
             JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
-            BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, PAYMENT_DAY,
+            BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, PAYMENT_DAY,
             USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE
         ) VALUES (
             #{workplaceId}, #{employeeUserId}, #{status},
             #{contractStartDate}, #{contractEndDate},
             #{workplaceName}, #{workplaceAddress}, #{ownerName}, #{employeeName},
             #{jobDescription}, #{workDays}, #{workStartTime}, #{workEndTime},
-            #{breakMinutes}, #{wageType}, #{hourlyWage}, #{monthlyWage}, #{paymentDay},
+            #{breakMinutes}, #{wageType}, #{hourlyWage}, #{monthlyWage}, #{dailyWage}, #{paymentDay},
             #{useNationalPension}, #{useHealthInsurance}, #{useEmpInsurance}
         )
     </insert>
@@ -58,7 +59,7 @@
                CONTRACT_START_DATE, CONTRACT_END_DATE,
                WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
                JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
-               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, PAYMENT_DAY,
+               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, PAYMENT_DAY,
                USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
                OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
                CREATED_AT, UPDATED_AT
@@ -71,7 +72,7 @@
                CONTRACT_START_DATE, CONTRACT_END_DATE,
                WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
                JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
-               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, PAYMENT_DAY,
+               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, PAYMENT_DAY,
                USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
                OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
                CREATED_AT, UPDATED_AT
@@ -85,7 +86,7 @@
                CONTRACT_START_DATE, CONTRACT_END_DATE,
                WORKPLACE_NAME, WORKPLACE_ADDRESS, OWNER_NAME, EMPLOYEE_NAME,
                JOB_DESCRIPTION, WORK_DAYS, WORK_START_TIME, WORK_END_TIME,
-               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, PAYMENT_DAY,
+               BREAK_MINUTES, WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE, PAYMENT_DAY,
                USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE, USE_EMP_INSURANCE,
                OWNER_SIGNED_AT, EMPLOYEE_SIGNED_AT, SENT_AT, REJECTED_REASON,
                CREATED_AT, UPDATED_AT

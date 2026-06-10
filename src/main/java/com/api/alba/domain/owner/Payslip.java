@@ -18,6 +18,7 @@ public class Payslip {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
 
     // USERS 테이블 조인으로 채워지는 필드
     private String userName;

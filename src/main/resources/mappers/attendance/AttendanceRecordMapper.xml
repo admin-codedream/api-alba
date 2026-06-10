@@ -12,6 +12,7 @@
         <result property="profileColor" column="PROFILE_COLOR"/>
         <result property="wageType" column="WAGE_TYPE"/>
         <result property="monthlyWage" column="MONTHLY_WAGE"/>
+        <result property="dailyWage" column="DAILY_WAGE"/>
         <result property="workDate" column="WORK_DATE"/>
         <result property="checkInAt" column="CHECK_IN_AT"/>
         <result property="checkOutAt" column="CHECK_OUT_AT"/>
@@ -36,7 +37,7 @@
     <select id="findByWorkplaceUserAndDate" resultMap="attendanceRecordMap">
         SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
                ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT,
-               wm.WAGE_TYPE, wm.MONTHLY_WAGE
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE, wm.DAILY_WAGE
         FROM ATTENDANCE_RECORDS ar
         LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
@@ -64,7 +65,7 @@
     <select id="findMyRecordsByPeriod" resultMap="attendanceRecordMap">
         SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
                ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT,
-               wm.WAGE_TYPE, wm.MONTHLY_WAGE
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE, wm.DAILY_WAGE
         FROM ATTENDANCE_RECORDS ar
         LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
@@ -92,7 +93,7 @@
 
     <select id="findWorkplaceRecordsByPeriod" resultMap="attendanceRecordMap">
         SELECT ar.ID, ar.WORKPLACE_ID, ar.USER_ID, u.NAME AS USER_NAME, u.PROFILE_COLOR AS PROFILE_COLOR,
-               wm.WAGE_TYPE, wm.MONTHLY_WAGE,
+               wm.WAGE_TYPE, wm.MONTHLY_WAGE, wm.DAILY_WAGE,
                ar.WORK_DATE, ar.CHECK_IN_AT, ar.CHECK_OUT_AT, ar.STATUS,
                ar.WORKED_MINUTES, ar.BASE_WAGE, ar.FINAL_WAGE, ar.NOTE, ar.CREATED_AT, ar.UPDATED_AT
         FROM ATTENDANCE_RECORDS ar
@@ -132,7 +133,8 @@
                COALESCE(ar.WORKED_MINUTES, 0) AS workedMinutes,
                COALESCE(ar.FINAL_WAGE, 0) AS finalWage,
                wm.WAGE_TYPE AS wageType,
-               wm.MONTHLY_WAGE AS monthlyWage
+               wm.MONTHLY_WAGE AS monthlyWage,
+               wm.DAILY_WAGE AS dailyWage
         FROM ATTENDANCE_RECORDS ar
         LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
         WHERE ar.WORKPLACE_ID = #{workplaceId}
@@ -152,7 +154,8 @@
                ar.WORKED_MINUTES AS workedMinutes,
                COALESCE(ar.FINAL_WAGE, 0) AS finalWage,
                wm.WAGE_TYPE AS wageType,
-               wm.MONTHLY_WAGE AS monthlyWage
+               wm.MONTHLY_WAGE AS monthlyWage,
+               wm.DAILY_WAGE AS dailyWage
         FROM ATTENDANCE_RECORDS ar
         JOIN USERS u ON u.ID = ar.USER_ID
         LEFT JOIN WORKPLACE_MEMBERS wm ON wm.WORKPLACE_ID = ar.WORKPLACE_ID AND wm.USER_ID = ar.USER_ID
@@ -257,6 +260,7 @@
                WM.WAGE_TYPE                  AS wageType,
                WM.HOURLY_WAGE                AS hourlyWage,
                WM.MONTHLY_WAGE               AS monthlyWage,
+               WM.DAILY_WAGE                 AS dailyWage,
                WM.BREAK_MINUTES              AS breakMinutes,
                0                             AS overnight
         FROM ATTENDANCE_RECORDS AR
@@ -288,6 +292,7 @@
                WM.WAGE_TYPE                  AS wageType,
                WM.HOURLY_WAGE                AS hourlyWage,
                WM.MONTHLY_WAGE               AS monthlyWage,
+               WM.DAILY_WAGE                 AS dailyWage,
                WM.BREAK_MINUTES              AS breakMinutes,
                1                             AS overnight
         FROM ATTENDANCE_RECORDS AR

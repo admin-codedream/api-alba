@@ -17,6 +17,7 @@ public class AttendanceRecord {
     private String profileColor;
     private String wageType;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private LocalDate workDate;
     private LocalDateTime checkInAt;
     private LocalDateTime checkOutAt;

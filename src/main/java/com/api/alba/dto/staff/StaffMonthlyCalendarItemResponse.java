@@ -14,4 +14,5 @@ public class StaffMonthlyCalendarItemResponse {
     private BigDecimal finalWage;
     private String wageType;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
 }
