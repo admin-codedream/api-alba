@@ -404,12 +404,12 @@ public class OwnerService {
         BigDecimal resolvedFinalWage;
         if ("DAILY".equals(memberWageType) && newCheckOut != null) {
             BigDecimal dw = staffMember.getDailyWage() != null ? staffMember.getDailyWage() : BigDecimal.ZERO;
-            resolvedWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, staffMember.getBreakMinutes());
+            resolvedWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, staffMember.getBreakMinutes() != null ? staffMember.getBreakMinutes() : 0);
             resolvedBaseWage = dw;
             resolvedFinalWage = dw;
         } else {
             BigDecimal hourlyWage = "MONTHLY".equals(memberWageType) ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
-            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, staffMember != null ? staffMember.getBreakMinutes() : 0);
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, staffMember != null && staffMember.getBreakMinutes() != null ? staffMember.getBreakMinutes() : 0);
             resolvedWorkedMinutes = wageCalculation.workedMinutes();
             resolvedBaseWage = wageCalculation.baseWage();
             resolvedFinalWage = wageCalculation.finalWage();
