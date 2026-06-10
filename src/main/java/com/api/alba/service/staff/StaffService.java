@@ -146,7 +146,8 @@ public class StaffService {
                     BigDecimal.ZERO,
                     hourlyWage,
                     wageType,
-                    monthlyWage
+                    monthlyWage,
+                    resolveDailyWage(member)
             );
         }
 
@@ -155,7 +156,11 @@ public class StaffService {
         if (record.getCheckInAt() != null && record.getCheckOutAt() == null) {
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), LocalDateTime.now());
             workedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
-            expectedWage = wageCalculationHelper.calculateWage(hourlyWage, workedMinutes);
+            if ("DAILY".equals(member.getWageType())) {
+                expectedWage = resolveDailyWage(member);
+            } else {
+                expectedWage = wageCalculationHelper.calculateWage(hourlyWage, workedMinutes);
+            }
         }
 
         return new StaffHomeTodayResponse(
@@ -168,7 +173,8 @@ public class StaffService {
                 expectedWage,
                 hourlyWage,
                 wageType,
-                monthlyWage
+                monthlyWage,
+                resolveDailyWage(member)
         );
     }
 
@@ -201,7 +207,11 @@ public class StaffService {
                         breakPolicies,
                         member.getBreakMinutes()
                 );
-                todayExpectedWage = wageCalculationHelper.calculateWage(hourlyWage, todayWorkedMinutes);
+                if ("DAILY".equals(member.getWageType())) {
+                    todayExpectedWage = resolveDailyWage(member);
+                } else {
+                    todayExpectedWage = wageCalculationHelper.calculateWage(hourlyWage, todayWorkedMinutes);
+                }
             }
         }
 
@@ -217,7 +227,8 @@ public class StaffService {
                 cumulativeWorkedMinutes,
                 cumulativeExpectedWage,
                 resolveWageType(member),
-                resolveMonthlyWage(member)
+                resolveMonthlyWage(member),
+                resolveDailyWage(member)
         );
     }
 
@@ -425,6 +436,10 @@ public class StaffService {
         return (member != null && member.getMonthlyWage() != null) ? member.getMonthlyWage() : BigDecimal.ZERO;
     }
 
+    private BigDecimal resolveDailyWage(WorkplaceMember member) {
+        return (member != null && member.getDailyWage() != null) ? member.getDailyWage() : BigDecimal.ZERO;
+    }
+
     private BigDecimal resolveHourlyWage(WorkplaceMember member, WorkplaceSetting setting) {
         if (member != null && member.getHourlyWage() != null) {
             return member.getHourlyWage();
@@ -450,6 +465,7 @@ public class StaffService {
                             p.getId(), p.getWorkplaceId(), p.getWorkplaceName(),
                             p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                             p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
+                            p.getDailyWage() != null ? p.getDailyWage() : BigDecimal.ZERO,
                             p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage()
                     );
                 })
@@ -470,6 +486,7 @@ public class StaffService {
                 payslip.getId(), payslip.getWorkplaceId(), payslip.getWorkplaceName(),
                 payslip.getFromDate(), payslip.getToDate(), payslip.getCreatedAt().toLocalDate(),
                 payslip.getWorkedDays(), payslip.getWorkedMinutes(), payslip.getWageType(), payslip.getHourlyWage(), payslip.getMonthlyWage(),
+                payslip.getDailyWage() != null ? payslip.getDailyWage() : BigDecimal.ZERO,
                 payslip.getBaseWage(), whp, payslip.getBonusAmount(), payslip.getDeductionAmount(), payslip.getTotalWage(),
                 payslip.getBonusNote(), deductions, records
         );

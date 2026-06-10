@@ -17,6 +17,7 @@ public class AutoCheckOutTarget {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private Integer breakMinutes;
     /** 야간 근무 여부 - true이면 checkOutAt = workDate + 1일 + scheduledCheckOutTime */
     private boolean overnight;

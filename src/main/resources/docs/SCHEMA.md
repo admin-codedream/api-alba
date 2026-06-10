@@ -41,7 +41,7 @@
 사업장 정보를 저장합니다. 사업장 소유자, 초대코드, 주소, 위치 기반 출퇴근 제한 여부, 출퇴근 허용 반경을 관리합니다.
 
 ### `WORKPLACE_MEMBERS`
-사용자와 사업장의 소속 관계를 저장합니다. 역할, 급여 유형(시급제/월급제), 시급, 월급, 소속 상태, 출퇴근 푸시 수신 여부, 직원 메모를 관리합니다.
+사용자와 사업장의 소속 관계를 저장합니다. 역할, 급여 유형(시급제/월급제/일급제), 시급, 월급, 일급, 소속 상태, 출퇴근 푸시 수신 여부, 직원 메모를 관리합니다.
 
 ### `WORKPLACE_SETTINGS`
 사업장별 근태/급여 계산 설정을 저장합니다. 급여 계산 단위, 반올림 정책, 기본 시급, 휴게시간 정책 사용 여부, 기본 출퇴근 시간을 관리합니다.
@@ -53,7 +53,7 @@
 직원의 출퇴근 기록 정정 요청을 저장합니다. 출근 수정, 퇴근 수정, 출퇴근 모두 수정 요청을 구분합니다.
 
 ### `PAYSLIPS`
-급여명세서 발행 정보를 저장합니다. 급여 기간, 급여 유형(시급제/월급제), 적용 시급 또는 월급, 근무일수, 근무시간, 기본급, 추가 지급액, 공제액, 최종 급여, 일별 근무 스냅샷을 관리합니다.
+급여명세서 발행 정보를 저장합니다. 급여 기간, 급여 유형(시급제/월급제/일급제), 적용 시급·월급·일급, 근무일수, 근무시간, 기본급, 추가 지급액, 공제액, 최종 급여, 일별 근무 스냅샷을 관리합니다.
 
 ### `API_ERROR_LOGS`
 API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 컨트롤러명, 요청한 사용자/사업장 ID, 요청 파라미터·헤더, 에러 메시지, 클라이언트 IP, User-Agent를 저장합니다. 비인증 요청의 경우 `USER_ID`, `WORKPLACE_ID`는 null이 될 수 있습니다.
@@ -95,6 +95,7 @@ API 요청 중 발생한 에러를 기록합니다. 요청 URI, HTTP 메서드, 
 |---|---|
 | `HOURLY` | 시급제 |
 | `MONTHLY` | 월급제 |
+| `DAILY` | 일급제 |
 
 ### `WORKPLACE_MEMBERS.STATUS`
 | 값 | 설명 |
@@ -358,6 +359,19 @@ ALTER TABLE WORKPLACE_MEMBERS
     ADD COLUMN USE_WEEKLY_HOLIDAY_PAY TINYINT(1) DEFAULT NULL
         COMMENT '직원별 주휴수당 사용 여부, NULL이면 매장 설정(WORKPLACE_SETTINGS.USE_WEEKLY_HOLIDAY_PAY) 상속'
         AFTER BREAK_MINUTES;
+
+-- 2026-06-10: 일급제 지원
+ALTER TABLE WORKPLACE_MEMBERS
+    ADD COLUMN DAILY_WAGE DECIMAL(12, 2) DEFAULT NULL NULL COMMENT '일급(일급제일 때 사용)'
+        AFTER MONTHLY_WAGE;
+
+ALTER TABLE PAYSLIPS
+    ADD COLUMN DAILY_WAGE DECIMAL(12, 2) DEFAULT 0.00 NOT NULL COMMENT '일급 스냅샷(일급제일 때 사용)'
+        AFTER MONTHLY_WAGE;
+
+ALTER TABLE LABOR_CONTRACTS
+    ADD COLUMN DAILY_WAGE DECIMAL(12, 2) DEFAULT 0.00 NOT NULL COMMENT '일급(일급제일 때 사용)'
+        AFTER MONTHLY_WAGE;
 ```
 
 ### QR 출퇴근 컬럼 추가 DDL
@@ -388,6 +402,9 @@ ALTER TABLE WORKPLACES
 | 2026-06-06 | `USERS.NAME`, `USERS.PROFILE_INITIAL` — 이름 변경 API 추가 (`PATCH /api/staff/name`, 이름 변경 시 PROFILE_INITIAL 자동 갱신) |
 | 2026-06-08 | `WORKPLACE_MEMBERS.USE_WEEKLY_HOLIDAY_PAY` 추가 (직원별 주휴수당 사용 여부, NULL이면 매장 설정 상속) |
 | 2026-06-08 | `WORKPLACES.USE_QR_ATTENDANCE` 추가 (QR 출퇴근 사용 여부, 위치 제한과 상호 배타) |
+| 2026-06-10 | `WORKPLACE_MEMBERS.DAILY_WAGE` 추가 (일급제 지원) |
+| 2026-06-10 | `PAYSLIPS.DAILY_WAGE` 추가 (일급제 급여명세서 스냅샷) |
+| 2026-06-10 | `LABOR_CONTRACTS.DAILY_WAGE` 추가 (일급제 계약서 지원) |
 
 ---
 

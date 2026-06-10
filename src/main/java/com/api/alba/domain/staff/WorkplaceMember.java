@@ -15,6 +15,7 @@ public class WorkplaceMember {
     private String wageType;
     private BigDecimal hourlyWage;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
     private String memo;
     private Boolean receiveAttendancePush;
     private String status;

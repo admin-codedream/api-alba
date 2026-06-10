@@ -209,7 +209,7 @@ public class OwnerService {
             throw new ApiException(WORKPLACE_NOT_FOUND);
         }
         String wageType = request.getWageType().toUpperCase();
-        if (!"HOURLY".equals(wageType) && !"MONTHLY".equals(wageType)) {
+        if (!"HOURLY".equals(wageType) && !"MONTHLY".equals(wageType) && !"DAILY".equals(wageType)) {
             throw new ApiException(INVALID_WAGE_TYPE);
         }
         if ("HOURLY".equals(wageType) && request.getHourlyWage() == null) {
@@ -218,10 +218,14 @@ public class OwnerService {
         if ("MONTHLY".equals(wageType) && request.getMonthlyWage() == null) {
             throw new ApiException(MONTHLY_WAGE_REQUIRED);
         }
+        if ("DAILY".equals(wageType) && request.getDailyWage() == null) {
+            throw new ApiException(DAILY_WAGE_REQUIRED);
+        }
         BigDecimal hourlyWage = "HOURLY".equals(wageType) ? request.getHourlyWage() : null;
         BigDecimal monthlyWage = "MONTHLY".equals(wageType) ? request.getMonthlyWage() : null;
-        workplaceMemberMapper.updateWage(memberId, wageType, hourlyWage, monthlyWage);
-        if ("MONTHLY".equals(wageType)) {
+        BigDecimal dailyWage = "DAILY".equals(wageType) ? request.getDailyWage() : null;
+        workplaceMemberMapper.updateWage(memberId, wageType, hourlyWage, monthlyWage, dailyWage);
+        if ("MONTHLY".equals(wageType) || "DAILY".equals(wageType)) {
             attendanceRecordMapper.clearWagesByMember(workplaceId, member.getUserId());
         }
     }
@@ -393,26 +397,32 @@ public class OwnerService {
         WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
-        BigDecimal hourlyWage = "MONTHLY".equals(staffMember != null ? staffMember.getWageType() : null)
-                ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
-
         int grossWorkedMinutes = newCheckOut != null ? calculateWorkedMinutes(newCheckIn, newCheckOut) : 0;
-        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                hourlyWage,
-                grossWorkedMinutes,
-                setting,
-                breakPolicies,
-                staffMember != null && staffMember.getBreakMinutes() != null ? staffMember.getBreakMinutes() : 0
-        );
+        String memberWageType = staffMember != null ? staffMember.getWageType() : null;
+        int resolvedWorkedMinutes;
+        BigDecimal resolvedBaseWage;
+        BigDecimal resolvedFinalWage;
+        if ("DAILY".equals(memberWageType) && newCheckOut != null) {
+            BigDecimal dw = staffMember.getDailyWage() != null ? staffMember.getDailyWage() : BigDecimal.ZERO;
+            resolvedWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, staffMember.getBreakMinutes());
+            resolvedBaseWage = dw;
+            resolvedFinalWage = dw;
+        } else {
+            BigDecimal hourlyWage = "MONTHLY".equals(memberWageType) ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, staffMember != null ? staffMember.getBreakMinutes() : 0);
+            resolvedWorkedMinutes = wageCalculation.workedMinutes();
+            resolvedBaseWage = wageCalculation.baseWage();
+            resolvedFinalWage = wageCalculation.finalWage();
+        }
 
         String status = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
         attendanceRecordMapper.updateByOwnerDecision(
                 recordId,
                 newCheckIn,
                 newCheckOut,
-                wageCalculation.workedMinutes(),
-                wageCalculation.baseWage(),
-                wageCalculation.finalWage(),
+                resolvedWorkedMinutes,
+                resolvedBaseWage,
+                resolvedFinalWage,
                 status,
                 request.getNote()
         );
@@ -468,7 +478,8 @@ public class OwnerService {
                         r.getFinalWage() != null ? r.getFinalWage() : BigDecimal.ZERO,
                         r.getStatus(),
                         r.getWageType(),
-                        r.getMonthlyWage()
+                        r.getMonthlyWage(),
+                        r.getDailyWage()
                 ))
                 .collect(Collectors.toList());
 
@@ -492,7 +503,9 @@ public class OwnerService {
             if (member == null) continue;
 
             boolean isMonthly = "MONTHLY".equals(member.getWageType());
-            BigDecimal hourlyWage = isMonthly ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+            boolean isDaily = "DAILY".equals(member.getWageType());
+            BigDecimal hourlyWage = (isMonthly || isDaily) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+            BigDecimal dailyWageAmount = isDaily ? (member.getDailyWage() != null ? member.getDailyWage() : BigDecimal.ZERO) : BigDecimal.ZERO;
             List<PayslipRecordItem> records = buildRecords(workplaceId, member, setting, breakPolicies, hourlyWage, request.getFromDate(), request.getToDate());
             int totalWorkedMinutes = records.stream().mapToInt(PayslipRecordItem::getWorkedMinutes).sum();
 
@@ -500,6 +513,15 @@ public class OwnerService {
             BigDecimal weeklyHolidayPay = BigDecimal.ZERO;
             if (isMonthly) {
                 baseWage = member.getMonthlyWage() != null ? member.getMonthlyWage() : BigDecimal.ZERO;
+            } else if (isDaily) {
+                baseWage = dailyWageAmount.multiply(BigDecimal.valueOf(records.size()));
+                boolean applyWeeklyHolidayPay = member.getUseWeeklyHolidayPay() != null
+                        ? member.getUseWeeklyHolidayPay()
+                        : Boolean.TRUE.equals(setting.getUseWeeklyHolidayPay());
+                if (applyWeeklyHolidayPay) {
+                    BigDecimal equivalentHourly = dailyWageAmount.divide(BigDecimal.valueOf(8), 2, RoundingMode.HALF_UP);
+                    weeklyHolidayPay = calculateWeeklyHolidayPay(records, equivalentHourly);
+                }
             } else {
                 baseWage = records.stream().map(PayslipRecordItem::getDailyWage).reduce(BigDecimal.ZERO, BigDecimal::add);
                 boolean applyWeeklyHolidayPay = member.getUseWeeklyHolidayPay() != null
@@ -515,9 +537,10 @@ public class OwnerService {
             payslip.setUserId(userId);
             payslip.setFromDate(request.getFromDate());
             payslip.setToDate(request.getToDate());
-            payslip.setWageType(isMonthly ? "MONTHLY" : "HOURLY");
-            payslip.setHourlyWage(isMonthly ? BigDecimal.ZERO : hourlyWage);
+            payslip.setWageType(isMonthly ? "MONTHLY" : isDaily ? "DAILY" : "HOURLY");
+            payslip.setHourlyWage((isMonthly || isDaily) ? BigDecimal.ZERO : hourlyWage);
             payslip.setMonthlyWage(isMonthly ? baseWage : BigDecimal.ZERO);
+            payslip.setDailyWage(isDaily ? dailyWageAmount : BigDecimal.ZERO);
             payslip.setWorkedDays(records.size());
             payslip.setWorkedMinutes(totalWorkedMinutes);
             payslip.setBaseWage(baseWage);
@@ -543,6 +566,7 @@ public class OwnerService {
                             p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                             p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                             p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
+                            p.getDailyWage() != null ? p.getDailyWage() : BigDecimal.ZERO,
                             p.getBaseWage(), whp, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
                             p.getStatus()
                     );
@@ -661,17 +685,18 @@ public class OwnerService {
         Collections.reverse(attendanceRecords);
 
         List<PayslipRecordItem> result = new ArrayList<>();
+        boolean memberIsDaily = "DAILY".equals(member.getWageType());
         for (AttendanceRecord record : attendanceRecords) {
             if (record.getCheckOutAt() == null) continue;
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
-            WageCalculationResult calc = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
-            result.add(new PayslipRecordItem(
-                    record.getWorkDate(),
-                    record.getCheckInAt().toLocalTime(),
-                    record.getCheckOutAt().toLocalTime(),
-                    calc.workedMinutes(),
-                    calc.finalWage()
-            ));
+            if (memberIsDaily) {
+                BigDecimal dw = member.getDailyWage() != null ? member.getDailyWage() : BigDecimal.ZERO;
+                int payableMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                result.add(new PayslipRecordItem(record.getWorkDate(), record.getCheckInAt().toLocalTime(), record.getCheckOutAt().toLocalTime(), payableMinutes, dw));
+            } else {
+                WageCalculationResult calc = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                result.add(new PayslipRecordItem(record.getWorkDate(), record.getCheckInAt().toLocalTime(), record.getCheckOutAt().toLocalTime(), calc.workedMinutes(), calc.finalWage()));
+            }
         }
         return result;
     }
@@ -693,6 +718,7 @@ public class OwnerService {
                 p.getId(), p.getUserId(), p.getUserName(), p.getProfileColor(),
                 p.getFromDate(), p.getToDate(), p.getCreatedAt().toLocalDate(),
                 p.getWorkedDays(), p.getWorkedMinutes(), p.getWageType(), p.getHourlyWage(), p.getMonthlyWage(),
+                p.getDailyWage() != null ? p.getDailyWage() : BigDecimal.ZERO,
                 p.getBaseWage(), weeklyHolidayPay, p.getBonusAmount(), p.getDeductionAmount(), p.getTotalWage(),
                 p.getBonusNote(), deductions, deserializeSnapshot(p.getDailySnapshot())
         );
@@ -828,7 +854,8 @@ public class OwnerService {
         List<AttendanceRecord> records = attendanceRecordMapper.findCompletedRecordsByWorkplace(workplaceId, fromDate, toDate);
         for (AttendanceRecord record : records) {
             WorkplaceMember member = workplaceMemberMapper.findActiveMember(workplaceId, record.getUserId());
-            if ("MONTHLY".equals(member != null ? member.getWageType() : null)) continue;
+            String memberWt = member != null ? member.getWageType() : null;
+            if ("MONTHLY".equals(memberWt) || "DAILY".equals(memberWt)) continue;
             BigDecimal hourlyWage = resolveHourlyWage(member, setting);
             int grossWorkedMinutes = calculateWorkedMinutes(record.getCheckInAt(), record.getCheckOutAt());
             WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
@@ -854,24 +881,31 @@ public class OwnerService {
         WorkplaceMember staffMember = workplaceMemberMapper.findActiveMember(record.getWorkplaceId(), record.getUserId());
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(record.getWorkplaceId());
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(record.getWorkplaceId(), setting);
-        BigDecimal hourlyWage = "MONTHLY".equals(staffMember != null ? staffMember.getWageType() : null)
-                ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
-        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                hourlyWage,
-                grossWorkedMinutes,
-                setting,
-                breakPolicies,
-                staffMember.getBreakMinutes()
-        );
+        String approvedWageType = staffMember != null ? staffMember.getWageType() : null;
+        int approvedWorkedMinutes;
+        BigDecimal approvedBaseWage;
+        BigDecimal approvedFinalWage;
+        if ("DAILY".equals(approvedWageType) && newCheckOut != null) {
+            BigDecimal dw = staffMember.getDailyWage() != null ? staffMember.getDailyWage() : BigDecimal.ZERO;
+            approvedWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, staffMember.getBreakMinutes());
+            approvedBaseWage = dw;
+            approvedFinalWage = dw;
+        } else {
+            BigDecimal hourlyWage = "MONTHLY".equals(approvedWageType) ? BigDecimal.ZERO : resolveHourlyWage(staffMember, setting);
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, staffMember != null ? staffMember.getBreakMinutes() : 0);
+            approvedWorkedMinutes = wageCalculation.workedMinutes();
+            approvedBaseWage = wageCalculation.baseWage();
+            approvedFinalWage = wageCalculation.finalWage();
+        }
 
         String attendanceStatus = newCheckOut == null ? "WORKING" : resolveCheckOutStatus(newCheckIn, setting);
         attendanceRecordMapper.updateByOwnerDecision(
                 record.getId(),
                 newCheckIn,
                 newCheckOut,
-                wageCalculation.workedMinutes(),
-                wageCalculation.baseWage(),
-                wageCalculation.finalWage(),
+                approvedWorkedMinutes,
+                approvedBaseWage,
+                approvedFinalWage,
                 attendanceStatus,
                 record.getNote()
         );
@@ -1051,17 +1085,28 @@ public class OwnerService {
             attendanceRecordMapper.insert(record);
 
             if (request.getCheckOutAt() != null) {
-                BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
                 int grossWorkedMinutes = calculateWorkedMinutes(request.getCheckInAt(), request.getCheckOutAt());
-                WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                        hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes()
-                );
+                int coWorkedMinutes;
+                BigDecimal coBaseWage;
+                BigDecimal coFinalWage;
+                if ("DAILY".equals(member.getWageType())) {
+                    BigDecimal dw = member.getDailyWage() != null ? member.getDailyWage() : BigDecimal.ZERO;
+                    coWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                    coBaseWage = dw;
+                    coFinalWage = dw;
+                } else {
+                    BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+                    WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                    coWorkedMinutes = wageCalculation.workedMinutes();
+                    coBaseWage = wageCalculation.baseWage();
+                    coFinalWage = wageCalculation.finalWage();
+                }
                 attendanceRecordMapper.updateCheckOut(
                         record.getId(),
                         request.getCheckOutAt(),
-                        wageCalculation.workedMinutes(),
-                        wageCalculation.baseWage(),
-                        wageCalculation.finalWage(),
+                        coWorkedMinutes,
+                        coBaseWage,
+                        coFinalWage,
                         resolveCheckOutStatus(request.getCheckInAt(), setting)
                 );
             }

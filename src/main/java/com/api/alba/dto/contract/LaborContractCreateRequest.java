@@ -42,7 +42,7 @@ public class LaborContractCreateRequest {
     private Integer breakMinutes;
 
     @NotNull(message = "급여 유형을 입력해 주세요.")
-    private String wageType; // HOURLY or MONTHLY
+    private String wageType; // HOURLY, MONTHLY or DAILY
 
     @DecimalMin(value = "0.00", inclusive = true, message = "시급은 0 이상이어야 해요.")
     @Digits(integer = 8, fraction = 2, message = "시급 형식이 올바르지 않아요.")
@@ -51,6 +51,10 @@ public class LaborContractCreateRequest {
     @DecimalMin(value = "0.00", inclusive = true, message = "월급은 0 이상이어야 해요.")
     @Digits(integer = 10, fraction = 2, message = "월급 형식이 올바르지 않아요.")
     private BigDecimal monthlyWage;
+
+    @DecimalMin(value = "0.00", inclusive = true, message = "일급은 0 이상이어야 해요.")
+    @Digits(integer = 10, fraction = 2, message = "일급 형식이 올바르지 않아요.")
+    private BigDecimal dailyWage;
 
     @NotNull(message = "급여 지급일을 입력해 주세요.")
     @Min(value = 1, message = "급여 지급일은 1일 이상이어야 해요.")

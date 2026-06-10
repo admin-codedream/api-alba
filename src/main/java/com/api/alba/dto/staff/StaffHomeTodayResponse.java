@@ -20,4 +20,5 @@ public class StaffHomeTodayResponse {
     private BigDecimal hourlyWage;
     private String wageType;
     private BigDecimal monthlyWage;
+    private BigDecimal dailyWage;
 }

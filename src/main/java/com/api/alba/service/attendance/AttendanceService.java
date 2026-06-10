@@ -148,23 +148,30 @@ public class AttendanceService {
 
         WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(member.getWorkplaceId());
         List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(member.getWorkplaceId(), setting);
-        BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
-        WageCalculationResult wageCalculation = wageCalculationHelper.calculate(
-                hourlyWage,
-                grossWorkedMinutes,
-                setting,
-                breakPolicies,
-                member.getBreakMinutes()
-        );
+        int checkOutWorkedMinutes;
+        BigDecimal checkOutBaseWage;
+        BigDecimal checkOutFinalWage;
+        if ("DAILY".equals(member.getWageType())) {
+            BigDecimal dw = member.getDailyWage() != null ? member.getDailyWage() : BigDecimal.ZERO;
+            checkOutWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+            checkOutBaseWage = dw;
+            checkOutFinalWage = dw;
+        } else {
+            BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+            checkOutWorkedMinutes = wageCalculation.workedMinutes();
+            checkOutBaseWage = wageCalculation.baseWage();
+            checkOutFinalWage = wageCalculation.finalWage();
+        }
 
         LocalTime scheduledCheckInTime = resolveScheduledCheckInTime(member, record.getCheckInAt());
         String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting, scheduledCheckInTime);
         attendanceRecordMapper.updateCheckOut(
                 record.getId(),
                 checkOutAt,
-                wageCalculation.workedMinutes(),
-                wageCalculation.baseWage(),
-                wageCalculation.finalWage(),
+                checkOutWorkedMinutes,
+                checkOutBaseWage,
+                checkOutFinalWage,
                 finalStatus
         );
 
@@ -319,19 +326,29 @@ public class AttendanceService {
                 WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(target.getWorkplaceId());
                 List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(target.getWorkplaceId(), setting);
 
-                BigDecimal hourlyWage = "MONTHLY".equals(target.getWageType())
-                        ? BigDecimal.ZERO
-                        : resolveHourlyWageFromTarget(target, setting);
-
-                WageCalculationResult wageResult = wageCalculationHelper.calculate(
-                        hourlyWage, grossWorkedMinutes, setting, breakPolicies, target.getBreakMinutes()
-                );
+                int autoWorkedMinutes;
+                BigDecimal autoBaseWage;
+                BigDecimal autoFinalWage;
+                if ("DAILY".equals(target.getWageType())) {
+                    BigDecimal dw = target.getDailyWage() != null ? target.getDailyWage() : BigDecimal.ZERO;
+                    autoWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, target.getBreakMinutes());
+                    autoBaseWage = dw;
+                    autoFinalWage = dw;
+                } else {
+                    BigDecimal hourlyWage = "MONTHLY".equals(target.getWageType())
+                            ? BigDecimal.ZERO
+                            : resolveHourlyWageFromTarget(target, setting);
+                    WageCalculationResult wageResult = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, target.getBreakMinutes());
+                    autoWorkedMinutes = wageResult.workedMinutes();
+                    autoBaseWage = wageResult.baseWage();
+                    autoFinalWage = wageResult.finalWage();
+                }
 
                 String status = resolveCheckOutStatus(target.getCheckInAt(), setting, target.getScheduledCheckInTime());
 
                 attendanceRecordMapper.updateCheckOut(
                         target.getRecordId(), checkOutAt,
-                        wageResult.workedMinutes(), wageResult.baseWage(), wageResult.finalWage(),
+                        autoWorkedMinutes, autoBaseWage, autoFinalWage,
                         status
                 );
                 log.info("[자동 퇴근] 처리 완료 recordId={}, workplaceId={}, userId={}, checkOutAt={}",
@@ -402,11 +419,24 @@ public class AttendanceService {
             int grossWorkedMinutes = (int) Math.max(diff, 0);
             WorkplaceSetting setting = workplaceSettingMapper.findByWorkplaceId(workplaceId);
             List<WorkplaceBreakPolicy> breakPolicies = resolveBreakPolicies(workplaceId, setting);
-            BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
-            WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+            int qrWorkedMinutes;
+            BigDecimal qrBaseWage;
+            BigDecimal qrFinalWage;
+            if ("DAILY".equals(member.getWageType())) {
+                BigDecimal dw = member.getDailyWage() != null ? member.getDailyWage() : BigDecimal.ZERO;
+                qrWorkedMinutes = wageCalculationHelper.calculatePayableWorkedMinutes(grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                qrBaseWage = dw;
+                qrFinalWage = dw;
+            } else {
+                BigDecimal hourlyWage = "MONTHLY".equals(member.getWageType()) ? BigDecimal.ZERO : resolveHourlyWage(member, setting);
+                WageCalculationResult wageCalculation = wageCalculationHelper.calculate(hourlyWage, grossWorkedMinutes, setting, breakPolicies, member.getBreakMinutes());
+                qrWorkedMinutes = wageCalculation.workedMinutes();
+                qrBaseWage = wageCalculation.baseWage();
+                qrFinalWage = wageCalculation.finalWage();
+            }
             LocalTime scheduledCheckInTime = resolveScheduledCheckInTime(member, record.getCheckInAt());
             String finalStatus = resolveCheckOutStatus(record.getCheckInAt(), setting, scheduledCheckInTime);
-            attendanceRecordMapper.updateCheckOut(record.getId(), checkOutAt, wageCalculation.workedMinutes(), wageCalculation.baseWage(), wageCalculation.finalWage(), finalStatus);
+            attendanceRecordMapper.updateCheckOut(record.getId(), checkOutAt, qrWorkedMinutes, qrBaseWage, qrFinalWage, finalStatus);
             sendAttendancePushSafely(workplaceId, userId, "퇴근 완료 알림", "%s님 퇴근이 완료되었습니다.");
             return attendanceRecordMapper.findByWorkplaceUserAndDate(workplaceId, userId, workDate);
         }

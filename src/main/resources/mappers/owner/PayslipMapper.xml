@@ -13,6 +13,7 @@
         <result property="wageType" column="WAGE_TYPE"/>
         <result property="hourlyWage" column="HOURLY_WAGE"/>
         <result property="monthlyWage" column="MONTHLY_WAGE"/>
+        <result property="dailyWage" column="DAILY_WAGE"/>
         <result property="userName" column="USER_NAME"/>
         <result property="profileColor" column="PROFILE_COLOR"/>
         <result property="workedDays" column="WORKED_DAYS"/>
@@ -34,13 +35,13 @@
     <insert id="insert" parameterType="com.api.alba.domain.owner.Payslip" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO PAYSLIPS (
             WORKPLACE_ID, USER_ID, FROM_DATE, TO_DATE,
-            WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE,
+            WAGE_TYPE, HOURLY_WAGE, MONTHLY_WAGE, DAILY_WAGE,
             WORKED_DAYS, WORKED_MINUTES, BASE_WAGE,
             WEEKLY_HOLIDAY_PAY, BONUS_AMOUNT, DEDUCTION_AMOUNT, TOTAL_WAGE,
             DAILY_SNAPSHOT, STATUS
         ) VALUES (
             #{workplaceId}, #{userId}, #{fromDate}, #{toDate},
-            #{wageType}, #{hourlyWage}, #{monthlyWage},
+            #{wageType}, #{hourlyWage}, #{monthlyWage}, #{dailyWage},
             #{workedDays}, #{workedMinutes}, #{baseWage},
             #{weeklyHolidayPay}, #{bonusAmount}, #{deductionAmount}, #{totalWage},
             #{dailySnapshot}, #{status}
@@ -49,7 +50,7 @@
 
     <select id="findById" resultMap="payslipMap">
         SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
-               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.DAILY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
                p.WEEKLY_HOLIDAY_PAY, p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
                p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
                u.NAME AS USER_NAME, u.PROFILE_COLOR
@@ -60,7 +61,7 @@
 
     <select id="findByWorkplaceId" resultMap="payslipMap">
         SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
-               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.DAILY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
                p.WEEKLY_HOLIDAY_PAY, p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
                p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
                u.NAME AS USER_NAME, u.PROFILE_COLOR
@@ -74,7 +75,7 @@
 
     <select id="findByUserId" resultMap="payslipMap">
         SELECT p.ID, p.WORKPLACE_ID, p.USER_ID, p.FROM_DATE, p.TO_DATE,
-               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
+               p.WAGE_TYPE, p.HOURLY_WAGE, p.MONTHLY_WAGE, p.DAILY_WAGE, p.WORKED_DAYS, p.WORKED_MINUTES, p.BASE_WAGE,
                p.WEEKLY_HOLIDAY_PAY, p.BONUS_AMOUNT, p.BONUS_NOTE, p.DEDUCTION_AMOUNT, p.DEDUCTION_NOTE, p.TOTAL_WAGE,
                p.DAILY_SNAPSHOT, p.STATUS, p.CREATED_AT, p.UPDATED_AT,
                u.NAME AS USER_NAME, u.PROFILE_COLOR,
