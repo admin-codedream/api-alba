@@ -782,7 +782,7 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         workplaceMapper.updateLocationRestriction(workplaceId, request.getUseLocationRestriction(), request.getAddress(), request.getLatitude(), request.getLongitude());
         if (Boolean.TRUE.equals(request.getUseLocationRestriction())) {
-            workplaceMapper.updateQrAttendance(workplaceId, false);
+            workplaceMapper.updateQrAttendance(workplaceId, false, false);
         }
     }
 
