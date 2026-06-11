@@ -150,7 +150,7 @@ public class OwnerService {
     }
 
     public DashboardTodayResponse getTodayDashboard(Long ownerUserId, Long workplaceId) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         LocalDate today = LocalDate.now();
         int totalStaffCount = workplaceMemberMapper.countActiveStaffByWorkplaceId(workplaceId);
         int checkedIn = attendanceRecordMapper.countTodayCheckedIn(workplaceId, today);
@@ -297,7 +297,7 @@ public class OwnerService {
     }
 
     public List<MemberScheduleItemResponse> getMemberSchedules(Long ownerUserId, Long workplaceId, Long memberId) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         WorkplaceMember member = workplaceMemberMapper.findById(memberId);
         if (member == null || !workplaceId.equals(member.getWorkplaceId())) {
             throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
@@ -342,7 +342,7 @@ public class OwnerService {
             LocalDate fromDate,
             LocalDate toDate
     ) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         if (fromDate.isAfter(toDate)) {
             throw new ApiException(INVALID_DATE_RANGE);
         }
@@ -388,7 +388,7 @@ public class OwnerService {
 
     @Transactional
     public void deleteAttendanceRecord(Long ownerUserId, Long workplaceId, Long recordId) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         AttendanceRecord record = attendanceRecordMapper.findById(recordId);
         if (record == null) {
             throw new ApiException(ATTENDANCE_RECORD_NOT_FOUND);
@@ -398,7 +398,7 @@ public class OwnerService {
 
     @Transactional
     public AttendanceRecord updateAttendanceRecord(Long ownerUserId, Long workplaceId, Long recordId, OwnerUpdateAttendanceRecordRequest request) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
 
         if (request.getCheckOutAt() != null && !request.getCheckOutAt().isAfter(request.getCheckInAt())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, CHECK_OUT_MUST_BE_AFTER_CHECK_IN);
@@ -453,7 +453,7 @@ public class OwnerService {
             Long workplaceId,
             LocalDate workDate
     ) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         return attendanceRecordMapper.findDailyAttendanceByWorkDate(workplaceId, workDate);
     }
 
@@ -463,7 +463,7 @@ public class OwnerService {
             Long staffUserId,
             String yearMonth
     ) {
-        ensureOwner(workplaceId, ownerUserId);
+        ensureOwnerOrManager(workplaceId, ownerUserId);
         YearMonth targetMonth = parseYearMonth(yearMonth);
         return attendanceRecordMapper.findOwnerMonthlyCalendarByPeriod(
                 workplaceId,
