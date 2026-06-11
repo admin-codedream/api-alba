@@ -27,6 +27,7 @@
         <result property="receiveAttendancePush" column="RECEIVE_ATTENDANCE_PUSH"/>
         <result property="memberCount" column="MEMBER_COUNT"/>
         <result property="useQrAttendance" column="USE_QR_ATTENDANCE"/>
+        <result property="qrNoTimeLimit" column="QR_NO_TIME_LIMIT"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.staff.WorkplaceMember" useGeneratedKeys="true" keyProperty="id">
@@ -80,7 +81,8 @@
                WM.RECEIVE_ATTENDANCE_PUSH,
                WM.ROLE,
                (SELECT COUNT(*) FROM WORKPLACE_MEMBERS WHERE WORKPLACE_ID = WM.WORKPLACE_ID AND STATUS = 'ACTIVE' AND ROLE NOT IN ('OWNER', 'SUPER_ADMIN')) AS MEMBER_COUNT,
-               W.USE_QR_ATTENDANCE
+               W.USE_QR_ATTENDANCE,
+               W.QR_NO_TIME_LIMIT
         FROM WORKPLACE_MEMBERS WM
                  INNER JOIN WORKPLACES W ON W.ID = WM.WORKPLACE_ID
                  INNER JOIN USERS U ON U.ID = W.OWNER_ID

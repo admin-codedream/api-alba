@@ -380,6 +380,7 @@ public class StaffService {
                 workplace.getLongitude(),
                 workplace.getUseLocationRestriction(),
                 workplace.getUseQrAttendance(),
+                workplace.getQrNoTimeLimit(),
                 Boolean.TRUE.equals(member.getReceiveAttendancePush()),
                 resolveHourlyWage(member, setting),
                 setting.getSalaryCalcUnit(),

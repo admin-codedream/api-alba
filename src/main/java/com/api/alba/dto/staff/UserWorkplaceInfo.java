@@ -13,4 +13,5 @@ public class UserWorkplaceInfo {
     private String role;
     private Integer memberCount;
     private Boolean useQrAttendance;
+    private Boolean qrNoTimeLimit;
 }

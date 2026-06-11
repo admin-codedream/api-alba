@@ -82,6 +82,15 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String createPermanentQrToken(Long workplaceId) {
+        return Jwts.builder()
+                .setSubject("QR")
+                .claim("workplaceId", workplaceId)
+                .setIssuedAt(new Date())
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     public Long validateQrToken(String token) {
         try {
             Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();

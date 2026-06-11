@@ -10,4 +10,5 @@ import javax.validation.constraints.NotNull;
 public class UpdateQrAttendanceRequest {
     @NotNull(message = "QR 출퇴근 사용 여부를 입력해 주세요.")
     private Boolean useQrAttendance;
+    private Boolean qrNoTimeLimit;
 }

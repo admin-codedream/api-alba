@@ -178,6 +178,7 @@ public class OwnerService {
                 workplace.getLongitude(),
                 workplace.getUseLocationRestriction(),
                 workplace.getUseQrAttendance(),
+                workplace.getQrNoTimeLimit(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage(),
                 setting.getSalaryCalcUnit(),
@@ -786,9 +787,9 @@ public class OwnerService {
     }
 
     @Transactional
-    public void updateQrAttendance(Long ownerUserId, Long workplaceId, Boolean useQrAttendance) {
+    public void updateQrAttendance(Long ownerUserId, Long workplaceId, Boolean useQrAttendance, Boolean qrNoTimeLimit) {
         ensureOwner(workplaceId, ownerUserId);
-        workplaceMapper.updateQrAttendance(workplaceId, useQrAttendance);
+        workplaceMapper.updateQrAttendance(workplaceId, useQrAttendance, Boolean.TRUE.equals(qrNoTimeLimit));
         if (Boolean.TRUE.equals(useQrAttendance)) {
             workplaceMapper.updateLocationRestrictionFlag(workplaceId, false);
         }
@@ -1181,6 +1182,11 @@ public class OwnerService {
 
     public QrTokenResponse generateQrToken(Long userId, Long workplaceId) {
         ensureOwner(workplaceId, userId);
+        Workplace workplace = workplaceMapper.findById(workplaceId);
+        if (Boolean.TRUE.equals(workplace.getQrNoTimeLimit())) {
+            String token = jwtTokenProvider.createPermanentQrToken(workplaceId);
+            return new QrTokenResponse(token, null);
+        }
         String token = jwtTokenProvider.createQrToken(workplaceId);
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtTokenProvider.getQrTokenExpirationSeconds());
         return new QrTokenResponse(token, expiresAt.toString());

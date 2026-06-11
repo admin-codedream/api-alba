@@ -427,7 +427,7 @@ public class OwnerController {
             @PathVariable Long workplaceId,
             @Valid @RequestBody UpdateQrAttendanceRequest request
     ) {
-        ownerService.updateQrAttendance(requiredPrincipal(principal), workplaceId, request.getUseQrAttendance());
+        ownerService.updateQrAttendance(requiredPrincipal(principal), workplaceId, request.getUseQrAttendance(), request.getQrNoTimeLimit());
     }
 
     @PatchMapping("/workplaces/{workplaceId}/settings/attendance-push")

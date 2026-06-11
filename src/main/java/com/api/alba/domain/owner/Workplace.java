@@ -18,6 +18,7 @@ public class Workplace {
     private Integer allowedRadiusMeters;
     private Boolean useLocationRestriction;
     private Boolean useQrAttendance;
+    private Boolean qrNoTimeLimit;
     private Boolean isPersonal;
     private LocalDateTime createdAt;
 }
