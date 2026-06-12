@@ -351,6 +351,7 @@ public class AttendanceService {
                         autoWorkedMinutes, autoBaseWage, autoFinalWage,
                         status
                 );
+                attendanceRecordMapper.updateNote(target.getRecordId(), "자동 퇴근 처리");
                 log.info("[자동 퇴근] 처리 완료 recordId={}, workplaceId={}, userId={}, checkOutAt={}",
                         target.getRecordId(), target.getWorkplaceId(), target.getUserId(), checkOutAt);
             } catch (Exception e) {

@@ -239,6 +239,15 @@
         WHERE ID = #{id}
     </update>
 
+    <update id="updateNote">
+        <![CDATA[
+        /* AttendanceRecordMapper.updateNote */
+        UPDATE ATTENDANCE_RECORDS
+        SET NOTE = #{note}
+        WHERE ID = #{id}
+        ]]>
+    </update>
+
     <delete id="deleteById">
         <![CDATA[
         /* AttendanceRecordMapper.deleteById */
