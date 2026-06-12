@@ -18,6 +18,7 @@ public class StaffWorkplaceSettingResponse {
     private Boolean useLocationRestriction;
     private Boolean useQrAttendance;
     private Boolean qrNoTimeLimit;
+    private String qrPin;
     private Boolean receiveAttendancePush;
     private BigDecimal hourlyWage;
     private String salaryCalcUnit;

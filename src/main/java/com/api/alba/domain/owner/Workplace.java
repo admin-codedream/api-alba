@@ -19,6 +19,7 @@ public class Workplace {
     private Boolean useLocationRestriction;
     private Boolean useQrAttendance;
     private Boolean qrNoTimeLimit;
+    private String qrPin;
     private Boolean isPersonal;
     private LocalDateTime createdAt;
 }

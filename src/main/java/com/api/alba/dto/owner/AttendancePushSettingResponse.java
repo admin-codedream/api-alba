@@ -18,6 +18,7 @@ public class AttendancePushSettingResponse {
     private Boolean useLocationRestriction;
     private Boolean useQrAttendance;
     private Boolean qrNoTimeLimit;
+    private String qrPin;
     private Boolean enabled;
     private BigDecimal hourlyWage;
     private String salaryCalcUnit;

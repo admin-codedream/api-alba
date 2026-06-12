@@ -381,6 +381,7 @@ public class StaffService {
                 workplace.getUseLocationRestriction(),
                 workplace.getUseQrAttendance(),
                 workplace.getQrNoTimeLimit(),
+                workplace.getQrPin(),
                 Boolean.TRUE.equals(member.getReceiveAttendancePush()),
                 resolveHourlyWage(member, setting),
                 setting.getSalaryCalcUnit(),

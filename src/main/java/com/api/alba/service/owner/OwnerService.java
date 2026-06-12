@@ -179,6 +179,7 @@ public class OwnerService {
                 workplace.getUseLocationRestriction(),
                 workplace.getUseQrAttendance(),
                 workplace.getQrNoTimeLimit(),
+                workplace.getQrPin(),
                 receiveAttendancePush,
                 setting.getDefaultHourlyWage(),
                 setting.getSalaryCalcUnit(),
@@ -782,14 +783,14 @@ public class OwnerService {
         ensureOwner(workplaceId, ownerUserId);
         workplaceMapper.updateLocationRestriction(workplaceId, request.getUseLocationRestriction(), request.getAddress(), request.getLatitude(), request.getLongitude());
         if (Boolean.TRUE.equals(request.getUseLocationRestriction())) {
-            workplaceMapper.updateQrAttendance(workplaceId, false, false);
+            workplaceMapper.updateQrAttendance(workplaceId, false, false, null);
         }
     }
 
     @Transactional
-    public void updateQrAttendance(Long ownerUserId, Long workplaceId, Boolean useQrAttendance, Boolean qrNoTimeLimit) {
+    public void updateQrAttendance(Long ownerUserId, Long workplaceId, Boolean useQrAttendance, Boolean qrNoTimeLimit, String qrPin) {
         ensureOwner(workplaceId, ownerUserId);
-        workplaceMapper.updateQrAttendance(workplaceId, useQrAttendance, Boolean.TRUE.equals(qrNoTimeLimit));
+        workplaceMapper.updateQrAttendance(workplaceId, useQrAttendance, Boolean.TRUE.equals(qrNoTimeLimit), qrPin);
         if (Boolean.TRUE.equals(useQrAttendance)) {
             workplaceMapper.updateLocationRestrictionFlag(workplaceId, false);
         }
