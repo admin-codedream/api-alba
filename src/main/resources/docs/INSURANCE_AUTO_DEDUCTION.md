@@ -13,8 +13,10 @@
 
 ```
 과세급여 = 총 지급액 - 비과세 금액
-총 지급액 = 기본급 + 주휴수당
 ```
+
+- **발행 시**: 총 지급액 = 기본급 + 주휴수당
+- **수정 시 재계산**: 총 지급액 = 기본급 + 주휴수당 + 보너스
 
 > 비과세 금액은 직원별로 설정 가능합니다. (기본값 0원)
 
@@ -123,7 +125,37 @@ POST /api/owner/workplaces/{workplaceId}/payslips
 발행 시 직원 보험 설정을 자동으로 읽어 공제 항목을 삽입합니다.
 적용된 보험이 없으면 공제 항목이 생성되지 않습니다.
 
-### 4-4. 급여명세서 보너스 + 공제 통합 저장 (신규)
+### 4-4. 공제 재계산 미리보기 (신규)
+```
+POST /api/owner/workplaces/{workplaceId}/payslips/{payslipId}/calculate-deductions
+```
+
+보너스 금액을 포함한 재계산 결과를 반환합니다. 저장은 하지 않습니다.
+
+Request:
+```json
+{
+  "bonusAmount": 50000
+}
+```
+
+Response:
+```json
+{
+  "deductions": [
+    { "deductionType": "NATIONAL_PENSION",     "name": "국민연금",     "amount": 51750, "appliedRate": 0.04500, "appliedBaseAmount": 1150000, "displayOrder": 1 },
+    { "deductionType": "HEALTH_INSURANCE",     "name": "건강보험",     "amount": 41342, "appliedRate": 0.03595, "appliedBaseAmount": 1150000, "displayOrder": 2 },
+    { "deductionType": "LONG_TERM_CARE",       "name": "장기요양보험", "amount": 5432,  "appliedRate": 0.13140, "appliedBaseAmount": 41342,   "displayOrder": 3 },
+    { "deductionType": "EMPLOYMENT_INSURANCE", "name": "고용보험",     "amount": 10350, "appliedRate": 0.00900, "appliedBaseAmount": 1150000, "displayOrder": 4 }
+  ],
+  "totalDeduction": 108874
+}
+```
+
+> 계산 기준: `기본급 + 주휴수당 + bonusAmount - 비과세 금액`
+> 직원의 보험 설정에서 꺼진 항목은 결과에 포함되지 않습니다.
+
+### 4-5. 급여명세서 보너스 + 공제 통합 저장 (신규)
 ```
 PUT /api/owner/workplaces/{workplaceId}/payslips/{payslipId}/full
 ```
@@ -134,16 +166,17 @@ Request:
   "bonusAmount": 50000,
   "bonusNote": "성과급",
   "deductions": [
-    { "deductionType": "NATIONAL_PENSION",     "name": "국민연금",      "amount": 49500, "displayOrder": 1 },
-    { "deductionType": "HEALTH_INSURANCE",     "name": "건강보험",      "amount": 35100, "displayOrder": 2 },
-    { "deductionType": "LONG_TERM_CARE",       "name": "장기요양보험",   "amount": 4530,  "displayOrder": 3 },
-    { "deductionType": "EMPLOYMENT_INSURANCE", "name": "고용보험",      "amount": 8100,  "displayOrder": 4 }
+    { "deductionType": "NATIONAL_PENSION",     "name": "국민연금",     "amount": 51750, "displayOrder": 1 },
+    { "deductionType": "HEALTH_INSURANCE",     "name": "건강보험",     "amount": 41342, "displayOrder": 2 },
+    { "deductionType": "LONG_TERM_CARE",       "name": "장기요양보험", "amount": 5432,  "displayOrder": 3 },
+    { "deductionType": "EMPLOYMENT_INSURANCE", "name": "고용보험",     "amount": 10350, "displayOrder": 4 }
   ]
 }
 ```
 
 > 보너스와 공제를 한 번에 저장하며, 실수령액을 한 번에 갱신합니다.
 > 기존 공제 항목은 전부 삭제 후 재삽입됩니다.
+> `deductions`에 보내는 금액이 그대로 저장됩니다. (재계산 없음)
 
 ---
 
@@ -151,21 +184,26 @@ Request:
 
 ```
 [직원 관리 화면]
-  1. GET /insurance-setting  → 현재 설정 조회
-  2. PUT /insurance-setting  → 국민연금/건강보험 등 on/off, 비과세 금액 설정
+  1. GET  /insurance-setting  → 현재 설정 조회
+  2. PUT  /insurance-setting  → 국민연금/건강보험 등 on/off, 비과세 금액 설정
 
 [급여명세서 발행]
-  3. POST /payslips          → 발행 시 백엔드가 자동 계산
-                                - 과세급여 = 기본급 + 주휴수당 - 비과세 금액
-                                - 국민연금, 건강보험, 장기요양, 고용보험 순으로 계산
-                                - 공제 항목 자동 삽입 + 실수령액 갱신
+  3. POST /payslips           → 발행 시 백엔드가 자동 계산
+                                 - 과세급여 = 기본급 + 주휴수당 - 비과세 금액
+                                 - 국민연금, 건강보험, 장기요양, 고용보험 순으로 계산
+                                 - 공제 항목 자동 삽입 + 실수령액 갱신
 
-[명세서 상세 조회]
-  4. GET /payslips/{id}      → deductions 항목에 자동 계산된 공제 포함
+[명세서 수정 화면]
+  4. GET  /payslips/{id}      → 발행된 공제 항목 표시 (수동 수정 가능)
 
-[수동 수정 후 저장]
-  5. PUT /payslips/{id}/full → 보너스 + 공제 항목 통합 저장
-                               실수령액 = 기본급 + 주휴수당 + 보너스 - 공제합계
+  보너스 입력 후 재계산 원할 시:
+  5. POST /payslips/{id}/calculate-deductions  → { bonusAmount }
+                                                → 재계산된 공제 금액 미리보기 반환
+                                                → 화면에 반영 (저장 아님, 수동 수정 가능)
+
+  저장:
+  6. PUT  /payslips/{id}/full → 보너스 + 공제 항목 통합 저장
+                                실수령액 = 기본급 + 주휴수당 + 보너스 - 공제합계
 ```
 
 ---
@@ -173,6 +211,6 @@ Request:
 ## 6. 주의사항
 
 - **소득세(`useIncomeTax`)**: 필드는 존재하지만 현재 자동 계산 미구현입니다.
-- **보너스는 공제 계산 기준에서 제외**: 발행 시점의 `총 지급액 = 기본급 + 주휴수당`이며, 보너스는 포함하지 않습니다.
-- **요율 변경 시**: `INSURANCE_RATE_RULES`에 새 행을 INSERT하고, 기존 행의 `EFFECTIVE_TO`를 업데이트하면 됩니다. 코드 수정 불필요합니다.
+- **발행 시 보너스 미포함**: 발행 시점에는 보너스가 없으므로 `기본급 + 주휴수당` 기준으로만 계산합니다. 보너스 입력 후에는 수정 화면에서 재계산하여 저장하세요.
+- **요율 변경 시**: `INSURANCE_RATE_RULES`에 새 행을 INSERT하고 기존 행의 `EFFECTIVE_TO`를 업데이트하면 됩니다. 코드 수정 불필요합니다.
 - **수동 저장 시**: `PUT /full` API로 저장하면 `APPLIED_RATE`, `APPLIED_BASE_AMOUNT`가 `NULL`로 저장됩니다.

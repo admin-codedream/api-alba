@@ -37,6 +37,8 @@ import com.api.alba.dto.owner.OwnerMonthlyCalendarItemResponse;
 import com.api.alba.dto.owner.PayslipDetailResponse;
 import com.api.alba.dto.owner.PayslipListItemResponse;
 import com.api.alba.dto.owner.PayslipResponse;
+import com.api.alba.dto.owner.CalculateDeductionsRequest;
+import com.api.alba.dto.owner.CalculateDeductionsResponse;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
 import com.api.alba.dto.owner.UpdatePayslipWithDeductionsRequest;
 import com.api.alba.dto.owner.UpdateQrAttendanceRequest;
@@ -213,6 +215,16 @@ public class OwnerController {
             @Valid @RequestBody UpdatePayslipWithDeductionsRequest request
     ) {
         return ownerService.updatePayslipWithDeductions(requiredPrincipal(principal), workplaceId, payslipId, request);
+    }
+
+    @PostMapping("/workplaces/{workplaceId}/payslips/{payslipId}/calculate-deductions")
+    public CalculateDeductionsResponse calculateDeductions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId,
+            @Valid @RequestBody CalculateDeductionsRequest request
+    ) {
+        return ownerService.calculateDeductions(requiredPrincipal(principal), workplaceId, payslipId, request);
     }
 
     @DeleteMapping("/workplaces/{workplaceId}/payslips/{payslipId}")

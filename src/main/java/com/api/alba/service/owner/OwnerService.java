@@ -735,6 +735,37 @@ public class OwnerService {
         return setting;
     }
 
+    public CalculateDeductionsResponse calculateDeductions(Long ownerUserId, Long workplaceId, Long payslipId,
+                                                           CalculateDeductionsRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+
+        WorkplaceMember member = workplaceMemberMapper.findMember(payslip.getWorkplaceId(), payslip.getUserId());
+        if (member == null) {
+            return new CalculateDeductionsResponse(List.of(), BigDecimal.ZERO);
+        }
+        EmployeeInsuranceSetting setting = employeeInsuranceSettingMapper.findByWorkplaceMemberId(member.getId());
+        if (setting == null) {
+            return new CalculateDeductionsResponse(List.of(), BigDecimal.ZERO);
+        }
+
+        BigDecimal whp = payslip.getWeeklyHolidayPay() != null ? payslip.getWeeklyHolidayPay() : BigDecimal.ZERO;
+        BigDecimal totalPay = payslip.getBaseWage().add(whp).add(request.getBonusAmount());
+
+        List<PayslipDeduction> deductions = insuranceCalculationHelper.calculate(setting, totalPay, payslip.getToDate());
+
+        List<CalculateDeductionsResponse.DeductionItem> items = new ArrayList<>();
+        BigDecimal totalDeduction = BigDecimal.ZERO;
+        for (PayslipDeduction d : deductions) {
+            items.add(new CalculateDeductionsResponse.DeductionItem(
+                    d.getDeductionType(), d.getName(), d.getAmount(),
+                    d.getAppliedRate(), d.getAppliedBaseAmount(), d.getDisplayOrder()
+            ));
+            totalDeduction = totalDeduction.add(d.getAmount());
+        }
+        return new CalculateDeductionsResponse(items, totalDeduction);
+    }
+
     @Transactional
     public PayslipDetailResponse updatePayslipWithDeductions(Long ownerUserId, Long workplaceId, Long payslipId,
                                                              UpdatePayslipWithDeductionsRequest request) {
