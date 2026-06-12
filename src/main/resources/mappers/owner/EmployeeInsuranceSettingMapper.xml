@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.owner.EmployeeInsuranceSettingMapper">
+
+    <resultMap id="employeeInsuranceSettingMap" type="com.api.alba.domain.owner.EmployeeInsuranceSetting">
+        <id property="id" column="ID"/>
+        <result property="workplaceMemberId" column="WORKPLACE_MEMBER_ID"/>
+        <result property="useNationalPension" column="USE_NATIONAL_PENSION"/>
+        <result property="useHealthInsurance" column="USE_HEALTH_INSURANCE"/>
+        <result property="useLongTermCare" column="USE_LONG_TERM_CARE"/>
+        <result property="useEmploymentInsurance" column="USE_EMPLOYMENT_INSURANCE"/>
+        <result property="useIncomeTax" column="USE_INCOME_TAX"/>
+        <result property="taxFreeAmount" column="TAX_FREE_AMOUNT"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <select id="findByWorkplaceMemberId" resultMap="employeeInsuranceSettingMap">
+        /* findByWorkplaceMemberId */
+        SELECT ID, WORKPLACE_MEMBER_ID, USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE,
+               USE_LONG_TERM_CARE, USE_EMPLOYMENT_INSURANCE, USE_INCOME_TAX, TAX_FREE_AMOUNT,
+               CREATED_AT, UPDATED_AT
+        FROM EMPLOYEE_INSURANCE_SETTINGS
+        WHERE WORKPLACE_MEMBER_ID = #{workplaceMemberId}
+    </select>
+
+    <insert id="insert" parameterType="com.api.alba.domain.owner.EmployeeInsuranceSetting" useGeneratedKeys="true" keyProperty="id">
+        /* insert */
+        INSERT INTO EMPLOYEE_INSURANCE_SETTINGS
+            (WORKPLACE_MEMBER_ID, USE_NATIONAL_PENSION, USE_HEALTH_INSURANCE,
+             USE_LONG_TERM_CARE, USE_EMPLOYMENT_INSURANCE, USE_INCOME_TAX, TAX_FREE_AMOUNT)
+        VALUES (#{workplaceMemberId}, #{useNationalPension}, #{useHealthInsurance},
+                #{useLongTermCare}, #{useEmploymentInsurance}, #{useIncomeTax}, #{taxFreeAmount})
+    </insert>
+
+    <update id="update" parameterType="com.api.alba.domain.owner.EmployeeInsuranceSetting">
+        /* update */
+        UPDATE EMPLOYEE_INSURANCE_SETTINGS
+        SET USE_NATIONAL_PENSION    = #{useNationalPension},
+            USE_HEALTH_INSURANCE    = #{useHealthInsurance},
+            USE_LONG_TERM_CARE      = #{useLongTermCare},
+            USE_EMPLOYMENT_INSURANCE = #{useEmploymentInsurance},
+            USE_INCOME_TAX          = #{useIncomeTax},
+            TAX_FREE_AMOUNT         = #{taxFreeAmount}
+        WHERE WORKPLACE_MEMBER_ID = #{workplaceMemberId}
+    </update>
+
+</mapper>

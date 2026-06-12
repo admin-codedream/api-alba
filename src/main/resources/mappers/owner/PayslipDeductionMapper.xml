@@ -12,15 +12,19 @@
         <result property="amount" column="AMOUNT"/>
         <result property="note" column="NOTE"/>
         <result property="displayOrder" column="DISPLAY_ORDER"/>
+        <result property="appliedRate" column="APPLIED_RATE"/>
+        <result property="appliedBaseAmount" column="APPLIED_BASE_AMOUNT"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.api.alba.domain.owner.PayslipDeduction" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO PAYSLIP_DEDUCTIONS (PAYSLIP_ID, DEDUCTION_TYPE, NAME, AMOUNT, NOTE, DISPLAY_ORDER)
-        VALUES (#{payslipId}, #{deductionType}, #{name}, #{amount}, #{note}, #{displayOrder})
+        /* insert */
+        INSERT INTO PAYSLIP_DEDUCTIONS (PAYSLIP_ID, DEDUCTION_TYPE, NAME, AMOUNT, NOTE, DISPLAY_ORDER, APPLIED_RATE, APPLIED_BASE_AMOUNT)
+        VALUES (#{payslipId}, #{deductionType}, #{name}, #{amount}, #{note}, #{displayOrder}, #{appliedRate}, #{appliedBaseAmount})
     </insert>
 
     <select id="findByPayslipId" resultMap="payslipDeductionMap">
-        SELECT ID, PAYSLIP_ID, DEDUCTION_TYPE, NAME, AMOUNT, NOTE, DISPLAY_ORDER
+        /* findByPayslipId */
+        SELECT ID, PAYSLIP_ID, DEDUCTION_TYPE, NAME, AMOUNT, NOTE, DISPLAY_ORDER, APPLIED_RATE, APPLIED_BASE_AMOUNT
         FROM PAYSLIP_DEDUCTIONS
         WHERE PAYSLIP_ID = #{payslipId}
         ORDER BY DISPLAY_ORDER ASC, ID ASC

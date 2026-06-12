@@ -14,7 +14,9 @@
       "Bash(find /c/git-repo/api-alba/src/main/java -type f -name *Schedule* -o -name *Shift*)",
       "Bash(xargs cat -n)",
       "Bash(bash gradlew compileJava)",
-      "Bash(grep -v \"//\")"
+      "Bash(grep -v \"//\")",
+      "Bash(claude mcp:*)",
+      "Bash(ls -la /c/git-repo/api-alba/src/main/java/com/api/alba/dto/owner/*Payslip*)"
     ]
   }
 }

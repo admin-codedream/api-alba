@@ -15,4 +15,6 @@ public class PayslipDeduction {
     private BigDecimal amount;
     private String note;
     private int displayOrder;
+    private BigDecimal appliedRate;       // 적용 요율 (자동 계산 시에만 저장)
+    private BigDecimal appliedBaseAmount; // 계산 기준 금액 (자동 계산 시에만 저장)
 }

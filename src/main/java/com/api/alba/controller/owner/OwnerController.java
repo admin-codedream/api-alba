@@ -38,7 +38,10 @@ import com.api.alba.dto.owner.PayslipDetailResponse;
 import com.api.alba.dto.owner.PayslipListItemResponse;
 import com.api.alba.dto.owner.PayslipResponse;
 import com.api.alba.dto.owner.UpdatePayslipRequest;
+import com.api.alba.dto.owner.UpdatePayslipWithDeductionsRequest;
 import com.api.alba.dto.owner.UpdateQrAttendanceRequest;
+import com.api.alba.dto.owner.EmployeeInsuranceSettingResponse;
+import com.api.alba.dto.owner.UpdateEmployeeInsuranceSettingRequest;
 import com.api.alba.dto.staff.EmployeeWageSummary;
 import com.api.alba.dto.staff.InviteCodeResponse;
 import com.api.alba.exception.ApiException;
@@ -200,6 +203,16 @@ public class OwnerController {
             @Valid @RequestBody SavePayslipDeductionsRequest request
     ) {
         return ownerService.savePayslipDeductions(requiredPrincipal(principal), workplaceId, payslipId, request);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/payslips/{payslipId}/full")
+    public PayslipDetailResponse updatePayslipWithDeductions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long payslipId,
+            @Valid @RequestBody UpdatePayslipWithDeductionsRequest request
+    ) {
+        return ownerService.updatePayslipWithDeductions(requiredPrincipal(principal), workplaceId, payslipId, request);
     }
 
     @DeleteMapping("/workplaces/{workplaceId}/payslips/{payslipId}")
@@ -478,6 +491,25 @@ public class OwnerController {
             @RequestBody UpdateWeeklyHolidayPayRequest request
     ) {
         ownerService.updateUseWeeklyHolidayPay(requiredPrincipal(principal), workplaceId, request.getUseWeeklyHolidayPay());
+    }
+
+    @GetMapping("/workplaces/{workplaceId}/members/{memberId}/insurance-settings")
+    public EmployeeInsuranceSettingResponse getEmployeeInsuranceSetting(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId
+    ) {
+        return ownerService.getEmployeeInsuranceSetting(requiredPrincipal(principal), workplaceId, memberId);
+    }
+
+    @PutMapping("/workplaces/{workplaceId}/members/{memberId}/insurance-settings")
+    public EmployeeInsuranceSettingResponse updateEmployeeInsuranceSetting(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long workplaceId,
+            @PathVariable Long memberId,
+            @Valid @RequestBody UpdateEmployeeInsuranceSettingRequest request
+    ) {
+        return ownerService.updateEmployeeInsuranceSetting(requiredPrincipal(principal), workplaceId, memberId, request);
     }
 
     private Long requiredPrincipal(UserPrincipal principal) {

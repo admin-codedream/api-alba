@@ -1,10 +1,12 @@
 package com.api.alba.service.owner;
 
+import com.api.alba.component.InsuranceCalculationHelper;
 import com.api.alba.component.WageCalculationHelper;
 import com.api.alba.component.WageCalculationHelper.WageCalculationResult;
 import com.api.alba.domain.attendance.AttendanceRecord;
 import com.api.alba.domain.attendance.AttendanceRequest;
 import com.api.alba.domain.auth.User;
+import com.api.alba.domain.owner.EmployeeInsuranceSetting;
 import com.api.alba.domain.owner.Payslip;
 import com.api.alba.domain.owner.PayslipDeduction;
 import com.api.alba.domain.owner.Workplace;
@@ -23,6 +25,7 @@ import com.api.alba.firebase.ProjectId;
 import com.api.alba.mapper.attendance.AttendanceRecordMapper;
 import com.api.alba.mapper.attendance.AttendanceRequestMapper;
 import com.api.alba.mapper.auth.UserMapper;
+import com.api.alba.mapper.owner.EmployeeInsuranceSettingMapper;
 import com.api.alba.mapper.owner.PayslipDeductionMapper;
 import com.api.alba.mapper.owner.PayslipMapper;
 import com.api.alba.mapper.owner.WorkplaceMapper;
@@ -69,8 +72,10 @@ public class OwnerService {
     private final AttendanceRequestMapper attendanceRequestMapper;
     private final UserMapper userMapper;
     private final WageCalculationHelper wageCalculationHelper;
+    private final InsuranceCalculationHelper insuranceCalculationHelper;
     private final PayslipMapper payslipMapper;
     private final PayslipDeductionMapper payslipDeductionMapper;
+    private final EmployeeInsuranceSettingMapper employeeInsuranceSettingMapper;
     private final ObjectMapper objectMapper;
     private final PushTokenMapper pushTokenMapper;
     private final FcmService fcmService;
@@ -570,9 +575,39 @@ public class OwnerService {
             payslip.setDailySnapshot(serializeSnapshot(records));
             payslip.setStatus("ISSUED");
             payslipMapper.insert(payslip);
+
+            // 4대보험 자동 공제 계산
+            autoInsertInsuranceDeductions(payslip, member, baseWage, weeklyHolidayPay);
+
             issuedCount++;
         }
         return new IssuePayslipResponse(issuedCount);
+    }
+
+    private void autoInsertInsuranceDeductions(Payslip payslip, WorkplaceMember member,
+                                                BigDecimal baseWage, BigDecimal weeklyHolidayPay) {
+        EmployeeInsuranceSetting setting = employeeInsuranceSettingMapper.findByWorkplaceMemberId(member.getId());
+        if (setting == null) return;
+
+        // 기준일: 급여 기간 종료일 (귀속월 말일 기준)
+        LocalDate baseDate = payslip.getToDate();
+        // 총 지급액 = 기본급 + 주휴수당 (추가 지급액 제외 - 발행 시점에는 0)
+        BigDecimal totalPay = baseWage.add(weeklyHolidayPay != null ? weeklyHolidayPay : BigDecimal.ZERO);
+
+        List<PayslipDeduction> deductions = insuranceCalculationHelper.calculate(setting, totalPay, baseDate);
+        if (deductions.isEmpty()) return;
+
+        BigDecimal totalDeductionAmount = BigDecimal.ZERO;
+        for (PayslipDeduction d : deductions) {
+            d.setPayslipId(payslip.getId());
+            payslipDeductionMapper.insert(d);
+            totalDeductionAmount = totalDeductionAmount.add(d.getAmount());
+        }
+
+        BigDecimal newTotal = payslip.getTotalWage().subtract(totalDeductionAmount);
+        payslipMapper.updateDeductionSnapshot(payslip.getId(), totalDeductionAmount, newTotal);
+        payslip.setDeductionAmount(totalDeductionAmount);
+        payslip.setTotalWage(newTotal);
     }
 
     public List<PayslipListItemResponse> getPayslips(Long ownerUserId, Long workplaceId, String yearMonth) {
@@ -641,6 +676,96 @@ public class OwnerService {
                 .add(whp)
                 .add(payslip.getBonusAmount())
                 .subtract(totalDeduction);
+        payslipMapper.updateDeductionSnapshot(payslipId, totalDeduction, totalWage);
+        return toOwnerDetailResponse(payslipMapper.findById(payslipId));
+    }
+
+    public EmployeeInsuranceSettingResponse getEmployeeInsuranceSetting(Long ownerUserId, Long workplaceId, Long memberId) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !member.getWorkplaceId().equals(workplaceId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        EmployeeInsuranceSetting setting = employeeInsuranceSettingMapper.findByWorkplaceMemberId(memberId);
+        if (setting == null) {
+            setting = defaultInsuranceSetting(memberId);
+        }
+        return new EmployeeInsuranceSettingResponse(setting);
+    }
+
+    @Transactional
+    public EmployeeInsuranceSettingResponse updateEmployeeInsuranceSetting(Long ownerUserId, Long workplaceId, Long memberId,
+                                                                            UpdateEmployeeInsuranceSettingRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        WorkplaceMember member = workplaceMemberMapper.findById(memberId);
+        if (member == null || !member.getWorkplaceId().equals(workplaceId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, MEMBER_NOT_FOUND);
+        }
+        EmployeeInsuranceSetting existing = employeeInsuranceSettingMapper.findByWorkplaceMemberId(memberId);
+        EmployeeInsuranceSetting setting = toInsuranceSetting(memberId, request);
+        if (existing == null) {
+            employeeInsuranceSettingMapper.insert(setting);
+        } else {
+            employeeInsuranceSettingMapper.update(setting);
+        }
+        return new EmployeeInsuranceSettingResponse(setting);
+    }
+
+    private EmployeeInsuranceSetting defaultInsuranceSetting(Long workplaceMemberId) {
+        EmployeeInsuranceSetting setting = new EmployeeInsuranceSetting();
+        setting.setWorkplaceMemberId(workplaceMemberId);
+        setting.setUseNationalPension(false);
+        setting.setUseHealthInsurance(false);
+        setting.setUseLongTermCare(false);
+        setting.setUseEmploymentInsurance(false);
+        setting.setUseIncomeTax(false);
+        setting.setTaxFreeAmount(BigDecimal.ZERO);
+        return setting;
+    }
+
+    private EmployeeInsuranceSetting toInsuranceSetting(Long workplaceMemberId, UpdateEmployeeInsuranceSettingRequest request) {
+        EmployeeInsuranceSetting setting = new EmployeeInsuranceSetting();
+        setting.setWorkplaceMemberId(workplaceMemberId);
+        setting.setUseNationalPension(request.getUseNationalPension());
+        setting.setUseHealthInsurance(request.getUseHealthInsurance());
+        setting.setUseLongTermCare(request.getUseLongTermCare());
+        setting.setUseEmploymentInsurance(request.getUseEmploymentInsurance());
+        setting.setUseIncomeTax(request.getUseIncomeTax());
+        setting.setTaxFreeAmount(request.getTaxFreeAmount());
+        return setting;
+    }
+
+    @Transactional
+    public PayslipDetailResponse updatePayslipWithDeductions(Long ownerUserId, Long workplaceId, Long payslipId,
+                                                             UpdatePayslipWithDeductionsRequest request) {
+        ensureOwner(workplaceId, ownerUserId);
+        Payslip payslip = findPayslipOrThrow(workplaceId, payslipId);
+        if ("CANCELLED".equals(payslip.getStatus())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, PAYSLIP_ALREADY_CANCELLED);
+        }
+
+        payslipDeductionMapper.deleteByPayslipId(payslipId);
+        for (UpdatePayslipWithDeductionsRequest.DeductionItem item : request.getDeductions()) {
+            PayslipDeduction deduction = new PayslipDeduction();
+            deduction.setPayslipId(payslipId);
+            deduction.setDeductionType(item.getDeductionType());
+            deduction.setName(item.getName());
+            deduction.setAmount(item.getAmount());
+            deduction.setNote(item.getNote());
+            deduction.setDisplayOrder(item.getDisplayOrder());
+            payslipDeductionMapper.insert(deduction);
+        }
+
+        BigDecimal totalDeduction = request.getDeductions().stream()
+                .map(UpdatePayslipWithDeductionsRequest.DeductionItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal whp = payslip.getWeeklyHolidayPay() != null ? payslip.getWeeklyHolidayPay() : BigDecimal.ZERO;
+        BigDecimal totalWage = payslip.getBaseWage()
+                .add(whp)
+                .add(request.getBonusAmount())
+                .subtract(totalDeduction);
+
+        payslipMapper.updateBonus(payslipId, request.getBonusAmount(), request.getBonusNote(), totalWage);
         payslipMapper.updateDeductionSnapshot(payslipId, totalDeduction, totalWage);
         return toOwnerDetailResponse(payslipMapper.findById(payslipId));
     }

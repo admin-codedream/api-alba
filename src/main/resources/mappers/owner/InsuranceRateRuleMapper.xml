@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.api.alba.mapper.owner.InsuranceRateRuleMapper">
+
+    <resultMap id="insuranceRateRuleMap" type="com.api.alba.domain.owner.InsuranceRateRule">
+        <id property="id" column="ID"/>
+        <result property="insuranceType" column="INSURANCE_TYPE"/>
+        <result property="rateTarget" column="RATE_TARGET"/>
+        <result property="rate" column="RATE"/>
+        <result property="baseType" column="BASE_TYPE"/>
+        <result property="effectiveFrom" column="EFFECTIVE_FROM"/>
+        <result property="effectiveTo" column="EFFECTIVE_TO"/>
+        <result property="isActive" column="IS_ACTIVE"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+    </resultMap>
+
+    <select id="findActiveEmployeeRates" resultMap="insuranceRateRuleMap">
+        /* findActiveEmployeeRates */
+        <![CDATA[
+        SELECT ID, INSURANCE_TYPE, RATE_TARGET, RATE, BASE_TYPE,
+               EFFECTIVE_FROM, EFFECTIVE_TO, IS_ACTIVE, CREATED_AT, UPDATED_AT
+        FROM INSURANCE_RATE_RULES
+        WHERE RATE_TARGET = 'EMPLOYEE'
+          AND IS_ACTIVE = 1
+          AND EFFECTIVE_FROM <= #{baseDate}
+          AND (EFFECTIVE_TO IS NULL OR EFFECTIVE_TO >= #{baseDate})
+        ORDER BY INSURANCE_TYPE, EFFECTIVE_FROM DESC
+        ]]>
+    </select>
+
+    <select id="findRate" resultMap="insuranceRateRuleMap">
+        /* findRate */
+        <![CDATA[
+        SELECT ID, INSURANCE_TYPE, RATE_TARGET, RATE, BASE_TYPE,
+               EFFECTIVE_FROM, EFFECTIVE_TO, IS_ACTIVE, CREATED_AT, UPDATED_AT
+        FROM INSURANCE_RATE_RULES
+        WHERE INSURANCE_TYPE = #{insuranceType}
+          AND RATE_TARGET = #{rateTarget}
+          AND IS_ACTIVE = 1
+          AND EFFECTIVE_FROM <= #{baseDate}
+          AND (EFFECTIVE_TO IS NULL OR EFFECTIVE_TO >= #{baseDate})
+        ORDER BY EFFECTIVE_FROM DESC
+        LIMIT 1
+        ]]>
+    </select>
+
+    <select id="findAll" resultMap="insuranceRateRuleMap">
+        /* findAll */
+        SELECT ID, INSURANCE_TYPE, RATE_TARGET, RATE, BASE_TYPE,
+               EFFECTIVE_FROM, EFFECTIVE_TO, IS_ACTIVE, CREATED_AT, UPDATED_AT
+        FROM INSURANCE_RATE_RULES
+        ORDER BY INSURANCE_TYPE, RATE_TARGET, EFFECTIVE_FROM DESC
+    </select>
+
+</mapper>
