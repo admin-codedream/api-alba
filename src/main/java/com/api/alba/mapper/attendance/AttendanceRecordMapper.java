@@ -113,6 +113,8 @@ public interface AttendanceRecordMapper {
             @Param("finalWage") BigDecimal finalWage
     );
 
+    int updateNote(@Param("id") Long id, @Param("note") String note);
+
     int deleteById(@Param("id") Long id);
 
     int clearWagesByMember(@Param("workplaceId") Long workplaceId, @Param("userId") Long userId);
